@@ -1,0 +1,12 @@
+namespace "MultipleVariables";
+
+native void WriteLine(string message);
+
+func void main() autoexec
+{ 
+    const int n = 15, a = 10, b = 5;
+
+    WriteLine("N=" + string(n));
+    WriteLine("A=" + string(a));
+    WriteLine("B=" + string(b));
+}

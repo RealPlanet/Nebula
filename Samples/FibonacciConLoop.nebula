@@ -1,0 +1,34 @@
+namespace "FibonacciConLoop";
+
+native void Write(string message);
+native void WriteLine(string message);
+
+func void main() autoexec
+{ 
+    int n = 15; 
+    int fibResult = fib(n); 
+    Write("Result of Fibonacci calculation is:");
+    WriteLine(string(fibResult));
+}
+
+func int fib(int n) 
+{ 
+    int x = n;
+    if (x <= 1) 
+    {
+        return x; 
+    }
+
+    int a = 0;
+    int b = 1;
+
+    while(x > 1)
+    {
+        int prev = b;
+        b = a + b;
+        a = prev;
+        x = x - 1;
+    }
+
+    return b;
+}

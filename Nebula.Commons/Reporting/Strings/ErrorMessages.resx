@@ -1,0 +1,240 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AllPathsMustReturn" xml:space="preserve">
+    <value>Not all paths return in function '{0}'.</value>
+  </data>
+  <data name="AttributeRequiresVoidReturnType" xml:space="preserve">
+    <value>Attribute '{0}' requires void return parameter.</value>
+  </data>
+  <data name="AttributeRequiresZeroParameters" xml:space="preserve">
+    <value>Attribute '{0}' requires zero function parameters.</value>
+  </data>
+  <data name="BadCharacterInput" xml:space="preserve">
+    <value>Bad character input '{0}'.</value>
+  </data>
+  <data name="BinaryOperatorNotDefined" xml:space="preserve">
+    <value>Binary operator '{0}' is not defined for types '{1' and '{2}'.</value>
+  </data>
+  <data name="BinderFunctionAlreadyExists" xml:space="preserve">
+    <value>Function symbol '{0}' already declared.</value>
+  </data>
+  <data name="BundleAlreadyExists" xml:space="preserve">
+    <value>Bundle {0}' already declared.</value>
+  </data>
+  <data name="BundleDoesNotExist" xml:space="preserve">
+    <value>Bundle '{0}' does not exist.</value>
+  </data>
+  <data name="CannotBindParameter" xml:space="preserve">
+    <value>Parameter '{0}' could not be declared.</value>
+  </data>
+  <data name="CannotConvertType" xml:space="preserve">
+    <value>Cannot convert type of '{0}' to '{1}'.</value>
+  </data>
+  <data name="CannotConvertTypeImplicity" xml:space="preserve">
+    <value>Cannot convert type of '{0}' to '{1}'. An explicit conversion exists (are you missing a cast?).</value>
+  </data>
+  <data name="CannotReassignReadonlyVariable" xml:space="preserve">
+    <value>Cannot reassign value of read-only variable '{0}'.</value>
+  </data>
+  <data name="ExpressionDoesNotEvaluateToType" xml:space="preserve">
+    <value>Expression '{0}' does not evaluate to '{1}'.</value>
+  </data>
+  <data name="ExpressionMustHaveValue" xml:space="preserve">
+    <value>Expression must have a value.</value>
+  </data>
+  <data name="FieldAlreadyDeclared" xml:space="preserve">
+    <value>Field '{0}' is already declared.</value>
+  </data>
+  <data name="FieldDoesNotExist" xml:space="preserve">
+    <value>Field '{0}' does not exist.</value>
+  </data>
+  <data name="FunctionAlreadyExists" xml:space="preserve">
+    <value>Function '{0}' already declared.</value>
+  </data>
+  <data name="FunctionDoesNotExists" xml:space="preserve">
+    <value>Function '{0}' does not exist.</value>
+  </data>
+  <data name="FunctionExpectsReturn" xml:space="preserve">
+    <value>Function '{0}' expects a return type of '{1}' but no expression was found after 'return' keyword.</value>
+  </data>
+  <data name="IdentifierIsNotAFunction" xml:space="preserve">
+    <value>'{0}' is not a function.</value>
+  </data>
+  <data name="NameIsNotAVariable" xml:space="preserve">
+    <value>'{0}' is not a variable.</value>
+  </data>
+  <data name="NamespaceAlreadySet" xml:space="preserve">
+    <value>Cannot set namespace '{0}' because another namespace has already been set.</value>
+  </data>
+  <data name="NamespaceMustBeFirstOfAny" xml:space="preserve">
+    <value>Namespace definition '{0}' must be before any global statement.</value>
+  </data>
+  <data name="NativeFunctionAlreadyExists" xml:space="preserve">
+    <value>Native function '{0}' already declared.</value>
+  </data>
+  <data name="NotAllPathsReturn" xml:space="preserve">
+    <value>Not all paths return in function '{0}'.</value>
+  </data>
+  <data name="ParameterAlreadyDeclared" xml:space="preserve">
+    <value>Parameter '{0}' is already declared.</value>
+  </data>
+  <data name="VariableAlreadyDeclared" xml:space="preserve">
+    <value>Variable '{0}' is already declared.</value>
+  </data>
+  <data name="TypeDoesNotExist" xml:space="preserve">
+    <value>Type '{0}' does not exist.</value>
+  </data>
+  <data name="UnaryOperatorNotDefined" xml:space="preserve">
+    <value>Unary operator '{0}' is not defined for type '{1}'.</value>
+  </data>
+  <data name="UnexpectedGlobalStatement" xml:space="preserve">
+    <value>Unexpected global statement '{0}'.</value>
+  </data>
+  <data name="UnexpectedToken" xml:space="preserve">
+    <value>Unexpected token '{0}', expected type '{1}'.</value>
+  </data>
+  <data name="UnterminatedMultilineComment" xml:space="preserve">
+    <value>Unterminated multi-line comment.</value>
+  </data>
+  <data name="UnterminatedStringLiteral" xml:space="preserve">
+    <value>Unterminated string literal: '{0}'.</value>
+  </data>
+  <data name="ValueNotOfType" xml:space="preserve">
+    <value>The value '{0}' is not of type '{1}'.</value>
+  </data>
+  <data name="VariableDoesNotExists" xml:space="preserve">
+    <value>Variable name does not exist '{0}'.</value>
+  </data>
+  <data name="VariableDoesNotHaveAnyFields" xml:space="preserve">
+    <value>Variable '{0}' does not have any fields.</value>
+  </data>
+  <data name="VoidFunctionCannotReturnValue" xml:space="preserve">
+    <value>Function '{0}' does not have a return type. 'return' keyword cannot be followed by an expression.</value>
+  </data>
+  <data name="WrongNumberOfArguments" xml:space="preserve">
+    <value>Function '{0}' requires '{1}' arguments but was given {2}.</value>
+  </data>
+  <data name="InvalidBreakOrContinue" xml:space="preserve">
+    <value>The keyword '{0}' can only be used inside loops.</value>
+  </data>
+  <data name="InvalidExpressionStatement" xml:space="preserve">
+    <value>Only assignment and call expressions can be used as a statement.</value>
+  </data>
+</root>

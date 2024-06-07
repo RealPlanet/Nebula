@@ -1,0 +1,33 @@
+namespace "StronglyTypedBundle";
+
+native void WriteLine(string s);
+
+bundle Message
+{
+    string Data;
+    int Id;
+    bool Handled;
+}
+
+func void main() autoexec
+{
+    WriteLine("Testing Bundles");
+    Message m = 0;
+
+    m.Data = "Hello, world";
+    m.Id = 1;
+    m.Handled = false;
+    
+    handleMessage(m); 
+
+    WriteLine("Message was handled? " + string(m.Handled));
+    WriteLine("Message is:" + m.Data);
+}
+
+func void handleMessage(Message m)
+{
+    string originalMessage = m.Data;
+    WriteLine("Handling message: " + m.Data);
+    m.Handled = true;
+    m.Data = m.Data + "_PROCESSED";
+}

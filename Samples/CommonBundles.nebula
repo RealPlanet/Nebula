@@ -1,0 +1,25 @@
+namespace "CommonBundles";
+
+native void WriteLine(string m);
+
+func void PrintEntity(CommonBundles::Entity ent)
+{
+    WriteLine("Printing bundle Entity information");
+    WriteLine("IsAlive should be true and is: " + string(ent.IsAlive));
+    WriteLine("Name should be Zombie and is: " + string(ent.Name));
+    WriteLine("NativePtr from engine is: " + string(ent.NativePtr)); 
+    WriteLine("Print finished");
+}
+
+bundle Data
+{
+    int Id;
+    string Message;
+}
+
+bundle Entity
+{
+    int NativePtr;
+    bool IsAlive;
+    string Name;
+}

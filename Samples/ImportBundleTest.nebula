@@ -1,0 +1,24 @@
+namespace "ImportBundleTest";
+
+import "CommonBundles";
+
+native void WriteLine(string s);
+native int HashString(string s);
+
+func int EntityPtrFromName(string s)
+{
+    return HashString(s);
+}
+
+func void main() autoexec
+{
+    WriteLine("Importing bundle");
+
+    CommonBundles::Entity enemyEnt = 0;
+    
+    enemyEnt.IsAlive = true;
+    enemyEnt.Name = "Zombie";
+    enemyEnt.NativePtr = EntityPtrFromName(enemyEnt.Name);  
+
+    CommonBundles::PrintEntity(enemyEnt);
+}

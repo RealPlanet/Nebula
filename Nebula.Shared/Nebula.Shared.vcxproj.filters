@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Internal">
+      <UniqueIdentifier>{ff39d2a4-d513-40cb-898f-68719125aa24}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\Utility.h" />
+    <ClInclude Include="include\InstructionDefs.h" />
+    <ClInclude Include="include\DiagnosticReport.h" />
+    <ClInclude Include="include\LanguageTypes.h" />
+    <ClInclude Include="include\Stack.h" />
+    <ClInclude Include="include\EmitTokens.h" />
+    <ClInclude Include="include\ErrorCallStack.h" />
+    <ClInclude Include="include\Instruction.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\DiagnosticReport.cpp" />
+    <ClCompile Include="src\LanguageTypes.cpp" />
+    <ClCompile Include="src\ErrorCallStack.cpp" />
+  </ItemGroup>
+</Project>

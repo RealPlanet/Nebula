@@ -1,0 +1,28 @@
+namespace "FizzBuzz";
+
+// Native stdout print
+native void WriteLine(string message);
+
+func string FizzBuzz(int n) {
+    bool divisibleByThree = n % 3 == 0;
+    bool divisibleByFive  = n % 5 == 0;
+    
+    if (divisibleByThree && divisibleByFive) {
+        return "FizzBuzz";
+    } else if (divisibleByThree) {
+        return "Fizz";
+    } else if (divisibleByFive) {
+        return "Buzz";
+    }
+    
+    return "Neither Fizz nor Buzz!";
+}
+
+func void main() autoexec
+{
+    int n = 1;
+    while (n <= 100) {
+        WriteLine(FizzBuzz(n));
+        n += 1;
+    }
+}
