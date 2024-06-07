@@ -1,0 +1,23 @@
+namespace "BreakContinue";
+
+native void WriteLine(string m);
+
+func void main() autoexec
+{
+    int count = 100;
+    while(count > 0)
+    {
+        count -= 1;
+        if(count > 50)
+        {
+            int count = 1;
+            WriteLine("Continue" + string(count));
+            continue;
+        } 
+        
+        WriteLine("Breaking" + string(count));
+        break;
+    }
+    
+    WriteLine("Count is " + string(count));
+}

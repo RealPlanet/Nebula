@@ -1,0 +1,24 @@
+namespace "HelloWorld";
+
+native void WriteLine(string message);
+
+func void main() autoexec
+{
+    WriteLine("Hello, World!");
+    bool a = false;
+    int c = 5;
+    if  (2 > c)
+    {
+        if(6 < c)
+        {
+            WriteLine("Hello, World!");
+            return;
+        }
+        WriteLine("Hello, World!");
+        return;
+    }
+    else
+    {
+        WriteLine("Hello, World!");
+    }
+}

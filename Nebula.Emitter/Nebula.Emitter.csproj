@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Platforms>x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+      <ProjectReference Include="..\Nebula.Interop\Nebula.Interop.vcxproj">
+          <IncludeAssets></IncludeAssets>
+      </ProjectReference>
+
+  </ItemGroup>
+
+</Project>

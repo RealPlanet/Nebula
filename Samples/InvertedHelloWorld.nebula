@@ -1,0 +1,19 @@
+namespace "InvertedHelloWorld";
+
+native void WriteLine(string message);
+
+func void main() autoexec
+{
+    WriteLine("First I invoke print of 'Hello,' with a delay of 5 seconds");
+    async do_print("Hello, ", 5);
+    WriteLine("Then I invoke print of 'World!' with a delay of 2 seconds");
+    async do_print("World!", 2);
+
+    WriteLine("What will it print?");
+}
+
+func void do_print(string message, int delay)
+{
+    wait delay;
+    WriteLine(message);
+}

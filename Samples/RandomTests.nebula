@@ -1,0 +1,76 @@
+namespace "RandomTests";
+
+native void WriteLine(string message);
+native void Write(string message);
+
+func void main() autoexec
+{ 
+    bool testOk = test_simple_math();
+    Write_test_result(testOk, "SimpleMathTest");
+
+    testOk = test_boolean();
+    Write_test_result(testOk, "SimpleBooleanTest");
+}
+
+func void Write_test_result(bool success, string testName)
+{
+    if(success)
+    {
+        WriteLine("'" + testName + "' succesfully passed!");
+        return;
+    }
+
+    WriteLine("'" + testName + "' did not pass!");
+}
+
+func bool test_boolean()
+{
+    int one = 1;
+    int two = 2;
+
+    if(1 > 2)
+    {
+        return false;
+    } 
+
+    if(1 >= 2)
+    {
+        return false;
+    } 
+
+    if(2 < 1)
+    {
+        return false;
+    } 
+
+    if(2 <= 1)
+    {
+        return false;
+    } 
+
+
+    return true;
+}
+
+func bool test_simple_math()
+{
+    int a = 10;
+    int b = 10;
+    
+    int sum = a + b;
+    Write("Sum is: ");
+    WriteLine(string(sum));
+    
+    int diff= a - b;
+    Write("Diffis: ");
+    WriteLine(string(diff));
+    
+    int mul= a * b;
+    Write("Mul is: ");
+    WriteLine(string(mul));
+    
+    int div = a / b;
+    Write("Div is: ");
+    WriteLine(string(div ));
+    return true;
+}

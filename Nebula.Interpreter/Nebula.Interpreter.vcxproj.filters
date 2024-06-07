@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="include\Interpreter.h" />
+    <ClInclude Include="include\ThreadMap.h" />
+    <ClInclude Include="include\Callstack.h" />
+    <ClInclude Include="include\Frame.h" />
+    <ClInclude Include="include\FrameScheduler.h" />
+    <ClInclude Include="include\Function.h" />
+    <ClInclude Include="include\DataStack.h" />
+    <ClInclude Include="include\Script.h" />
+    <ClInclude Include="include\Bundle.h" />
+    <ClInclude Include="include\IScriptParser.h" />
+    <ClInclude Include="src\LiteralScriptParser.h" />
+    <ClInclude Include="src\InstructionRegistry.h" />
+    <ClInclude Include="include\FrameMemory.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Interpreter.cpp" />
+    <ClCompile Include="src\Callstack.cpp" />
+    <ClCompile Include="src\Frame.cpp" />
+    <ClCompile Include="src\FrameScheduler.cpp" />
+    <ClCompile Include="src\ThreadMap.cpp" />
+    <ClCompile Include="src\Function.cpp" />
+    <ClCompile Include="src\Script.cpp" />
+    <ClCompile Include="src\Bundle.cpp" />
+    <ClCompile Include="src\IScriptParser.cpp" />
+    <ClCompile Include="src\LiteralScriptParser.cpp" />
+    <ClCompile Include="src\InstructionRegistry.cpp" />
+    <ClCompile Include="src\FrameMemory.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Script">
+      <UniqueIdentifier>{71a1e2ee-dfb9-45ac-9cca-604a7f996659}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Script\ScriptParser">
+      <UniqueIdentifier>{d3a591b9-1011-4d8d-b1f7-6eeda413ecfe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Script\ScriptParser\Debug">
+      <UniqueIdentifier>{fe96adf6-f7fc-4553-ba8a-11747530f6bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Script\ScriptParser\Release">
+      <UniqueIdentifier>{a6873ea7-adaf-4652-ba52-9dff035a7fc1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Script\DataStack">
+      <UniqueIdentifier>{c665cfb7-4190-490a-b3e1-12ccf6c57d5a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Interpreter">
+      <UniqueIdentifier>{3e809fdd-b5a6-4a99-bd95-85614b08d625}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Interpreter\Frame">
+      <UniqueIdentifier>{7abe0c4c-b13c-40b3-b9ba-6f1053f57d2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Interpreter\Function">
+      <UniqueIdentifier>{aa0718bf-e3ff-4180-8ca2-b8007a315157}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Interpreter\Instructions">
+      <UniqueIdentifier>{956dceec-9b09-46f9-9fa1-48ba8a5abaf7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

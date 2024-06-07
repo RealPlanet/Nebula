@@ -1,0 +1,46 @@
+namespace "ForLoop";
+
+native void WriteLine(string s);
+
+func void TestForLoop() autoexec
+{
+    WriteLine("Stampo i primi dieci numeri con un for loop");
+    for(int i = 0; i < 10; i += 1)
+    {
+        WriteLine(string(i)); 
+    }
+
+    WriteLine("");
+    WriteLine("Stampo i numeri da 10 a 19 con un loop infinito, poi esco con un break");
+    for(int i = 10;;i +=1)
+    {
+        WriteLine(string(i));
+        if(i == 19)
+            break;
+    }
+    
+    WriteLine("");
+    WriteLine("Stampo i numeri da 20 a 29 con un loop infinito partendo da 0 e poi esco con un break");
+    for(int i = 0;;i +=1)
+    {
+        if(i < 20)
+            continue;
+
+        WriteLine(string(i));
+        if(i == 29)
+            break;
+    }
+    
+    WriteLine("");
+    WriteLine("Faccio un loop infinito vuoto ed esco dopo 10 numeri");
+    int i = 0;
+    for(;;)
+    {
+        WriteLine(string(i));
+        if(i == 9)
+            break;
+        i += 1;
+    }
+    
+    WriteLine("Finito!");
+}

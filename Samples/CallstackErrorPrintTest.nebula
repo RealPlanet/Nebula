@@ -1,0 +1,28 @@
+namespace "StronglyTypedBundle";
+
+native void WrongFunc(string s);
+
+func void start() autoexec
+{
+    first();
+}
+
+func void first(){
+    second();
+}
+
+func void second(){
+    third();
+}
+
+func void third(){
+    forth();
+}
+
+func void forth(){
+    fifth();
+}
+
+func void fifth(){
+    WrongFunc("NO");
+}

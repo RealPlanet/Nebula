@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Library</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Platforms>x64</Platforms>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Mono.Options" Version="6.12.0.148" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Nebula.Commons\Nebula.Commons.csproj" />
+      <ProjectReference Include="..\Nebula.Emitter\Nebula.Emitter.csproj" />
+    </ItemGroup>
+</Project>
