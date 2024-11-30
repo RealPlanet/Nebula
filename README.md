@@ -52,3 +52,7 @@ When a threaded function returns the return type is ignored and any return data 
 
 \* Due to the nature of the language each implementation must define its own native bindings.
 To avoid forcing the hand of the implementer none are required.
+
+## Thanks
+A big thanks to [Immo Landwerth](https://www.youtube.com/@ImmoLandwerth), this project initially started from his youtube series as a custom language compiled to IL
+but quickly evolved to be something more.
