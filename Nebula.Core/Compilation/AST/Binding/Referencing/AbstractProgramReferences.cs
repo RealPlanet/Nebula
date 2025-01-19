@@ -1,5 +1,5 @@
 ﻿using Nebula.Core.Binding.Symbols;
-using Nebula.Interpreter;
+using Nebula.Interop;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;

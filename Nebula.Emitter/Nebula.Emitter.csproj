@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+      <ProjectReference Include="..\Nebula.Commons\Nebula.Commons.csproj" />
       <ProjectReference Include="..\Nebula.Interop\Nebula.Interop.vcxproj">
           <IncludeAssets></IncludeAssets>
       </ProjectReference>

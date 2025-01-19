@@ -3,7 +3,7 @@ using Nebula.Commons.Text;
 using Nebula.Core.Binding;
 using Nebula.Core.Emitting;
 using Nebula.Core.Parsing;
-using Nebula.Interpreter;
+using Nebula.Interop;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;

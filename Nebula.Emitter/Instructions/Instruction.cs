@@ -1,20 +1,30 @@
-﻿using System;
+﻿using Nebula.Commons.Text;
+using System;
 using System.Text;
 
 namespace Nebula.CodeEmitter
 {
-    public sealed class Instruction
+    public interface IEmitterObject
     {
+        /// <summary>The text location of this object, used to reference the source code original position</summary>
+        TextSpan? SourceCodeTextSpan { get; }
+    }
+
+    public sealed class Instruction
+        : IEmitterObject
+    {
+        public TextSpan? SourceCodeTextSpan { get; }
         public InstructionOpcode Opcode { get; set; }
         public object? Operand { get; set; } = null;
 
-        public Instruction(InstructionOpcode opcode)
+        public Instruction(InstructionOpcode opcode, TextSpan? sourceCodeTextSpan)
         {
             Opcode = opcode;
+            SourceCodeTextSpan = sourceCodeTextSpan;
         }
 
-        public Instruction(InstructionOpcode opcode, object operand)
-            : this(opcode)
+        public Instruction(InstructionOpcode opcode, object operand, TextSpan? sourceCodeTextSpan)
+            : this(opcode, sourceCodeTextSpan)
         {
             Operand = operand;
         }

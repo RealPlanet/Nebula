@@ -2,6 +2,7 @@
 using Nebula.CodeEmitter.Types;
 using Nebula.Commons.Reporting;
 using Nebula.Commons.Syntax;
+using Nebula.Commons.Text;
 using Nebula.Core.Binding;
 using Nebula.Core.Binding.Symbols;
 using Nebula.Core.Parsing;
@@ -11,6 +12,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Nebula.Core.Emitting
@@ -18,9 +20,9 @@ namespace Nebula.Core.Emitting
     public sealed class Emitter
     {
         /// <summary>Context used by the emitter to keep track of all the code being emitted</summary>
-        private sealed class Context(string moduleName, string @namespace, CodeEmitter.Version moduleVersion)
+        private sealed class Context(string moduleName, string @namespace, CodeEmitter.Version moduleVersion, SourceCode sourceCode)
         {
-            public Assembly Assembly { get; } = new(moduleName, @namespace, moduleVersion);
+            public Assembly Assembly { get; } = new(moduleName, @namespace, moduleVersion, sourceCode);
             public Report Report { get; } = new();
             public Dictionary<VariableSymbol, VariableDefinition> Locals { get; } = [];
             public Dictionary<VariableSymbol, ParameterDefinition> Parameters { get; } = [];
@@ -42,7 +44,7 @@ namespace Nebula.Core.Emitting
         public void Emit(AbstractProgram program, bool readableBytecode, out Report emitReport)
         {
             NamespaceStatement nsToken = (NamespaceStatement)program.Namespace.OriginalNode;
-            _currentContext = new(ModuleName, program.Namespace.Text, new(1, 0, 0));
+            _currentContext = new(ModuleName, program.Namespace.Text, new(1, 0, 0), program.SourceCode);
 
             foreach (KeyValuePair<string, BundleSymbol> bundle in program.Bundles)
             {
@@ -55,15 +57,31 @@ namespace Nebula.Core.Emitting
             }
 
             string moduleName = Path.ChangeExtension(ModuleName, ".neb");
+            string moduleDbgName = Path.ChangeExtension(ModuleName, ".ndbg");
             string outputFilePath = Path.Combine(OutputFolder, moduleName);
+            string outputDbgFilePath = Path.Combine(OutputFolder, moduleDbgName);
+
             Directory.CreateDirectory(Path.GetDirectoryName(outputFilePath) ?? throw new Exception("Path does not exist"));
 
             if (readableBytecode)
             {
                 using (FileStream output = File.Create(outputFilePath))
+                using (FileStream outputDbg = File.Create(outputDbgFilePath))
                 using (StreamWriter writer = new(output))
+                using (StreamWriter dbgWriter = new(outputDbg))
                 {
                     _currentContext.Assembly.Write(writer);
+                    output.Flush();
+                    output.Position = 0;
+                    string md5Checksum = string.Empty;
+                    using (MD5 md5 = MD5.Create())
+                    {
+
+                        md5Checksum = BitConverter.ToString(md5.ComputeHash(output)).Replace("-", "").ToLowerInvariant();
+                    }
+
+                    Debug.Assert(!string.IsNullOrEmpty(md5Checksum));
+                    _currentContext.Assembly.WriteDebuggingInfo(dbgWriter, md5Checksum);
                 }
             }
             else
@@ -93,7 +111,7 @@ namespace Nebula.Core.Emitting
 
             TypeReference returnType = _knownTypes[declaration.ReturnType];
             NativeAttribute attributes = GenerateAttributeMask(declaration.Attributes);
-            MethodDefinition method = new(declaration.Name, attributes, returnType);
+            MethodDefinition method = new(declaration.Name, attributes, returnType, declaration.Declaration?.Span ?? TextSpan.Empty);
             _currentContext.Assembly.TypeDefinition.Methods.Add(method);
 
             foreach (ParameterSymbol? parameter in declaration.Parameters)
@@ -180,14 +198,14 @@ namespace Nebula.Core.Emitting
         private void EmitWaitStatement(NILProcessor processor, AbstractWaitStatement node)
         {
             EmitExpression(processor, node.TimeExpression);
-            processor.Emit(InstructionOpcode.Wait);
+            processor.Emit(InstructionOpcode.Wait, node.OriginalNode.Span);
         }
 
         private void EmitReturnStatement(NILProcessor processor, AbstractReturnStatement node)
         {
             if (node.Expression != null)
                 EmitExpression(processor, node.Expression);
-            processor.Emit(InstructionOpcode.Ret);
+            processor.Emit(InstructionOpcode.Ret, node.OriginalNode.Span);
         }
 
         private void EmitLabelStatement(NILProcessor processor, AbstractLabelStatement node)
@@ -198,7 +216,10 @@ namespace Nebula.Core.Emitting
         private void EmitGotoStatement(NILProcessor processor, AbstractGotoStatement node)
         {
             _currentContext.LabelReferences.Add((processor.Body.Instructions.Count, node.Label));
-            processor.Emit(InstructionOpcode.Br, new Instruction(InstructionOpcode.Nop));
+            TextSpan location = node.OriginalNode.Span;
+            processor.Emit(InstructionOpcode.Br,
+                new Instruction(InstructionOpcode.Nop, location),
+                location);
         }
 
         private void EmitConditionalGotoStatement(NILProcessor processor, AbstractConditionalGotoStatement node)
@@ -207,7 +228,11 @@ namespace Nebula.Core.Emitting
 
             InstructionOpcode opCode = node.JumpIfTrue ? InstructionOpcode.Brtrue : InstructionOpcode.Brfalse;
             _currentContext.LabelReferences.Add((processor.Body.Instructions.Count, node.Label));
-            processor.Emit(opCode, new Instruction(InstructionOpcode.Nop));
+
+            TextSpan location = node.OriginalNode.Span;
+            processor.Emit(opCode,
+                new Instruction(InstructionOpcode.Nop, location),
+                location);
         }
 
         private void EmitVariableDeclaration(NILProcessor processor, AbstractVariableDeclarationCollection node)
@@ -241,25 +266,25 @@ namespace Nebula.Core.Emitting
                 {
                     arguments = new string[] { typeNamespace, typedName };
                 }
-                processor.Emit(InstructionOpcode.Ld_b, arguments);
-                processor.Emit(InstructionOpcode.Stloc, variableDefinition);
+                processor.Emit(InstructionOpcode.Ld_b, arguments, node.OriginalNode.Span);
+                processor.Emit(InstructionOpcode.Stloc, variableDefinition, node.OriginalNode.Span);
                 return;
             }
 
             EmitExpression(processor, node.Initializer);
-            processor.Emit(InstructionOpcode.Stloc, variableDefinition);
+            processor.Emit(InstructionOpcode.Stloc, variableDefinition, node.OriginalNode.Span);
         }
 
         private void EmitExpressionStatement(NILProcessor processor, AbstractExpressionStatement node)
         {
             EmitExpression(processor, node.Expression);
             if (node.Expression.ResultType != TypeSymbol.Void)
-                processor.Emit(InstructionOpcode.Pop);
+                processor.Emit(InstructionOpcode.Pop, node.OriginalNode.Span);
         }
 
-        private static void EmitNopStatement(NILProcessor processor, AbstractNopStatement _)
+        private static void EmitNopStatement(NILProcessor processor, AbstractNopStatement node)
         {
-            processor.Emit(InstructionOpcode.Nop);
+            processor.Emit(InstructionOpcode.Nop, node.OriginalNode.Span);
         }
 
         #endregion
@@ -309,7 +334,7 @@ namespace Nebula.Core.Emitting
         private void EmitConversionExpression(NILProcessor processor, AbstractConversionExpression node)
         {
             EmitExpression(processor, node.Expression);
-            processor.Emit(InstructionOpcode.ConvType, node.ResultType);
+            processor.Emit(InstructionOpcode.ConvType, node.ResultType, node.OriginalNode.Span);
         }
 
         private void EmitCallExpression(NILProcessor processor, AbstractCallExpression node)
@@ -326,7 +351,7 @@ namespace Nebula.Core.Emitting
                 arguments = new string[] { node.Namespace, node.Function.Name };
             }
 
-            processor.Emit(callInstruction, arguments);
+            processor.Emit(callInstruction, arguments, node.OriginalNode.Span);
         }
 
         private void EmitBundleFieldAssignmentExpression(NILProcessor processor, AbstractBundleFieldAssignment node)
@@ -335,16 +360,24 @@ namespace Nebula.Core.Emitting
             {
                 ParameterDefinition? parameterDefinition = _currentContext.Parameters[node.BundleVariable];
                 EmitExpression(processor, node.Expression);
-                processor.Emit(InstructionOpcode.Dup); // Takes current value on stack and pushes it again
-                processor.Emit(InstructionOpcode.StBArg, new int[] { parameter.OrdinalPosition, node.FieldToAssign.OrdinalPosition }); // Writes value into local
+                processor.Emit(InstructionOpcode.Dup,
+                    node.OriginalNode.Span); // Takes current value on stack and pushes it again
+
+                processor.Emit(InstructionOpcode.StBArg,
+                    new int[] { parameter.OrdinalPosition, node.FieldToAssign.OrdinalPosition },
+                    node.OriginalNode.Span); // Writes value into local
                 return;
             }
 
             VariableDefinition? variableDefinition = _currentContext.Locals[node.BundleVariable];
             EmitExpression(processor, node.Expression);
-            processor.Emit(InstructionOpcode.Dup); // Takes current value on stack and pushes it again
+            processor.Emit(InstructionOpcode.Dup,
+                node.OriginalNode.Span); // Takes current value on stack and pushes it again
+
             // TODO Add a concept of bundle fields in the emitter too
-            processor.Emit(InstructionOpcode.StBloc, new int[] { variableDefinition.Index, node.FieldToAssign.OrdinalPosition }); // Writes value into local
+            processor.Emit(InstructionOpcode.StBloc,
+                new int[] { variableDefinition.Index, node.FieldToAssign.OrdinalPosition },
+                node.OriginalNode.Span); // Writes value into local
         }
 
         private void EmitAssignmentExpression(NILProcessor processor, AbstractAssignmentExpression node)
@@ -353,14 +386,14 @@ namespace Nebula.Core.Emitting
             {
                 ParameterDefinition? parameterDefinition = _currentContext.Parameters[node.Variable];
                 EmitExpression(processor, node.Expression);
-                processor.Emit(InstructionOpcode.Dup); // Takes current value on stack and pushes it again
-                processor.Emit(InstructionOpcode.StArg, parameterDefinition); // Writes value into parameter
+                processor.Emit(InstructionOpcode.Dup, node.OriginalNode.Span); // Takes current value on stack and pushes it again
+                processor.Emit(InstructionOpcode.StArg, parameterDefinition, node.OriginalNode.Span); // Writes value into parameter
             }
 
             VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
             EmitExpression(processor, node.Expression);
-            processor.Emit(InstructionOpcode.Dup); // Takes current value on stack and pushes it again
-            processor.Emit(InstructionOpcode.Stloc, variableDefinition); // Writes value into local
+            processor.Emit(InstructionOpcode.Dup, node.OriginalNode.Span); // Takes current value on stack and pushes it again
+            processor.Emit(InstructionOpcode.Stloc, variableDefinition, node.OriginalNode.Span); // Writes value into local
         }
 
         private void EmitVariableExpression(NILProcessor processor, AbstractVariableExpression node)
@@ -376,7 +409,7 @@ namespace Nebula.Core.Emitting
                     paramArg = new int[] { parameter.OrdinalPosition, fParam.Field.OrdinalPosition };
                 }
 
-                processor.Emit(paramOpcode, paramArg);
+                processor.Emit(paramOpcode, paramArg, node.OriginalNode.Span);
                 return;
             }
 
@@ -392,7 +425,7 @@ namespace Nebula.Core.Emitting
                 argument = new int[] { variableDefinition.Index, f.Field.OrdinalPosition };
             }
 
-            processor.Emit(opcode, argument);
+            processor.Emit(opcode, argument, node.OriginalNode.Span);
         }
 
         private void EmitBinaryExpression(NILProcessor processor, AbstractBinaryExpression node)
@@ -440,54 +473,54 @@ namespace Nebula.Core.Emitting
             switch (node.Operator.BinaryType)
             {
                 case AbstractdBinaryType.Addition:
-                    processor.Emit(InstructionOpcode.Add);
+                    processor.Emit(InstructionOpcode.Add, node.OriginalNode.Span);
                     break;
                 case AbstractdBinaryType.Subtraction:
-                    processor.Emit(InstructionOpcode.Sub);
+                    processor.Emit(InstructionOpcode.Sub, node.OriginalNode.Span);
                     break;
                 case AbstractdBinaryType.Multiplication:
-                    processor.Emit(InstructionOpcode.Mul);
+                    processor.Emit(InstructionOpcode.Mul, node.OriginalNode.Span);
                     break;
                 case AbstractdBinaryType.Division:
-                    processor.Emit(InstructionOpcode.Div);
+                    processor.Emit(InstructionOpcode.Div, node.OriginalNode.Span);
                     break;
                 case AbstractdBinaryType.Remainer:
-                    processor.Emit(InstructionOpcode.Rem);
+                    processor.Emit(InstructionOpcode.Rem, node.OriginalNode.Span);
                     break;
                 case AbstractdBinaryType.LogicalAnd:
                 case AbstractdBinaryType.BitwiseAnd:
-                    processor.Emit(InstructionOpcode.And);
+                    processor.Emit(InstructionOpcode.And, node.OriginalNode.Span);
                     break;
                 case AbstractdBinaryType.BitwiseOr:
                 case AbstractdBinaryType.LogicalOr:
-                    processor.Emit(InstructionOpcode.Or);
+                    processor.Emit(InstructionOpcode.Or, node.OriginalNode.Span);
                     break;
                 case AbstractdBinaryType.BitwiseXor:
-                    processor.Emit(InstructionOpcode.Xor);
+                    processor.Emit(InstructionOpcode.Xor, node.OriginalNode.Span);
                     break;
                 case AbstractdBinaryType.Equals:
-                    processor.Emit(InstructionOpcode.Ceq);
+                    processor.Emit(InstructionOpcode.Ceq, node.OriginalNode.Span);
                     break;
                 case AbstractdBinaryType.NotEquals:
-                    processor.Emit(InstructionOpcode.Ceq);
-                    processor.Emit(InstructionOpcode.Ldc_i4_0);
-                    processor.Emit(InstructionOpcode.Ceq);
+                    processor.Emit(InstructionOpcode.Ceq, node.OriginalNode.Span);
+                    processor.Emit(InstructionOpcode.Ldc_i4_0, node.OriginalNode.Span);
+                    processor.Emit(InstructionOpcode.Ceq, node.OriginalNode.Span);
                     break;
                 case AbstractdBinaryType.LessThan:
-                    processor.Emit(InstructionOpcode.Clt);
+                    processor.Emit(InstructionOpcode.Clt, node.OriginalNode.Span);
                     break;
                 case AbstractdBinaryType.LessThanOrEqual:
-                    processor.Emit(InstructionOpcode.Cgt);
-                    processor.Emit(InstructionOpcode.Ldc_i4_0);
-                    processor.Emit(InstructionOpcode.Ceq);
+                    processor.Emit(InstructionOpcode.Cgt, node.OriginalNode.Span);
+                    processor.Emit(InstructionOpcode.Ldc_i4_0, node.OriginalNode.Span);
+                    processor.Emit(InstructionOpcode.Ceq, node.OriginalNode.Span);
                     break;
                 case AbstractdBinaryType.GreaterThan:
-                    processor.Emit(InstructionOpcode.Cgt);
+                    processor.Emit(InstructionOpcode.Cgt, node.OriginalNode.Span);
                     break;
                 case AbstractdBinaryType.GreaterThanOrEqual:
-                    processor.Emit(InstructionOpcode.Clt);
-                    processor.Emit(InstructionOpcode.Ldc_i4_0);
-                    processor.Emit(InstructionOpcode.Ceq);
+                    processor.Emit(InstructionOpcode.Clt, node.OriginalNode.Span);
+                    processor.Emit(InstructionOpcode.Ldc_i4_0, node.OriginalNode.Span);
+                    processor.Emit(InstructionOpcode.Ceq, node.OriginalNode.Span);
                     break;
                 default:
                     throw new Exception($"Unexpected binary operator {SyntaxEx.GetText(node.Operator.NodeType)}");
@@ -505,7 +538,7 @@ namespace Nebula.Core.Emitting
             switch (nodes.Count)
             {
                 case 0:
-                    processor.Emit(InstructionOpcode.Ldc_s, string.Empty);
+                    processor.Emit(InstructionOpcode.Ldc_s, string.Empty, node.OriginalNode.Span);
                     break;
 
                 //case 1:
@@ -540,7 +573,7 @@ namespace Nebula.Core.Emitting
                         EmitExpression(processor, nodes[i]);
                     }
 
-                    processor.Emit(InstructionOpcode.AddStr, nodes.Count);
+                    processor.Emit(InstructionOpcode.AddStr, nodes.Count, node.OriginalNode.Span);
                     break;
             }
 
@@ -611,16 +644,16 @@ namespace Nebula.Core.Emitting
                     // NOP
                     break;
                 case AbstractUnaryType.LogicalNegation:
-                    processor.Emit(InstructionOpcode.Ldc_i4_0);
-                    processor.Emit(InstructionOpcode.Ceq);
+                    processor.Emit(InstructionOpcode.Ldc_i4_0, node.OriginalNode.Span);
+                    processor.Emit(InstructionOpcode.Ceq, node.OriginalNode.Span);
                     // !
                     break;
                 case AbstractUnaryType.Negation:
-                    processor.Emit(InstructionOpcode.Neg);
+                    processor.Emit(InstructionOpcode.Neg, node.OriginalNode.Span);
                     // -
                     break;
                 case AbstractUnaryType.OnesComplement:
-                    processor.Emit(InstructionOpcode.Not);
+                    processor.Emit(InstructionOpcode.Not, node.OriginalNode.Span);
                     // ~
                     break;
                 default:
@@ -636,7 +669,7 @@ namespace Nebula.Core.Emitting
             if (node.ResultType == TypeSymbol.Int)
             {
                 int value = (int)node.ConstantValue.Value;
-                processor.Emit(InstructionOpcode.Ldc_i4, value);
+                processor.Emit(InstructionOpcode.Ldc_i4, value, node.OriginalNode.Span);
                 return;
             }
 
@@ -644,14 +677,14 @@ namespace Nebula.Core.Emitting
             {
                 bool value = (bool)node.ConstantValue.Value;
                 InstructionOpcode instruction = value ? InstructionOpcode.Ldc_i4_1 : InstructionOpcode.Ldc_i4_0;
-                processor.Emit(instruction);
+                processor.Emit(instruction, node.OriginalNode.Span);
                 return;
             }
 
             if (node.ResultType == TypeSymbol.String)
             {
                 string? value = (string)node.ConstantValue.Value;
-                processor.Emit(InstructionOpcode.Ldc_s, value);
+                processor.Emit(InstructionOpcode.Ldc_s, value, node.OriginalNode.Span);
                 return;
             }
 

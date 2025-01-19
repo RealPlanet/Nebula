@@ -1,6 +1,8 @@
-﻿using System.CodeDom.Compiler;
+﻿using Nebula.Commons.Text;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.Json;
 
 namespace Nebula.CodeEmitter.Writer
 {
@@ -24,6 +26,40 @@ namespace Nebula.CodeEmitter.Writer
             {
                 inWriter.WriteMethod(func);
             }
+        }
+
+        public static void WriterDebuggingInfo(this StreamWriter writer, Assembly assembly, string assemblyChecksum)
+        {
+            string fileName = Path.GetFileName(assembly.SourceCode.FileName);
+            DebugFile outpuData = new(assembly.Namespace, fileName, assemblyChecksum);
+
+            foreach (MethodDefinition func in assembly.TypeDefinition.Methods)
+            {
+                DebugFunction dbgFunc = new(func.Name, TextSpan.Empty);
+                outpuData.Functions.Add(dbgFunc.Name, dbgFunc);
+
+                foreach (ParameterDefinition p in func.Parameters)
+                {
+                    dbgFunc.Parameters.Add(new(p.Name));
+                }
+
+                foreach (VariableDefinition v in func.Body.Variables)
+                {
+                    dbgFunc.LocalVariables.Add(new(v.Name));
+                }
+
+                foreach (Instruction inst in func.Body.Instructions)
+                {
+                    TextSpan instSpan = inst.SourceCodeTextSpan.GetValueOrDefault();
+                    int lineNumber = assembly.SourceCode.GetLineIndex(instSpan.Start);
+                    dbgFunc.InstructionLines.Add(lineNumber);
+                }
+            }
+
+            writer.Write(JsonSerializer.Serialize(outpuData, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            }));
         }
 
         public static void WriteComment(this IndentedTextWriter writer, string comment)
