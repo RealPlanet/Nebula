@@ -49,6 +49,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nebula.Compiler.Tests", "Ne
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nebula.Editor", "Nebula.Editor\Nebula.Editor.csproj", "{3D31BB36-606E-489A-9393-3157A143B069}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nebula.Debugger", "Nebula.DAP\Nebula.Debugger.csproj", "{53E62B47-1AEF-4F7A-BEE4-A46B1F0CD1A1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -136,6 +138,14 @@ Global
 		{3D31BB36-606E-489A-9393-3157A143B069}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3D31BB36-606E-489A-9393-3157A143B069}.Release|x64.ActiveCfg = Release|Any CPU
 		{3D31BB36-606E-489A-9393-3157A143B069}.Release|x64.Build.0 = Release|Any CPU
+		{53E62B47-1AEF-4F7A-BEE4-A46B1F0CD1A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53E62B47-1AEF-4F7A-BEE4-A46B1F0CD1A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53E62B47-1AEF-4F7A-BEE4-A46B1F0CD1A1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{53E62B47-1AEF-4F7A-BEE4-A46B1F0CD1A1}.Debug|x64.Build.0 = Debug|Any CPU
+		{53E62B47-1AEF-4F7A-BEE4-A46B1F0CD1A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53E62B47-1AEF-4F7A-BEE4-A46B1F0CD1A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53E62B47-1AEF-4F7A-BEE4-A46B1F0CD1A1}.Release|x64.ActiveCfg = Release|Any CPU
+		{53E62B47-1AEF-4F7A-BEE4-A46B1F0CD1A1}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -153,6 +163,7 @@ Global
 		{03E6CAFA-2D0E-4F8E-BF7F-9D1A7BA3B9D4} = {E4DA8A50-944D-4157-BA0A-1043FFA3E530}
 		{D8C9353C-9518-4F20-8C4A-84678DF61D4C} = {8F9FDD24-62B8-4627-8F0C-A974C110F743}
 		{3D31BB36-606E-489A-9393-3157A143B069} = {E4DA8A50-944D-4157-BA0A-1043FFA3E530}
+		{53E62B47-1AEF-4F7A-BEE4-A46B1F0CD1A1} = {6649D4C4-B413-4ED2-8329-79D96024D0A0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {46FBA00E-F93B-44E9-BEC2-4FCF1E299043}
