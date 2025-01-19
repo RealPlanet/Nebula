@@ -42,7 +42,7 @@ When a threaded function returns the return type is ignored and any return data 
 | Feature                                              | Is implemented   |
 | -----------                                          |---------         |
 | Built-in standard library*                           | ❌               |
-| Debug symbols for runtime debugging                  | ❌               |
+| Debug symbols for runtime debugging\*                 | 🟨                 |
 | Single-thread async routines                         | ✅               |
 | Threads can sleep any amount of time                 | ✅               |
 | Binding to native functions for function calls       | ✅               |
@@ -53,6 +53,8 @@ When a threaded function returns the return type is ignored and any return data 
 \* Due to the nature of the language each implementation must define its own native bindings.
 To avoid forcing the hand of the implementer none are required.
 
+\* An initial implementation through the Debug Adapter Protocol has been commited. A VSCode extension will be released eventually. 
+![image example_dbg](https://RealPlanet.github.io/assets/ref/nebula/example_dbg_1.png)
 ## Thanks
 A big thanks to [Immo Landwerth](https://www.youtube.com/@ImmoLandwerth), this project initially started from his youtube series as a custom language compiled to IL
 but quickly evolved to be something more.
