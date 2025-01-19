@@ -4,7 +4,6 @@ namespace Nebula.CodeEmitter
 {
     public sealed class MethodBody
     {
-        public IList<VariableDefinition> Arguments { get; } = [];
         public IList<Instruction> Instructions { get; } = [];
         public IList<VariableDefinition> Variables { get; } = [];
 

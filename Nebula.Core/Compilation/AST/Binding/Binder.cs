@@ -10,7 +10,7 @@ using Nebula.Core.Parsing;
 using Nebula.Core.Parsing.Expressions;
 using Nebula.Core.Parsing.Statements;
 using Nebula.Core.Reporting;
-using Nebula.Interpreter;
+using Nebula.Interop;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -784,7 +784,7 @@ namespace Nebula.Core.Binding
                 if (!isAllowedExpression)
                 {
                     _binderReport.ReportInvalidExpressionStatement(statement.Location);
-                    if(Debugger.IsAttached)
+                    if (Debugger.IsAttached)
                     {
                         Debugger.Break();
                     }

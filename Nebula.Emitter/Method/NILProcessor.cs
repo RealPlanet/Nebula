@@ -1,4 +1,5 @@
 ﻿
+using Nebula.Commons.Text;
 using System.Collections.Generic;
 
 namespace Nebula.CodeEmitter
@@ -14,14 +15,14 @@ namespace Nebula.CodeEmitter
             _instructions = methodBody.Instructions;
         }
 
-        public void Emit(InstructionOpcode opcode)
+        public void Emit(InstructionOpcode opcode, TextSpan? sourceCodeLocation)
         {
-            _instructions.Add(new(opcode));
+            _instructions.Add(new(opcode, sourceCodeLocation));
         }
 
-        public void Emit(InstructionOpcode opcode, object argument)
+        public void Emit(InstructionOpcode opcode, object argument, TextSpan? sourceCodeLocation)
         {
-            _instructions.Add(new(opcode, argument));
+            _instructions.Add(new(opcode, argument, sourceCodeLocation));
         }
     }
 }
