@@ -31,6 +31,6 @@ namespace nebula::shared
     private:
         std::vector<ErrorCallStackLine> m_Lines;
         std::string m_preText;
-        InstructionErrorCode m_ErrorCode;
+        InstructionErrorCode m_ErrorCode{ InstructionErrorCode::Unknown};
     };
 }
