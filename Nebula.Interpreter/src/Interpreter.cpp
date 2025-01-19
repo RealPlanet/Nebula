@@ -23,33 +23,59 @@ Interpreter::~Interpreter()
     delete m_LastErrorCallstack;
 }
 
-Interpreter::State Interpreter::Start()
+Interpreter::State Interpreter::Init(bool startPaused /*= false*/)
 {
-    SetState(State::Running);
-
+    SetState(startPaused ? State::Paused : State::Running);
     m_LastSchedulingUpdate = std::chrono::high_resolution_clock::now();
-
     SwapExecutingThread();
+    return GetState();
+}
+
+Interpreter::State Interpreter::Run()
+{
     while (m_CurrentState == State::Running || m_CurrentState == State::Paused)
     {
-        if (!m_Threads.HasCallStacks())
+        if (m_CurrentState == State::Paused)
         {
-            SetState(State::Exited);
+            m_IsVMRunning.wait(true);
+            continue;
+        }
+            
+        // Exit once we can no longer step
+        if (!Step())
+        {
             break;
         }
-
-        if (m_CurrentState == State::Paused)
-            continue;
-
-        if (ShouldScheduleNewFrame())
-        {
-            SwapExecutingThread();
-        }
-
-        Tick();
     }
 
     return GetState();
+}
+
+Interpreter::State Interpreter::Pause()
+{
+    SetState(State::Paused);
+    return GetState();
+}
+
+Interpreter::State Interpreter::Stop()
+{
+    SetState(State::Exited);
+    return GetState();
+}
+
+void Interpreter::Reset()
+{
+    m_Threads.Clear();
+    m_CurrentThreadIndex = 0;
+    delete m_LastErrorCallstack;
+
+    m_NativeFunctions.clear();
+    m_Scripts.clear();
+
+    m_LastSchedulingUpdate = std::chrono::high_resolution_clock::now();
+
+    // Ready to go!
+    m_StartedOnce = false;
 }
 
 bool Interpreter::BindNativeFunction(const std::string& name, const NativeFunctionCallback callback)
@@ -85,6 +111,23 @@ bool Interpreter::AddScript(std::shared_ptr<Script> script)
     return true;
 }
 
+bool Interpreter::Step()
+{
+    if (!m_Threads.HasCallStacks())
+    {
+        SetState(State::Exited);
+        return false;
+    }
+
+    if (ShouldScheduleNewFrame())
+    {
+        SwapExecutingThread();
+    }
+
+    Tick();
+    return true;
+}
+
 void Interpreter::SetState(State state)
 {
     if (m_CurrentState == state)
@@ -99,7 +142,7 @@ void Interpreter::SetState(State state)
 
     if (state == State::Paused)
     {
-        m_IsVMRunning.clear();
+        //m_IsVMRunning.clear();
         return;
     }
 

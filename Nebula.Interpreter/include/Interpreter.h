@@ -15,7 +15,7 @@
 namespace nebula
 {
     // Function pointer definition to bind Nebula function calls to C++ calls
-    using NativeFunctionCallback = ::std::function<InstructionErrorCode(Interpreter*, Frame*)>; //InstructionError(*)(VirtualMachine*, Frame*);
+    using NativeFunctionCallback = ::std::function<InstructionErrorCode(Interpreter*, Frame*)>;
 
     // Core of the virtual machine
     class Interpreter
@@ -40,15 +40,21 @@ namespace nebula
     public:
         State GetState() const { return m_CurrentState; }
         State Wait() { m_IsVMRunning.wait(true); return GetState(); }
-        State Start();
+        State InitAndRun(bool startPaused = false) { Init(startPaused); return Run(); }
+        State Init(bool startPaused = false);
+        State Run();
+        State Pause();
+        State Stop();
+        void Reset();
 
         shared::ErrorCallStack* GetFatalErrorCallstack() { return m_LastErrorCallstack; }
-
 
         // Native functions are responsible to fetch the data from the parent data stack
         bool BindNativeFunction(const std::string& name, const NativeFunctionCallback callback);
         bool AddScript(std::shared_ptr<Script> script);
 
+        bool Step();
+        const ThreadMap& GetThreadMap() { return m_Threads; }
     private:
         void SetState(State);
         bool ShouldScheduleNewFrame();

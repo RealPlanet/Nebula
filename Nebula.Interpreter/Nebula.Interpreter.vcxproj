@@ -17,7 +17,7 @@
     <ClInclude Include="include\Function.h" />
     <ClInclude Include="include\FrameScheduler.h" />
     <ClInclude Include="include\Frame.h" />
-    <ClInclude Include="include\Callstack.h" />
+    <ClInclude Include="include\CallStack.h" />
     <ClInclude Include="include\IScriptParser.h" />
     <ClInclude Include="include\ThreadMap.h" />
     <ClInclude Include="include\Script.h" />
@@ -36,7 +36,7 @@
     <ClCompile Include="src\ThreadMap.cpp" />
     <ClCompile Include="src\Frame.cpp" />
     <ClCompile Include="src\FrameScheduler.cpp" />
-    <ClCompile Include="src\Callstack.cpp" />
+    <ClCompile Include="src\CallStack.cpp" />
     <ClCompile Include="src\Interpreter.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Callstack.h"
+#include "CallStack.h"
 
 #include <map>
 #include <vector>
@@ -16,6 +16,8 @@ namespace nebula
 
         size_t Count() const { return m_Callstacks.size(); }
         CallStack& At(size_t index) { return m_Callstacks[index]; }
+        const CallStack& At(size_t index) const { return m_Callstacks[index]; }
+
         CallStack* CreateNewThread() { return &m_Callstacks.emplace_back(); }
         bool HasCallStacks() { return !m_Callstacks.empty(); }
 

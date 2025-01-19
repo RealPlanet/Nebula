@@ -37,6 +37,26 @@ FrameVariable& FrameMemory::ParamAt(size_t i)
     return m_Variables[i];
 }
 
+const FrameVariable& FrameMemory::LocalAt(size_t i) const
+{
+    if (i > m_ParamCount + i)
+    {
+        throw std::exception("Invalid local index");
+    }
+
+    return m_Variables[m_ParamCount + i];
+}
+
+const FrameVariable& FrameMemory::ParamAt(size_t i) const
+{
+    if (i > m_ParamCount)
+    {
+        throw std::exception("Invalid param index");
+    }
+
+    return m_Variables[i];
+}
+
 bool FrameVariable::SetValue(DataStackVariant& val)
 {
     if (Type() != val.index())
