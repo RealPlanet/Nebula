@@ -39,6 +39,6 @@ namespace nebula
             return "DivideByZero";
         }
 
-        return "Unknown error code: " + (int)c;
+        return std::format("Unknown error code: {}", (int)c);
     }
 }
