@@ -1,4 +1,6 @@
-﻿namespace Nebula.Commons.Text
+﻿using System.Text.Json.Serialization;
+
+namespace Nebula.Commons.Text
 {
     /// <summary>
     /// Rapresents a span of text in a source file.
@@ -9,6 +11,8 @@
 
         public int Start { get; }
         public int Length { get; }
+
+        [JsonIgnore]
         public readonly int End => Start + Length;
 
         public static TextSpan FromBounds(int start, int end) => new(start, end - start);
@@ -18,6 +22,7 @@
         /// </summary>
         /// <param name="start">Index of character in source file</param>
         /// <param name="length">>Index of character in source file</param>
+        [JsonConstructor]
         public TextSpan(int start, int length)
         {
             Start = start;

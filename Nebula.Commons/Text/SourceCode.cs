@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Immutable;
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Nebula.Commons.Text
 {
@@ -18,7 +20,7 @@ namespace Nebula.Commons.Text
         }
 
         public static SourceCode From(string text, string fileName = "") => new(text, fileName);
-        public static SourceCode From(string fileName) 
+        public static SourceCode From(string fileName)
         {
             if (!File.Exists(fileName))
             {
@@ -113,5 +115,10 @@ namespace Nebula.Commons.Text
         public string ToString(int start, int length) => Text.Substring(start, length);
 
         public string ToString(TextSpan span) => ToString(span.Start, span.Length);
+
+        public string ToMD5Hash()
+        {
+            return BitConverter.ToString(MD5.HashData(Encoding.UTF8.GetBytes(Text))).Replace("-", "").ToLowerInvariant();
+        }
     }
 }
