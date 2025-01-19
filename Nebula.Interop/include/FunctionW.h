@@ -7,7 +7,7 @@
 #include "NativeAttribute.h"
 
 
-namespace Nebula::Interpreter
+namespace Nebula::Interop
 {
     public ref class FunctionParameterW
     {

@@ -2,7 +2,7 @@
 
 #include "Bundle.h"
 
-using namespace Nebula::Interpreter;
+using namespace Nebula::Interop;
 
 BundleFieldW::BundleFieldW(System::String^ name, Nebula::CodeEmitter::Types::TypeIdentifier type)
     : m_Name{ name }, m_Type{ type }

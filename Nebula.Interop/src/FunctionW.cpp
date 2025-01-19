@@ -1,7 +1,7 @@
 #include "Function.h"
 #include "FunctionW.h"
 
-using namespace Nebula::Interpreter;
+using namespace Nebula::Interop;
 
 FunctionW::FunctionW(const nebula::Function* nativeDefinition)
     : m_NativePtr{ nativeDefinition }
@@ -26,18 +26,18 @@ FunctionW::FunctionW(const nebula::Function* nativeDefinition)
     }
 }
 
-Nebula::Interpreter::InstructionW::InstructionW(nebula::VMInstruction opcode)
+Nebula::Interop::InstructionW::InstructionW(nebula::VMInstruction opcode)
     : m_Opcode{ (Nebula::CodeEmitter::InstructionOpcode)opcode }
 {
 
 }
 
-Nebula::Interpreter::FunctionParameterW::FunctionParameterW(nebula::DataStackVariantIndex type)
+Nebula::Interop::FunctionParameterW::FunctionParameterW(nebula::DataStackVariantIndex type)
     : m_Type{ (Nebula::CodeEmitter::Types::TypeIdentifier)type }
 {
 }
 
-Nebula::Interpreter::FunctionAttributeW::FunctionAttributeW(System::String^ name)
+Nebula::Interop::FunctionAttributeW::FunctionAttributeW(System::String^ name)
     : m_RawName{ name }
 {
     
@@ -47,7 +47,7 @@ Nebula::Interpreter::FunctionAttributeW::FunctionAttributeW(System::String^ name
     }
 }
 
-Nebula::Interpreter::FunctionAttributeW::FunctionAttributeW(nebula::VMAttribute nativeAttribute)
+Nebula::Interop::FunctionAttributeW::FunctionAttributeW(nebula::VMAttribute nativeAttribute)
 {
     if (nativeAttribute == nebula::VMAttribute::uknown)
     {
