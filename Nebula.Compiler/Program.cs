@@ -2,7 +2,7 @@
 using Nebula.Commons.Text;
 using Nebula.Commons.Text.Printers;
 using Nebula.Core.Compilation;
-using Nebula.Interpreter;
+using Nebula.Interop;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -120,7 +120,7 @@ namespace Nebula.Compilation
                     continue;
                 }
 
-                if(!CompiledScript.LoadScriptFromFile(referencePath, out CompiledScript loadedScript))
+                if (!CompiledScript.LoadScriptFromFile(referencePath, out CompiledScript loadedScript))
                 {
                     Writer.WriteLine($"Could not load compiled script at '{referencePath}'", ConsoleColor.Red);
                     continue;
