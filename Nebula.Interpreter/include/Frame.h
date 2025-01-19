@@ -37,6 +37,7 @@ namespace nebula
         inline DataStack& Stack() { return m_Stack; }
         inline FrameMemory& Memory() { return m_Memory; }
         inline Frame* Parent() { return m_ParentFrame; }
+        inline const FrameMemory& Memory() const { return m_Memory; };
         inline const Function* GetFunction() const { return m_FunctionDefinition; }
         inline InstructionErrorCode GetLastError() const { return m_LastErrorCode; }
         inline size_t CurrentInstructionIndex() const { return m_NextInstructionIndex == 0 ? 0 : m_NextInstructionIndex - 1; }

@@ -127,7 +127,7 @@ static int ExecuteVM(std::vector<std::string>& scripts) {
 
     std::cout << ">------- Begin execution ---------\n";
 
-    vm.Start();
+    vm.InitAndRun();
     vm.Wait();
 
     auto finish = std::chrono::high_resolution_clock::now();
