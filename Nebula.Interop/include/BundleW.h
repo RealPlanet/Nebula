@@ -7,7 +7,7 @@ namespace nebula
     class BundleDefinition; // Native FW
 }
 
-namespace Nebula::Interpreter
+namespace Nebula::Interop
 {
     public ref class BundleFieldW
     {

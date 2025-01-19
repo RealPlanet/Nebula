@@ -9,6 +9,12 @@
     <ClInclude Include="include\SharedPtrW.h" />
     <ClInclude Include="include\FunctionW.h" />
     <ClInclude Include="include\NativeAttribute.h" />
+    <ClInclude Include="include\InterpreterW.h" />
+    <ClInclude Include="include\InteropUtility.h" />
+    <ClInclude Include="include\CallStackW.h" />
+    <ClInclude Include="include\StackFrameW.h" />
+    <ClInclude Include="include\LoggerW.h" />
+    <ClInclude Include="include\VariableW.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Includer.cpp" />
@@ -16,5 +22,9 @@
     <ClCompile Include="src\CompiledScript.cpp" />
     <ClCompile Include="src\BundleW.cpp" />
     <ClCompile Include="src\FunctionW.cpp" />
+    <ClCompile Include="src\InterpreterW.cpp" />
+    <ClCompile Include="src\CallStackW.cpp" />
+    <ClCompile Include="src\StackFrameW.cpp" />
+    <ClCompile Include="src\VariableW.cpp" />
   </ItemGroup>
 </Project>

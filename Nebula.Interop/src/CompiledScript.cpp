@@ -4,7 +4,7 @@
 #include <string>
 #include <msclr\marshal_cppstd.h>
 
-using namespace Nebula::Interpreter;
+using namespace Nebula::Interop;
 
 bool CompiledScript::LoadScriptFromFile(System::String^ filePath, [System::Runtime::InteropServices::Out] CompiledScript^% script)
 {

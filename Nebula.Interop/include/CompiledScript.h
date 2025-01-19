@@ -9,7 +9,7 @@ namespace nebula
     class Script; // Native FW
 }
 
-namespace Nebula::Interpreter
+namespace Nebula::Interop
 {
     public ref class CompiledScript
     {
