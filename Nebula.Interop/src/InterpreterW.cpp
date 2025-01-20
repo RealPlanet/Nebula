@@ -96,9 +96,17 @@ void InterpreterW::Step()
 
 CallStackW^ InterpreterW::GetStackFrameOf(int threadId)
 {
+    if (threadId < 0 || threadId >= _virtualMachine->GetThreadMap().Count())
+        return nullptr;
+
     const nebula::CallStack* callStack = &_virtualMachine->GetThreadMap().At(threadId);
     CallStackW^ cStack = gcnew CallStackW(callStack);
     return cStack;
+}
+
+size_t Nebula::Interop::InterpreterW::GetCurrentThreadId()
+{
+    return _virtualMachine->GetCurrentThreadId();
 }
 
 int InterpreterW::ThreadCount::get()

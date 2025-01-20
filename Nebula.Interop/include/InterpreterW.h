@@ -36,9 +36,8 @@ namespace Nebula::Interop
         void Reset();
 
         CallStackW^ GetStackFrameOf(int threadId);
-
+        size_t GetCurrentThreadId();
          
-
     public:
         property int ThreadCount
         {

@@ -55,11 +55,13 @@ namespace nebula
 
         bool Step();
         const ThreadMap& GetThreadMap() { return m_Threads; }
+        const size_t GetCurrentThreadId() const { return m_CurrentThreadIndex; }
     private:
+        bool CheckAndSetExitState();
+
         void SetState(State);
         bool ShouldScheduleNewFrame();
         void SwapExecutingThread();
-        void Tick();
         void CreateFrameOnStack(const Function*, bool);
         void BuildErrorStack(Frame*);
         std::string BuildInstructionLineForCallStack(Frame*);

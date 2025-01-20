@@ -30,6 +30,11 @@ namespace Nebula::Interop
             int get();
         }
 
+        property int InstructionCount
+        {
+            int get();
+        }
+
         property int LocalCount
         {
             int get();

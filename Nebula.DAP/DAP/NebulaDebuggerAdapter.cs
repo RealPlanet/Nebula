@@ -27,14 +27,21 @@ namespace Nebula.Debugger.DAP
         private readonly ManualResetEventSlim _runEvent = new(true);
         private readonly object _lockSync = new();
         private StoppedEvent? _stopEvent;
+        private bool _isStepIn;
 
         internal NebulaDebuggerAdapter(DebuggerConfiguration debuggerConfiguration, ILogger logger)
         {
             _configuration = debuggerConfiguration;
             _logger = logger;
             _nebulaDebugger = new NebulaDebugger(debuggerConfiguration, logger);
-
+            _nebulaDebugger.ExecutionEnd += OnExecutionEnd;
             InitializeProtocolClient(debuggerConfiguration.InStream, debuggerConfiguration.Outstream);
+        }
+
+        private void OnExecutionEnd(object? sender, EventArgs e)
+        {
+            _tokSource.Cancel();
+            _runEvent.Reset();
         }
 
         #region Private
@@ -54,7 +61,7 @@ namespace Nebula.Debugger.DAP
 
         private void TaskDbgThread()
         {
-            _nebulaDebugger.Init(_configuration.StepOnEntry);
+            _nebulaDebugger.Init();
             while (!_tokSource.IsCancellationRequested)
             {
                 lock (_lockSync)
@@ -76,16 +83,18 @@ namespace Nebula.Debugger.DAP
                 while (_runEvent.IsSet)
                 {
                     bool isSingleStep = _stopEvent != null && _stopEvent.Reason == StoppedEvent.ReasonValue.Step;
+                    bool isStepIn = _isStepIn;
                     int threadId = -1;
 
                     if (isSingleStep)
                     {
+                        _logger.LogInformation($"Stepping thread {_stopEvent!.ThreadId}");
                         threadId = _stopEvent!.ThreadId.GetValueOrDefault();
+                        _isStepIn = false;
                         _runEvent.Reset();
                     }
 
-                    _nebulaDebugger.Step(threadId);
-                    _nebulaDebugger.ReloadStateInformation();
+                    _nebulaDebugger.Step(threadId, isStepIn);
                 }
             }
 
@@ -100,13 +109,49 @@ namespace Nebula.Debugger.DAP
                 _stopEvent = new()
                 {
                     Reason = reason,
-                    ThreadId = 0,
+                    ThreadId = threadId,
                     AllThreadsStopped = true
                 };
                 _runEvent.Reset();
             }
         }
 
+        private void LoadDebuggerScripts(LaunchArguments arguments)
+        {
+            string rootFolder = arguments.ConfigurationProperties.GetValueAsString("workspace");
+
+            List<string> additionalFolders = [];
+            additionalFolders.Add(rootFolder);
+            JArray? jAddFolders = (JArray?)arguments.ConfigurationProperties.GetValueOrDefault("add_deps");
+            if (jAddFolders is not null)
+            {
+                foreach (string? f in jAddFolders.Values<string>())
+                {
+                    if (!string.IsNullOrEmpty(f))
+                    {
+                        additionalFolders.Add(f);
+                    }
+                }
+            }
+
+            string[] scriptFiles = GetScriptsToLoad(additionalFolders.ToArray());
+            _nebulaDebugger.LoadScripts(scriptFiles);
+        }
+
+        private string[] GetScriptsToLoad(string[] folders)
+        {
+            HashSet<string> files = new();
+            foreach (string folder in folders)
+            {
+                foreach (string file in Directory.GetFiles(folder, "*.neb"))
+                {
+                    files.Add(file);
+                }
+            }
+
+            _logger.LogInformation($"Debugging with {files.Count} unique scripts");
+            return files.ToArray();
+        }
         #endregion
 
         #region API
@@ -129,10 +174,11 @@ namespace Nebula.Debugger.DAP
             return new InitializeResponse()
             {
                 SupportsSingleThreadExecutionRequests = false, // All or nothing
-                SupportsFunctionBreakpoints = false,
-                SupportsExceptionFilterOptions = false,
-                SupportsDebuggerProperties = true,
                 SupportsConfigurationDoneRequest = true,
+                SupportsFunctionBreakpoints = true,
+                SupportsDebuggerProperties = true,
+                SupportsInstructionBreakpoints = false,
+                SupportsExceptionFilterOptions = false,
             };
         }
         protected override ConfigurationDoneResponse HandleConfigurationDoneRequest(ConfigurationDoneArguments arguments)
@@ -146,67 +192,100 @@ namespace Nebula.Debugger.DAP
 
         protected override SetFunctionBreakpointsResponse HandleSetFunctionBreakpointsRequest(SetFunctionBreakpointsArguments arguments)
         {
-            return new()
+            List<Breakpoint> actualBreakpoints = [];
+            foreach (var funcBreakpoint in arguments.Breakpoints)
             {
-                Breakpoints = []
-            };
-        }
-
-        protected override SetExceptionBreakpointsResponse HandleSetExceptionBreakpointsRequest(SetExceptionBreakpointsArguments arguments)
-        {
-            return new()
-            {
-                Breakpoints = []
-            };
-        }
-
-        #endregion
-
-        protected override LaunchResponse HandleLaunchRequest(LaunchArguments arguments)
-        {
-            string rootFolder = arguments.ConfigurationProperties.GetValueAsString("workspace");
-            List<string> additionalFolders = [];
-            additionalFolders.Add(rootFolder);
-            JArray? jAddFolders = (JArray?)arguments.ConfigurationProperties.GetValueOrDefault("add_deps");
-            if (jAddFolders is not null)
-            {
-                foreach (string? f in jAddFolders.Values<string>())
-                    additionalFolders.Add(f);
-            }
-
-            string[] scriptFiles = GetScriptsToLoad(additionalFolders.ToArray());
-            _nebulaDebugger.LoadScripts(scriptFiles);
-
-            _dbgThread = Task.Run(TaskDbgThread, _tokSource.Token);
-
-            if (_configuration.StepOnEntry)
-            {
-                PostStopReason(StoppedEvent.ReasonValue.Entry, 0);
-            }
-
-            return new LaunchResponse();
-        }
-
-        private string[] GetScriptsToLoad(string[] folders)
-        {
-            HashSet<string> files = new();
-            foreach (string folder in folders)
-            {
-                foreach (string file in Directory.GetFiles(folder, "*.neb"))
+                string funcName = funcBreakpoint.Name;
+                Breakpoint bp = new()
                 {
-                    files.Add(file);
+                    Verified = false,
+                    Line = -1,
+                    Source = null,
+                    Reason = Breakpoint.ReasonValue.Failed
+                };
+
+                actualBreakpoints.Add(bp);
+
+                if (funcName.Contains("::"))
+                {
+                    // Namespace :: Funcname
+                    string[] tokens = funcName.Split("::", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    if (tokens.Length != 2)
+                    {
+                        _logger.LogWarning($"Invalid function breakpoint '{funcName}'");
+                        bp.Message = "Could not split into namespace and function name (expected one '::' token as separator)";
+
+                        continue;
+                    }
+                    string ns = tokens[0];
+                    funcName = tokens[1];
+
+                    if (!_nebulaDebugger.DebugFiles.TryGetValue(ns, out var dbgFile))
+                    {
+                        _logger.LogWarning($"Namespace for function breakpoint '{ns}' not found in dbg files");
+                        bp.Message = "Could not find namespace";
+
+                        continue;
+                    }
+
+                    if (!dbgFile.Functions.TryGetValue(funcName, out var dbgFunc))
+                    {
+                        _logger.LogWarning($"Function '{funcName}' in namespace '{ns}' not found in dbg files for function breakpoint");
+                        bp.Message = "Could not find function in namespace";
+                        continue;
+                    }
+
+                    bp.Verified = true;
+                    bp.Line = dbgFunc.LineNumber;
+                    bp.Source = _nebulaDebugger.DAPSources[ns];
+                    bp.Reason = null;
+                }
+                else
+                {
+                    //TODO :: Break on all functions in all namespaces with the same name
+                    throw new ProtocolException("Invalid function breakpoint");
                 }
             }
 
-            _logger.LogInformation($"Debugging with {files.Count} unique scripts");
-            return files.ToArray();
+            return new(actualBreakpoints);
         }
 
-        protected override DisconnectResponse HandleDisconnectRequest(DisconnectArguments arguments)
+        protected override SetBreakpointsResponse HandleSetBreakpointsRequest(SetBreakpointsArguments arguments)
         {
-            _nebulaDebugger.StopAndReset();
-            return new DisconnectResponse();
+            List<Breakpoint> actualBreakpoints = [];
+
+            foreach (var reqBp in arguments.Breakpoints)
+            {
+                Breakpoint bp = new()
+                {
+                    Verified = false,
+                    Line = -1,
+                    Source = null,
+                    Reason = Breakpoint.ReasonValue.Failed,
+                };
+                actualBreakpoints.Add(bp);
+
+
+                int targetLine = reqBp.Line;
+                bool isDbg = _nebulaDebugger.IsLineDebuggable(targetLine);
+
+                if(!isDbg)
+                {
+                    bp.Message = "Line is not debuggable";
+                    continue;
+                }
+
+                bp.Line = targetLine;
+                bp.Verified = true;
+
+
+            }
+
+            return new(actualBreakpoints);
         }
+        #endregion
+
+        #region Control Operations
 
         protected override NextResponse HandleNextRequest(NextArguments arguments)
         {
@@ -222,42 +301,66 @@ namespace Nebula.Debugger.DAP
 
         protected override ContinueResponse HandleContinueRequest(ContinueArguments arguments)
         {
+            Continue(false, arguments.ThreadId);
             return new()
             {
-                AllThreadsContinued = false,
+                AllThreadsContinued = true,
             };
         }
 
-        protected override SetBreakpointsResponse HandleSetBreakpointsRequest(SetBreakpointsArguments arguments)
+        protected override StepInResponse HandleStepInRequest(StepInArguments arguments)
         {
-            if (arguments.Breakpoints == null)
-                throw new ProtocolException("No breakpoints set");
+            _isStepIn = true;
+            Continue(true, arguments.ThreadId);
+            return new StepInResponse();
+        }
 
-            //List<Breakpoint> responseBreakpoints;
-            //foreach (var sourceBreakpoint in arguments.Breakpoints)
-            //{
-            //    if (_nebulaDebugger.Breakpoints.IsLineNumberDebuggable(arguments.Source.Name, sourceBreakpoint.Line, out int resolvedLine))
-            //    {
-            //
-            //    }
-            //}
+        #endregion
 
-            return new SetBreakpointsResponse();
+        protected override LaunchResponse HandleLaunchRequest(LaunchArguments arguments)
+        {
+            bool debugInternals = arguments.ConfigurationProperties.GetValueAsBool("debug_dap") ?? false;
+            if (debugInternals)
+            {
+                System.Diagnostics.Debugger.Launch();
+            }
+
+            bool stopOnEntry = arguments.ConfigurationProperties.GetValueAsBool("stopOnEntry") ?? false;
+            _configuration.StepOnEntry = stopOnEntry;
+
+            LoadDebuggerScripts(arguments);
+
+            _dbgThread = Task.Run(TaskDbgThread, _tokSource.Token);
+
+            if (_configuration.StepOnEntry)
+            {
+                PostStopReason(StoppedEvent.ReasonValue.Entry, 0);
+            }
+
+            return new LaunchResponse();
+        }
+
+        protected override DisconnectResponse HandleDisconnectRequest(DisconnectArguments arguments)
+        {
+            _nebulaDebugger.StopAndReset();
+            return new DisconnectResponse();
         }
 
         protected override ThreadsResponse HandleThreadsRequest(ThreadsArguments arguments)
         {
             List<Thread> vmThreads = [];
             foreach (NebulaThread nt in _nebulaDebugger.Threads.Values)
+            {
                 vmThreads.Add(new Thread
                 {
                     Id = nt.ThreadId,
                     Name = nt.ThreadName
                 });
+            }
 
             return new ThreadsResponse()
             {
-                Threads = vmThreads,
+                Threads = vmThreads
             };
         }
 

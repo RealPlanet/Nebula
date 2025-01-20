@@ -26,3 +26,8 @@ StackFrameW^ Nebula::Interop::CallStackW::LastFrame::get()
 {
     return gcnew StackFrameW(m_pNative->at(m_pNative->size() - 1));
 }
+
+int Nebula::Interop::CallStackW::FrameCount::get()
+{
+    return (int)m_pNative->size();
+}
