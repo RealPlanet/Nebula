@@ -56,3 +56,8 @@ VariableW^ Nebula::Interop::StackFrameW::GetParameterVariableAt(int index)
     const nebula::FrameVariable& v = m_pNative->Memory().ParamAt(index);
     return gcnew VariableW(&v);
 }
+
+int Nebula::Interop::StackFrameW::InstructionCount::get()
+{
+    return m_pNative->GetFunction()->Instructions().size();
+}

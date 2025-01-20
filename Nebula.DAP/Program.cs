@@ -2,53 +2,52 @@
 using Nebula.Debugger.Bridge;
 using Nebula.Debugger.DAP;
 using Nebula.Debugger.Logging;
+using Ookii.CommandLine;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 
 namespace Nebula.Debugger
 {
-    //[GeneratedParser]
-    //internal partial class ProgramArgs
-    //{
-    //    [CommandLineArgument("debug", DefaultValue = false, IsRequired = false)]
-    //    [Description("If true will launch debugging of DAP")]
-    //    public bool Debug { get; set; }
-    //
-    //    [CommandLineArgument("nodebug", DefaultValue = false, IsRequired = false)]
-    //    public bool NoDebug { get; set; }
-    //
-    //    [CommandLineArgument("server", DefaultValue = 0, IsRequired = false)]
-    //    public int ServerPort { get; set; }
-    //
-    //    [CommandLineArgument("stepOnEnter", DefaultValue = false, IsRequired = false)]
-    //    public bool StepOnEnter { get; set; }
-    //}
+    [GeneratedParser]
+    internal partial class ProgramArgs
+    {
+        [CommandLineArgument("debug_dap", DefaultValue = false, IsRequired = false)]
+        [Description("If true will launch debugging of DAP")]
+        public bool DebugDAP { get; set; }
+
+        [CommandLineArgument("stopOnEntry", DefaultValue = false, IsRequired = false)]
+        [Description("If true immediately halt execution of code")]
+        public bool StepOnEntry { get; set; }
+    }
 
     internal class Program
     {
         public static ILogger AppLogger { get; private set; } = null!;
         public static int Main(string[] args)
         {
-            //CommandLineParser parser = new CommandLineParser(typeof(ProgramArgs));
-            //ProgramArgs arguments = null;
-            //
-            //try
-            //{
-            //    arguments = (ProgramArgs)parser.Parse(args);
-            //}
-            //catch (CommandLineArgumentException ex)
-            //{
-            //    Console.WriteLine(ex.Message);
-            //    parser.WriteUsage();
-            //    return -1;
-            //}
 
-            System.Diagnostics.Debugger.Launch();
+            CommandLineParser parser = new CommandLineParser(typeof(ProgramArgs));
+            ProgramArgs arguments = null!;
+            try
+            {
+                arguments = (ProgramArgs?)parser.Parse(args) ?? new();
+            }
+            catch (CommandLineArgumentException ex)
+            {
+                Console.WriteLine(ex.Message);
+                parser.WriteUsage();
+                return -1;
+            }
+
+            if (arguments.DebugDAP)
+                System.Diagnostics.Debugger.Launch();
+
 
             DebuggerConfiguration configuration = new(Console.OpenStandardInput(), Console.OpenStandardOutput())
             {
-                StepOnEntry = true,
+                StepOnEntry = arguments.StepOnEntry,
             };
 
             AppLogger = CreateFileLogger();
@@ -88,5 +87,75 @@ namespace Nebula.Debugger
             ILogger<Program> logger = factory.CreateLogger<Program>();
             return logger;
         }
+
+        /*
+          private static void RunServer(ProgramArgs args)
+        {
+            Console.WriteLine(Invariant($"Waiting for connections on port {args.ServerPort}..."));
+            SampleDebugAdapter adapter = null;
+
+            Thread listenThread = new Thread(() =>
+            {
+                TcpListener listener = new TcpListener(IPAddress.Parse("127.0.0.1"), args.ServerPort);
+                listener.Start();
+
+                while (true)
+                {
+                    Socket clientSocket = listener.AcceptSocket();
+                    Thread clientThread = new Thread(() =>
+                    {
+                        Console.WriteLine("Accepted connection");
+
+                        using (Stream stream = new NetworkStream(clientSocket))
+                        {
+                            adapter = new SampleDebugAdapter(stream, stream);
+                            adapter.Protocol.LogMessage += (sender, e) => Console.WriteLine(e.Message);
+                            adapter.Protocol.DispatcherError += (sender, e) =>
+                            {
+                                Console.Error.WriteLine(e.Exception.Message);
+                            };
+                            adapter.Run();
+                            adapter.Protocol.WaitForReader();
+
+                            adapter = null;
+                        }
+
+                        Console.WriteLine("Connection closed");
+                    });
+
+                    clientThread.Name = "DebugServer connection thread";
+                    clientThread.Start();
+                }
+            });
+
+            Thread keypressThread;
+            if (args.StepOnEnter)
+            {
+                Console.WriteLine("Will step when ENTER is pressed.");
+                keypressThread = new Thread(() =>
+                {
+                    ConsoleKeyInfo keyInfo;
+
+                    while (true)
+                    {
+                        keyInfo = Console.ReadKey();
+                        if (keyInfo.Key == ConsoleKey.Enter && adapter != null)
+                        {
+                            Console.WriteLine("Forcing step");
+                            adapter.ExitBreakCore(0, true);
+                        }
+                    }
+                });
+
+                keypressThread.Name = "Keypress listener thread";
+                keypressThread.Start();
+            }
+
+            listenThread.Name = "DebugServer listener thread";
+            listenThread.Start();
+            listenThread.Join();
+        }
+    }
+         */
     }
 }

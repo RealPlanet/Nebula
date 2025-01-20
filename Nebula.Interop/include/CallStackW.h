@@ -15,7 +15,12 @@ namespace Nebula::Interop
 
         property StackFrameW^ LastFrame
         {
-            StackFrameW^ get();
+            StackFrameW ^ get();
+        }
+
+        property int FrameCount
+        {
+            int get();
         }
 
     private:

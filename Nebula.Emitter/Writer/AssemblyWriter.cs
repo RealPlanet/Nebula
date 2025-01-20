@@ -35,7 +35,11 @@ namespace Nebula.CodeEmitter.Writer
 
             foreach (MethodDefinition func in assembly.TypeDefinition.Methods)
             {
-                DebugFunction dbgFunc = new(func.Name, TextSpan.Empty);
+                int funcLineNumber = -1; 
+                if(func.SourceCodeTextSpan != null)
+                    funcLineNumber = assembly.SourceCode.GetLineIndex(func.SourceCodeTextSpan.Value.Start);
+
+                DebugFunction dbgFunc = new(func.Name, funcLineNumber);
                 outpuData.Functions.Add(dbgFunc.Name, dbgFunc);
 
                 foreach (ParameterDefinition p in func.Parameters)

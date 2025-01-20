@@ -113,19 +113,51 @@ bool Interpreter::AddScript(std::shared_ptr<Script> script)
 
 bool Interpreter::Step()
 {
-    if (!m_Threads.HasCallStacks())
-    {
-        SetState(State::Exited);
-        return false;
-    }
+    if (CheckAndSetExitState())
+        return false; // Early exit
 
     if (ShouldScheduleNewFrame())
     {
         SwapExecutingThread();
     }
 
-    Tick();
+    Frame* currentFrame = GetCurrentCallstack()->back();
+    Frame::Status frameStatus = currentFrame->Tick(this);
+
+    switch (frameStatus)
+    {
+    case Frame::Status::FatalError:
+    {
+        BuildErrorStack(currentFrame);
+        SetState(State::Abort);
+        break;
+    }
+    case Frame::Status::Finished:
+
+        delete currentFrame;
+        GetCurrentCallstack()->pop_back();
+        break;
+    }
+
+    if (GetCurrentCallstack()->empty())
+    {
+        m_Threads.RemoveCallstack(m_CurrentThreadIndex);
+        SwapExecutingThread();
+    }
+
+    CheckAndSetExitState();
     return true;
+}
+
+bool Interpreter::CheckAndSetExitState()
+{
+    if (!m_Threads.HasCallStacks())
+    {
+        SetState(State::Exited);
+        return true;
+    }
+
+    return false;
 }
 
 void Interpreter::SetState(State state)
@@ -187,33 +219,6 @@ void Interpreter::SwapExecutingThread()
         {
             m_CurrentThreadIndex = 0;
         }
-    }
-}
-
-void Interpreter::Tick()
-{
-    Frame* currentFrame = GetCurrentCallstack()->back();
-    Frame::Status frameStatus = currentFrame->Tick(this);
-
-    switch (frameStatus)
-    {
-    case Frame::Status::FatalError:
-    {
-        BuildErrorStack(currentFrame);
-        SetState(State::Abort);
-        break;
-    }
-    case Frame::Status::Finished:
-
-        delete currentFrame;
-        GetCurrentCallstack()->pop_back();
-        break;
-    }
-
-    if (GetCurrentCallstack()->empty())
-    {
-        m_Threads.RemoveCallstack(m_CurrentThreadIndex);
-        SwapExecutingThread();
     }
 }
 

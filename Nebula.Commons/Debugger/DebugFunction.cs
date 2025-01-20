@@ -11,7 +11,7 @@ namespace Nebula.Commons.Text
         public string Name { get; private set; }
 
         [DataMember]
-        public TextSpan Span { get; private set; }
+        public int LineNumber { get; private set; }
 
         [DataMember]
         public List<DebugVariable> Parameters { get; private set; } = [];
@@ -22,15 +22,15 @@ namespace Nebula.Commons.Text
         [DataMember]
         public List<int> InstructionLines { get; private set; } = [];
 
-        public DebugFunction(string name, TextSpan span)
+        public DebugFunction(string name, int lineNumber)
         {
             Name = name;
-            Span = span;
+            LineNumber = lineNumber;
         }
 
         [JsonConstructor]
-        public DebugFunction(string name, TextSpan span, List<DebugVariable> parameters, List<DebugVariable> localVariables, List<int> instructionLines)
-            : this(name, span)
+        public DebugFunction(string name, int lineNumber, List<DebugVariable> parameters, List<DebugVariable> localVariables, List<int> instructionLines)
+            : this(name, lineNumber)
         {
             Parameters = parameters;
             LocalVariables = localVariables;
