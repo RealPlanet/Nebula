@@ -36,9 +36,8 @@ namespace Nebula.Debugger.Bridge
         private readonly CancellationTokenSource _tokenSource = new();
         private readonly InterpreterW _interpreter;
         private readonly ILogger _logger;
-        private readonly HashSet<int> _debuggableLines = new();
+        private readonly Dictionary<string, DebugFile> _dbgFiles = [];
         private StateInformation _latestStateInformation;
-        private Dictionary<string, DebugFile> _dbgFiles = [];
         #endregion
 
         public NebulaDebugger(DebuggerConfiguration configuration, ILogger logger)
@@ -52,17 +51,17 @@ namespace Nebula.Debugger.Bridge
 
             _logger.LogInformation("Debugger constructed");
 
-            DebugFilesChanged += ReloadLineNumberChace;
+            //DebugFilesChanged += ReloadLineNumberCache;
         }
 
-        private void ReloadLineNumberChace(object? sender, EventArgs e)
-        {
-            _debuggableLines.Clear();
-            var lines = _dbgFiles.Values.SelectMany(s => s.Functions.Values)
-                .SelectMany(v => v.InstructionLines);
-            foreach (var l in lines)
-                _debuggableLines.Add(l);
-        }
+        //private void ReloadLineNumberCache(object? sender, EventArgs e)
+        //{
+        //    _debuggableLines.Clear();
+        //    var lines = _dbgFiles.Values.SelectMany(s => s.Functions.Values)
+        //        .SelectMany(v => v.InstructionLines);
+        //    foreach (var l in lines)
+        //        _debuggableLines.Add(l);
+        //}
 
         #region Initialization
 
@@ -78,18 +77,49 @@ namespace Nebula.Debugger.Bridge
             _latestStateInformation = new(this);
         }
 
-        public void Pause()
+        /// <summary>
+        /// TODO :: Rewrite this into something more managable, it has grown to have a different logic between stepping and continuing without a thread id.
+        /// </summary>
+        public bool Step(int threadId, bool isStepIn, out int stoppedThreadId, out StoppedEvent.ReasonValue? stopReason)
         {
-            _interpreter.Pause();
-            ReloadStateInformation();
-        }
-
-        public bool Step(int threadId, bool isStepIn)
-        {
+            stoppedThreadId = threadId;
+            stopReason = null;
             // Continue step
-            if(threadId < 0)
+            if (threadId < 0)
             {
+                int[] startingOpcodes = _interpreter.GetCurrentOpcodeIndexForAllThreads();
+
                 _interpreter.Step();
+
+
+                if (ShouldEarlyExitFromStepping(out int earlyStoppedThread, out stopReason))
+                {
+                    // Only consider early exits when we move at least one line for the stopping thread, otherwise we'll keep breaking on the same breakpoint
+                    CallStackW earlyStoppingStack = _interpreter.GetStackFrameOf(earlyStoppedThread);
+                    StackFrameW frame = earlyStoppingStack.LastFrame;
+                    DebugFile currentDbgInfo = DebugFiles[frame.Namespace];
+                    DebugFunction currentDbgFunction = currentDbgInfo.Functions[frame.FunctionName];
+                    int currentOpcodeIndex = frame.CurrentInstructionIndex;
+
+
+                    int startingLine = currentDbgFunction.LineNumber;
+                    if (startingOpcodes[earlyStoppedThread] >= 0)
+                        startingLine = currentDbgFunction.InstructionLines[startingOpcodes[earlyStoppedThread]];
+                    int steppedLine = currentDbgFunction.LineNumber;
+                    if (currentOpcodeIndex >= 0)
+                        steppedLine = currentDbgFunction.InstructionLines[currentOpcodeIndex];
+
+                    if (startingLine != steppedLine)
+                    {
+                        // Stop on a specific thread
+                        stoppedThreadId = earlyStoppedThread;
+                    }
+                    else
+                    {
+                        stopReason = null;
+                    }
+
+                }
 
                 if (_interpreter.State == InterpreterState.Exited)
                     ExecutionEnd?.Invoke(this, EventArgs.Empty);
@@ -111,8 +141,8 @@ namespace Nebula.Debugger.Bridge
                 int lineNumber = currentDbgFunction.InstructionLines[currentOpcode];
                 if (currentOpcode < currentDbgFunction.InstructionLines.Count)
                 {
-                    while (currentDbgFunction.InstructionLines[currentOpcode + numberOfSteps] == lineNumber &&
-                        currentOpcode < frame.InstructionCount)
+                    while (currentOpcode < frame.InstructionCount &&
+                        currentDbgFunction.InstructionLines[currentOpcode + numberOfSteps] == lineNumber)
                     {
                         numberOfSteps++;
                     }
@@ -135,6 +165,35 @@ namespace Nebula.Debugger.Bridge
                         targetOpcode == frame.InstructionCount - 1;
 
                     _interpreter.Step();
+                    CallStackW latestStack = _interpreter.GetStackFrameOf(threadId);
+                    StackFrameW? lastFrame = latestStack?.LastFrame;
+                    if (latestStack is null || lastFrame is null ||
+                        latestStack.LastFrame.Namespace != currentDbgInfo.Namespace || latestStack.LastFrame.FunctionName != currentDbgFunction.Name)
+                    {
+                        // We exited the function
+                        if (ShouldEarlyExitFromStepping(out int earlyStoppedThread, out stopReason))
+                        {
+                            // Stop on a specific thread
+                            stoppedThreadId = earlyStoppedThread;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        int currentLineNumber = currentDbgFunction.InstructionLines[frame.CurrentInstructionIndex];
+                        // This is to prevent breaking on the same line because of a breakpoint
+                        // If we started from this line then we likely broke here
+                        if (lineNumber != currentLineNumber)
+                        {
+                            // Separate ifs to avoid setting stopReason
+                            if (ShouldEarlyExitFromStepping(out int earlyStoppedThread, out stopReason))
+                            {
+                                // Stop on a specific thread
+                                stoppedThreadId = earlyStoppedThread;
+                                break;
+                            }
+                        }
+                    }
 
                     // Ensures we exit only if we actually stepped our thread id
                     exitLoop = exitLoop && (int)_interpreter.GetCurrentThreadId() == threadId;
@@ -147,9 +206,68 @@ namespace Nebula.Debugger.Bridge
             return true;
         }
 
-        public bool IsLineDebuggable(int lineNumber)
+        private bool ShouldEarlyExitFromStepping(out int stoppedThread, out StoppedEvent.ReasonValue? stopReason)
         {
-            return _debuggableLines.Contains(lineNumber);
+            stoppedThread = -1;
+            stopReason = null;
+
+            // Check for function breakpoints
+            foreach (NebulaBreakpoint fBp in Breakpoints.FunctionBreakpoints)
+            {
+                int threadId = _interpreter.AnyFrameJustStarted(fBp.Namespace, fBp.FuncName);
+                if (threadId >= 0)
+                {
+                    stoppedThread = threadId;
+                    stopReason = StoppedEvent.ReasonValue.FunctionBreakpoint;
+                    return true;
+                }
+            }
+
+            foreach (ConcurrentHashSet<NebulaBreakpoint> breakpointSet in Breakpoints.GenericBreakpoints)
+            {
+                foreach (NebulaBreakpoint bp in breakpointSet)
+                {
+                    int threadId = _interpreter.AnyFrameAt(bp.Namespace, bp.FuncName, bp.Line);
+                    if (threadId >= 0)
+                    {
+                        stoppedThread = threadId;
+                        stopReason = StoppedEvent.ReasonValue.Breakpoint;
+                        return true;
+                    }
+                }
+            }
+
+            return stoppedThread >= 0;
+        }
+
+        /// <summary>
+        /// Returns true if the line matches a debuggable opcode within the namespace. <br/>
+        /// out string is name of debugged function and offsetLine is opcode index for the function to break at
+        /// </summary>
+        public bool IsLineDebuggable(string @namespace, int lineNumber, out string targetFuncionName, out int instructionIndex)
+        {
+            targetFuncionName = string.Empty;
+            instructionIndex = -1;
+            lineNumber--; // Debug files are offset by one
+            if (DebugFiles.TryGetValue(@namespace, out var dbgFile))
+            {
+                DebugFunction? targetFunc = dbgFile.Functions.Values.FirstOrDefault(f =>
+                {
+                    int startLine = f.LineNumber;
+                    int endLine = startLine + f.InstructionLines.Count;
+
+                    return lineNumber >= startLine && lineNumber <= endLine;
+                });
+
+                if (targetFunc is null)
+                    return false;
+
+                targetFuncionName = targetFunc.Name;
+                instructionIndex = targetFunc.InstructionLines.IndexOf(lineNumber);
+                return true;
+            }
+
+            return false;
         }
 
         #endregion
@@ -188,7 +306,7 @@ namespace Nebula.Debugger.Bridge
 
                 DAPSources.Add(file.Namespace, new()
                 {
-                    Name = Path.GetFileNameWithoutExtension(file.OriginalFileName),
+                    Name = Path.GetFileName(file.OriginalFileName),
                     Path = sourceFilePath,
                 });
             }
