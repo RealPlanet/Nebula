@@ -40,9 +40,10 @@ Frame::Status Frame::Tick(Interpreter* interpreter)
     const VMInstruction& opCode = theInstruction.first;
     const InstructionArguments& args = theInstruction.second;
 
-    if (m_NextInstructionIndex >= insts.size() && opCode != VMInstruction::Ret)
+    if (m_NextInstructionIndex >= insts.size())
     {
-        return Status::FatalError;
+        if (opCode != VMInstruction::Ret && opCode != VMInstruction::Br)
+            return Status::FatalError;
     }
 
     InstructionErrorCode executionError = ExecuteInstruction(opCode, interpreter, this, args);

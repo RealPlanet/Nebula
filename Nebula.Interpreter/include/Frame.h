@@ -10,14 +10,16 @@ namespace nebula
     class Interpreter;
     class Function;
 
+
     // Rapresents a asingular executing function call
     class Frame
     {
     public:
+        static constexpr auto frame_not_started{ static_cast<size_t>(-1) };
         enum Status
         {
             FatalError, // Fatal error requires VM to stop
-            Running, 
+            Running,
             Paused,
             Finished,
         };
@@ -40,7 +42,7 @@ namespace nebula
         inline const FrameMemory& Memory() const { return m_Memory; };
         inline const Function* GetFunction() const { return m_FunctionDefinition; }
         inline InstructionErrorCode GetLastError() const { return m_LastErrorCode; }
-        inline size_t CurrentInstructionIndex() const { return m_NextInstructionIndex == 0 ? 0 : m_NextInstructionIndex - 1; }
+        inline size_t CurrentInstructionIndex() const { return m_NextInstructionIndex - 1; }
         const std::string& Namespace();
 
     public:
@@ -57,7 +59,7 @@ namespace nebula
         FrameMemory m_Memory;
         DataStack m_Stack;
 
-        InstructionErrorCode m_LastErrorCode{InstructionErrorCode::None};
+        InstructionErrorCode m_LastErrorCode{ InstructionErrorCode::None };
     };
 }
 
