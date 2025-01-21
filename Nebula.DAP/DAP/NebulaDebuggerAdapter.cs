@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Intrinsics.Arm;
 using System.Threading;
 using System.Threading.Tasks;
 using Thread = Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Messages.Thread;
@@ -59,8 +60,11 @@ namespace Nebula.Debugger.DAP
             _runEvent.Set();
         }
 
-        private void TaskDbgThread()
+        private async void TaskDbgThread()
         {
+            // Cheap trick to ensure breakpoints arrive on time before we start running the vm
+            // This is to avoid missing breakpoints on the first lines
+            await Task.Delay(100);
             _nebulaDebugger.Init();
             while (!_tokSource.IsCancellationRequested)
             {
@@ -94,12 +98,33 @@ namespace Nebula.Debugger.DAP
                         _runEvent.Reset();
                     }
 
-                    _nebulaDebugger.Step(threadId, isStepIn);
+                    _nebulaDebugger.Step(threadId, isStepIn, out int stoppedThreadId, out StoppedEvent.ReasonValue? stopReason);
+                    if (stopReason != null)
+                    {
+                        StoppedEvent? newStopEvent = _stopEvent;
+                        newStopEvent ??= new();
+
+                        newStopEvent.ThreadId = stoppedThreadId;
+                        // TODO :: Figure out reason
+                        newStopEvent.Reason = (StoppedEvent.ReasonValue)stopReason;
+                        newStopEvent.AllThreadsStopped = true;
+                        PostStopReason(newStopEvent);
+                    }
+                        
                 }
             }
 
             Protocol.SendEvent(new ExitedEvent(exitCode: 0));
             Protocol.SendEvent(new TerminatedEvent());
+        }
+
+        private void PostStopReason(StoppedEvent newStopEvent)
+        {
+            lock (_lockSync)
+            {
+                _stopEvent = newStopEvent;
+                _runEvent.Reset();
+            }
         }
 
         private void PostStopReason(StoppedEvent.ReasonValue reason, int threadId)
@@ -188,11 +213,12 @@ namespace Nebula.Debugger.DAP
 
         #endregion
 
-        #region BreakpointsRequests
+        #region Breakpoint Requests
 
         protected override SetFunctionBreakpointsResponse HandleSetFunctionBreakpointsRequest(SetFunctionBreakpointsArguments arguments)
         {
             List<Breakpoint> actualBreakpoints = [];
+            _nebulaDebugger.Breakpoints.ClearFunctionBreakpoints();
             foreach (var funcBreakpoint in arguments.Breakpoints)
             {
                 string funcName = funcBreakpoint.Name;
@@ -239,6 +265,8 @@ namespace Nebula.Debugger.DAP
                     bp.Line = dbgFunc.LineNumber;
                     bp.Source = _nebulaDebugger.DAPSources[ns];
                     bp.Reason = null;
+
+                    _nebulaDebugger.Breakpoints.AddFunctionBreakpoint(new(ns, funcName, dbgFunc.LineNumber));
                 }
                 else
                 {
@@ -246,14 +274,24 @@ namespace Nebula.Debugger.DAP
                     throw new ProtocolException("Invalid function breakpoint");
                 }
             }
-
             return new(actualBreakpoints);
         }
 
         protected override SetBreakpointsResponse HandleSetBreakpointsRequest(SetBreakpointsArguments arguments)
         {
             List<Breakpoint> actualBreakpoints = [];
+            string @namespace = string.Empty;
+            Source? inMemorySource = null;
+            foreach(var kvp in _nebulaDebugger.DAPSources)
+            {
+                if(kvp.Value.Name == arguments.Source.Name)
+                {
+                    @namespace = kvp.Key;
+                    inMemorySource = kvp.Value;
+                }
+            }
 
+            _nebulaDebugger.Breakpoints.ClearGenericBreakpoints(@namespace);
             foreach (var reqBp in arguments.Breakpoints)
             {
                 Breakpoint bp = new()
@@ -265,22 +303,29 @@ namespace Nebula.Debugger.DAP
                 };
                 actualBreakpoints.Add(bp);
 
+                if(inMemorySource is null)
+                {
+                    bp.Message = "Source could not be found in debug files";
+                    continue;
+                }
+
 
                 int targetLine = reqBp.Line;
-                bool isDbg = _nebulaDebugger.IsLineDebuggable(targetLine);
-
-                if(!isDbg)
+                bool isDbg = _nebulaDebugger.IsLineDebuggable(@namespace, targetLine, out string functionName, out int instructionIndex);
+                if (!isDbg)
                 {
                     bp.Message = "Line is not debuggable";
                     continue;
                 }
 
+
                 bp.Line = targetLine;
                 bp.Verified = true;
 
-
+                _nebulaDebugger.Breakpoints.AddBreakpoint(new NebulaBreakpoint(@namespace, functionName, instructionIndex));
             }
 
+            //_loadingBreakpointsEvent.Reset();
             return new(actualBreakpoints);
         }
         #endregion
@@ -317,6 +362,7 @@ namespace Nebula.Debugger.DAP
 
         #endregion
 
+        #region Base operations
         protected override LaunchResponse HandleLaunchRequest(LaunchArguments arguments)
         {
             bool debugInternals = arguments.ConfigurationProperties.GetValueAsBool("debug_dap") ?? false;
@@ -435,6 +481,8 @@ namespace Nebula.Debugger.DAP
 
             return response;
         }
+        #endregion
+
         #endregion
     }
 }
