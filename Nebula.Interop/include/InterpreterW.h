@@ -37,7 +37,10 @@ namespace Nebula::Interop
 
         CallStackW^ GetStackFrameOf(int threadId);
         size_t GetCurrentThreadId();
-         
+        array<int>^ GetCurrentOpcodeIndexForAllThreads();
+        int GetCurrentOpcodeIndexForThread(int threadId);
+        int AnyFrameJustStarted(System::String^ _namespace, System::String^ funcName);
+        int AnyFrameAt(System::String^ _namespace, System::String^ funcName, int opcode);
     public:
         property int ThreadCount
         {

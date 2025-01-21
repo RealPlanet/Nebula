@@ -36,7 +36,7 @@ InterpreterW::!InterpreterW()
 
 bool InterpreterW::AddScripts(System::Collections::Generic::ICollection<System::String^>^ scriptPaths)
 {
-    for each (System::String^ sPath in scriptPaths)
+    for each (System::String ^ sPath in scriptPaths)
     {
         std::string nativePath;
         MarshalString(sPath, nativePath);
@@ -107,6 +107,99 @@ CallStackW^ InterpreterW::GetStackFrameOf(int threadId)
 size_t Nebula::Interop::InterpreterW::GetCurrentThreadId()
 {
     return _virtualMachine->GetCurrentThreadId();
+}
+
+array<int>^ InterpreterW::GetCurrentOpcodeIndexForAllThreads()
+{
+    const nebula::ThreadMap& threads = _virtualMachine->GetThreadMap();
+    array<int>^ result = gcnew array<int>(threads.Count());
+
+    for (int i = 0; i < threads.Count(); i++)
+    {
+        const nebula::CallStack& stack = threads.At(i);
+        if (stack.size() == 0)
+        {
+            result[i] = -1;
+            continue;
+        }
+
+        const nebula::Frame* frame = stack.at(stack.size() - 1);
+        size_t index = frame->CurrentInstructionIndex();
+        result[i] = -1;
+        if (index != nebula::Frame::frame_not_started)
+            result[i] = index;
+    }
+
+    return result;
+}
+
+int Nebula::Interop::InterpreterW::GetCurrentOpcodeIndexForThread(int threadId)
+{
+    const nebula::ThreadMap& threads = _virtualMachine->GetThreadMap();
+
+    if (threadId < 0 || threadId >= threads.Count())
+        return -1;
+
+    const nebula::CallStack& stack = threads.At(threadId);
+    if (stack.size() == 0)
+    {
+        return -1;
+    }
+
+    const nebula::Frame* frame = stack.at(stack.size() - 1);
+    size_t index = frame->CurrentInstructionIndex();
+    if (index == nebula::Frame::frame_not_started)
+        return -1;
+
+    return index;
+}
+
+int InterpreterW::AnyFrameJustStarted(System::String^ _namespace, System::String^ funcName)
+{
+    const nebula::ThreadMap& threads = _virtualMachine->GetThreadMap();
+
+    for (int i = 0; i < threads.Count(); i++)
+    {
+        const nebula::CallStack& stack = threads.At(i);
+        if (stack.size() == 0)
+            continue;
+
+        const nebula::Frame* frame = stack.at(stack.size() - 1);
+        // We need JUST started
+        if (frame->CurrentInstructionIndex() == nebula::Frame::frame_not_started)
+            continue;
+
+        const nebula::Function* func = frame->GetFunction();
+        System::String^ frameNamespace = gcnew System::String(func->Namespace().data());
+        System::String^ frameFuncName = gcnew System::String(func->Name().data());
+        if (frameNamespace == _namespace && frameFuncName == funcName)
+            return i;
+    }
+
+    return -1;
+}
+
+int InterpreterW::AnyFrameAt(System::String^ _namespace, System::String^ funcName, int opcode)
+{
+    const nebula::ThreadMap& threads = _virtualMachine->GetThreadMap();
+
+    for (int i = 0; i < threads.Count(); i++)
+    {
+        const nebula::CallStack& stack = threads.At(i);
+        if (stack.size() == 0)
+            continue;
+
+        const nebula::Frame* frame = stack.at(stack.size() - 1);
+        if (frame->CurrentInstructionIndex() != opcode)
+            continue;
+
+        const nebula::Function* func = frame->GetFunction();
+        System::String^ frameNamespace = gcnew System::String(func->Namespace().data());
+        System::String^ frameFuncName = gcnew System::String(func->Name().data());
+        if (frameNamespace == _namespace && frameFuncName == funcName)
+            return i;
+    }
+    return -1;
 }
 
 int InterpreterW::ThreadCount::get()

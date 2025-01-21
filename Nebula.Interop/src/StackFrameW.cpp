@@ -6,7 +6,7 @@ using namespace Nebula::Interop;
 StackFrameW::StackFrameW(const nebula::Frame* nativePtr)
     : m_pNative{ nativePtr }
 {
-    
+
 }
 
 System::String^ StackFrameW::FunctionName::get()
@@ -25,17 +25,22 @@ System::String^ StackFrameW::Namespace::get()
 
 int StackFrameW::CurrentInstructionIndex::get()
 {
-    return m_pNative->CurrentInstructionIndex();
+    size_t index = m_pNative->CurrentInstructionIndex();
+    if (index == nebula::Frame::frame_not_started)
+        return -1;
+    return static_cast<int>(index);
 }
 
 int StackFrameW::LocalCount::get()
 {
-    return m_pNative->Memory().LocalCount();
+    size_t count = m_pNative->Memory().LocalCount();
+    return static_cast<int>(count);
 }
 
 int StackFrameW::ParameterCount::get()
 {
-    return m_pNative->Memory().ParamCount();
+    size_t count = m_pNative->Memory().ParamCount();
+    return static_cast<int>(count);
 }
 
 
@@ -59,5 +64,6 @@ VariableW^ Nebula::Interop::StackFrameW::GetParameterVariableAt(int index)
 
 int Nebula::Interop::StackFrameW::InstructionCount::get()
 {
-    return m_pNative->GetFunction()->Instructions().size();
+    size_t count = m_pNative->GetFunction()->Instructions().size();
+    return static_cast<int>(count);
 }
