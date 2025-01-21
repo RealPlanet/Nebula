@@ -349,8 +349,14 @@ namespace Nebula.Debugger.Bridge
 
         internal int GetLineNumber(NebulaStackFrame f)
         {
-            return GetDebugInfo(f)!
-                .InstructionLines[f.NativeFrame.CurrentInstructionIndex];
+            int opcode = f.NativeFrame.CurrentInstructionIndex;
+            DebugFunction debugFunc = GetDebugInfo(f)!;
+            if (opcode >= 0)
+            {
+                return debugFunc.InstructionLines[opcode];
+            }
+
+            return debugFunc.LineNumber;
         }
 
         internal DebugFunction? GetDebugInfo(NebulaStackFrame f)
