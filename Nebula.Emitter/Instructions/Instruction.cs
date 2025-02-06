@@ -1,4 +1,5 @@
-﻿using Nebula.Commons.Text;
+﻿using Nebula.CodeEmitter.Types;
+using Nebula.Commons.Text;
 using System;
 using System.Text;
 
@@ -29,13 +30,15 @@ namespace Nebula.CodeEmitter
             Operand = operand;
         }
 
+        // TODO :: Improve this
         public string GetArgumentString()
         {
             return Opcode switch
             {
                 InstructionOpcode.Ldc_s => $"\"{(string)Operand!}\"",
                 InstructionOpcode.Ldc_i4 => ((int)Operand!).ToString(),
-                InstructionOpcode.ConvType => Operand!.ToString()!,
+                InstructionOpcode.Ldc_r4 => ((float)Operand!).ToString(),
+                InstructionOpcode.ConvType => CreateConvTypeArgument((TypeReference)Operand!),
                 InstructionOpcode.Call or InstructionOpcode.Call_t => GetCallArgumentString(),
                 InstructionOpcode.Stloc => ((VariableDefinition)Operand!).Index.ToString(),
                 InstructionOpcode.StBloc => ProcessArrayOperand(),
@@ -50,6 +53,11 @@ namespace Nebula.CodeEmitter
                 InstructionOpcode.Br or InstructionOpcode.Brtrue or InstructionOpcode.Brfalse => Operand!.ToString()!,
                 _ => string.Empty,
             };
+        }
+
+        private string CreateConvTypeArgument(TypeReference operand)
+        {
+            return operand.Name;
         }
 
         private string GetLdBArgumentString()

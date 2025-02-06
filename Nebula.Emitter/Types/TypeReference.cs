@@ -13,7 +13,7 @@
 
         public TypeIdentifier Identifier { get; }
 
-        public string Name => Identifier.ToString();
+        public string Name => Identifier.ToString().ToLower();
 
         internal TypeReference(TypeIdentifier identifier)
         {
