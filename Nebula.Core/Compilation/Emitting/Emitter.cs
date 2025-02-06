@@ -343,8 +343,8 @@ namespace Nebula.Core.Emitting
 
         private void EmitConversionExpression(NILProcessor processor, AbstractConversionExpression node)
         {
-            EmitExpression(processor, node.Expression);
-            processor.Emit(InstructionOpcode.ConvType, node.ResultType, node.OriginalNode.Span);
+            EmitExpression(processor, node.Expression);      
+            processor.Emit(InstructionOpcode.ConvType, _knownTypes[node.ResultType], node.OriginalNode.Span);
         }
 
         private void EmitCallExpression(NILProcessor processor, AbstractCallExpression node)
