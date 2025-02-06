@@ -1,6 +1,6 @@
 ﻿namespace Nebula.Core.Binding
 {
-    public enum AbstractdBinaryType
+    public enum AbstractBinaryType
     {
         Addition,
         Subtraction,

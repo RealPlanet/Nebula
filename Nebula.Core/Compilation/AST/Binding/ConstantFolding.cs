@@ -30,7 +30,7 @@ namespace Nebula.Core.Binding
             #region AND/OR Short-circuit
             // Special cases that CAN be computed with partial values (AND / OR)
             // If either side of the binary operation is false then AND will result false
-            if (op.BinaryType == AbstractdBinaryType.LogicalAnd)
+            if (op.BinaryType == AbstractBinaryType.LogicalAnd)
             {
                 if (leftConstant != null && !(bool)leftConstant.Value ||
                     rightConstant != null && !(bool)rightConstant.Value)
@@ -40,7 +40,7 @@ namespace Nebula.Core.Binding
             }
 
             // If either side of the binary operation is true then OR will result true
-            if (op.BinaryType == AbstractdBinaryType.LogicalAnd)
+            if (op.BinaryType == AbstractBinaryType.LogicalAnd)
             {
                 if (leftConstant != null && (bool)leftConstant.Value ||
                     rightConstant != null && (bool)rightConstant.Value)
@@ -58,39 +58,71 @@ namespace Nebula.Core.Binding
             object? r = right.ConstantValue!.Value;
             return op.BinaryType switch
             {
-                AbstractdBinaryType.Addition => new(EvaluateAddition(op, l, r)),
-                AbstractdBinaryType.Subtraction => new((int)l - (int)r),
-                AbstractdBinaryType.Multiplication => new((int)l * (int)r),
-                AbstractdBinaryType.Division => new((int)l / (int)r),
+                AbstractBinaryType.Addition => new(EvaluateAddition(op, l, r)),
+                AbstractBinaryType.Subtraction => new(EvaluateSubtraction(op, l, r)),
+                AbstractBinaryType.Multiplication => new(EvaluateMultiplication(op, l, r)),
+                AbstractBinaryType.Division => new(EvaluateDivision(op, l, r)),
 
-                AbstractdBinaryType.BitwiseAnd => new(EvaluateBitwiseAnd(op, l, r)),
-                AbstractdBinaryType.BitwiseOr => new(EvaluateBitwiseOr(op, l, r)),
-                AbstractdBinaryType.BitwiseXor => new(EvaluateBitwiseXOR(op, l, r)),
+                AbstractBinaryType.BitwiseAnd => new(EvaluateBitwiseAnd(op, l, r)),
+                AbstractBinaryType.BitwiseOr => new(EvaluateBitwiseOr(op, l, r)),
+                AbstractBinaryType.BitwiseXor => new(EvaluateBitwiseXOR(op, l, r)),
 
-                AbstractdBinaryType.LogicalAnd => new((bool)l && (bool)r),
-                AbstractdBinaryType.LogicalOr => new((bool)l || (bool)r),
-                AbstractdBinaryType.Equals => new(Equals(l, r)),
-                AbstractdBinaryType.NotEquals => new(!Equals(l, r)),
-                AbstractdBinaryType.LessThan => new((int)l < (int)r),
-                AbstractdBinaryType.LessThanOrEqual => new((int)l <= (int)r),
-                AbstractdBinaryType.GreaterThan => new((int)l > (int)r),
-                AbstractdBinaryType.GreaterThanOrEqual => new((int)l >= (int)r),
+                AbstractBinaryType.LogicalAnd => new((bool)l && (bool)r),
+                AbstractBinaryType.LogicalOr => new((bool)l || (bool)r),
+                AbstractBinaryType.Equals => new(Equals(l, r)),
+                AbstractBinaryType.NotEquals => new(!Equals(l, r)),
+                AbstractBinaryType.LessThan => new((int)l < (int)r),
+                AbstractBinaryType.LessThanOrEqual => new((int)l <= (int)r),
+                AbstractBinaryType.GreaterThan => new((int)l > (int)r),
+                AbstractBinaryType.GreaterThanOrEqual => new((int)l >= (int)r),
                 _ => throw new Exception($"Unexpected binary operator <{op.BinaryType}>"),
             };
         }
 
         private static object EvaluateAddition(AbstractBinaryOperator op, object lValue, object rValue)
         {
-            if (op.LeftType == TypeSymbol.Int)
+            if (op.LeftType == TypeSymbol.Int && op.RightType == TypeSymbol.Int)
                 return (int)lValue + (int)rValue;
+
+            if (op.LeftType == TypeSymbol.Float || op.RightType == TypeSymbol.Float)
+                return (float)lValue + (float)rValue;
+
             //if (op.Type == TypeSymbol.String)
             return (string)lValue + (string)rValue;
+        }
+
+        private static object EvaluateSubtraction(AbstractBinaryOperator op, object lValue, object rValue)
+        {
+            if (op.LeftType == TypeSymbol.Int && op.RightType == TypeSymbol.Int)
+                return (int)lValue - (int)rValue;
+
+            return (float)lValue - (float)rValue;
+        }
+
+
+        private static object EvaluateDivision(AbstractBinaryOperator op, object lValue, object rValue)
+        {
+            if (op.LeftType == TypeSymbol.Int && op.RightType == TypeSymbol.Int)
+                return (int)lValue / (int)rValue;
+
+            return (float)lValue / (float)rValue;
+        }
+
+        private static object EvaluateMultiplication(AbstractBinaryOperator op, object lValue, object rValue)
+        {
+            if (op.LeftType == TypeSymbol.Int && op.RightType == TypeSymbol.Int)
+                return (int)lValue * (int)rValue;
+
+            return (float)lValue * (float)rValue;
         }
 
         private static object EvaluateBitwiseOr(AbstractBinaryOperator op, object lValue, object rValue)
         {
             if (op.LeftType == TypeSymbol.Int)
                 return (int)lValue | (int)rValue;
+
+            if (op.LeftType == TypeSymbol.Float || op.RightType == TypeSymbol.Float)
+                return (float)lValue + (float)rValue;
 
             return (bool)lValue || (bool)rValue;
         }

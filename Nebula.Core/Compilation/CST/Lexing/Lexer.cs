@@ -103,6 +103,12 @@ namespace Nebula.Core.Parsing.Lexing
                     }
                 case '.':
                     {
+                        if (char.IsDigit(Peek(1)))
+                        {
+                            LexNumber();
+                            break;
+                        }
+
                         _type = NodeType.DotToken;
                         _currentPosition++;
                         break;
@@ -546,14 +552,33 @@ namespace Nebula.Core.Parsing.Lexing
 
             int len = _currentPosition - _tokenStart;
             string numberText = _source.ToString(_tokenStart, len);
-            if (!int.TryParse(numberText, out int val))
-            {
-                TextSpan span = new(_tokenStart, len);
-                TextLocation location = new(_source, span);
-                _report.ReportIdentifierNotOfType(location, numberText, TypeSymbol.Int);
-            }
+            TextSpan span = new(_tokenStart, len);
+            TextLocation location = new(_source, span);
 
-            _tokenValue = val;
+            if (hasFoundDecimal)
+            {
+                if (Current != 'f')
+                {
+                    _report.ReportFloatMustEndWithMarker(location, numberText);
+                    return;
+                }
+                _currentPosition++;
+                if (!float.TryParse(numberText, out float val))
+                {
+                    _report.ReportIdentifierNotOfType(location, numberText, TypeSymbol.Int);
+                }
+
+                _tokenValue = val;
+            }
+            else
+            {
+                if (!int.TryParse(numberText, out int val))
+                {
+                    _report.ReportIdentifierNotOfType(location, numberText, TypeSymbol.Int);
+                }
+
+                _tokenValue = val;
+            }
         }
         private void LexString()
         {

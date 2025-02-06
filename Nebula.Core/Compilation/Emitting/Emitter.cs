@@ -46,6 +46,11 @@ namespace Nebula.Core.Emitting
             NamespaceStatement nsToken = (NamespaceStatement)program.Namespace.OriginalNode;
             _currentContext = new(ModuleName, program.Namespace.Text, new(1, 0, 0), program.SourceCode);
 
+            foreach(var nativeFunc in program.NativeFunctions)
+            {
+                EmitNativeFunctionDeclaration(nativeFunc);
+            }
+
             foreach (KeyValuePair<string, BundleSymbol> bundle in program.Bundles)
             {
                 EmitBundleDeclaration(bundle.Value);
@@ -100,7 +105,12 @@ namespace Nebula.Core.Emitting
             _currentContext = null!;
         }
 
+
         #region Emit Function
+        private void EmitNativeFunctionDeclaration(FunctionSymbol nativeFunc)
+        {
+            _currentContext.Assembly.TypeDefinition.NativeMethods.Add(new(nativeFunc.Name));
+        }
 
         private void EmitFunctionDeclaration(FunctionSymbol declaration, AbstractBlockStatement body)
         {
@@ -431,7 +441,7 @@ namespace Nebula.Core.Emitting
         private void EmitBinaryExpression(NILProcessor processor, AbstractBinaryExpression node)
         {
             // +(string, string)
-            if (node.Operator.BinaryType == AbstractdBinaryType.Addition)
+            if (node.Operator.BinaryType == AbstractBinaryType.Addition)
             {
                 if (node.Left.ResultType == TypeSymbol.String && node.Right.ResultType == TypeSymbol.String)
                 {
@@ -472,52 +482,52 @@ namespace Nebula.Core.Emitting
 
             switch (node.Operator.BinaryType)
             {
-                case AbstractdBinaryType.Addition:
+                case AbstractBinaryType.Addition:
                     processor.Emit(InstructionOpcode.Add, node.OriginalNode.Span);
                     break;
-                case AbstractdBinaryType.Subtraction:
+                case AbstractBinaryType.Subtraction:
                     processor.Emit(InstructionOpcode.Sub, node.OriginalNode.Span);
                     break;
-                case AbstractdBinaryType.Multiplication:
+                case AbstractBinaryType.Multiplication:
                     processor.Emit(InstructionOpcode.Mul, node.OriginalNode.Span);
                     break;
-                case AbstractdBinaryType.Division:
+                case AbstractBinaryType.Division:
                     processor.Emit(InstructionOpcode.Div, node.OriginalNode.Span);
                     break;
-                case AbstractdBinaryType.Remainer:
+                case AbstractBinaryType.Remainer:
                     processor.Emit(InstructionOpcode.Rem, node.OriginalNode.Span);
                     break;
-                case AbstractdBinaryType.LogicalAnd:
-                case AbstractdBinaryType.BitwiseAnd:
+                case AbstractBinaryType.LogicalAnd:
+                case AbstractBinaryType.BitwiseAnd:
                     processor.Emit(InstructionOpcode.And, node.OriginalNode.Span);
                     break;
-                case AbstractdBinaryType.BitwiseOr:
-                case AbstractdBinaryType.LogicalOr:
+                case AbstractBinaryType.BitwiseOr:
+                case AbstractBinaryType.LogicalOr:
                     processor.Emit(InstructionOpcode.Or, node.OriginalNode.Span);
                     break;
-                case AbstractdBinaryType.BitwiseXor:
+                case AbstractBinaryType.BitwiseXor:
                     processor.Emit(InstructionOpcode.Xor, node.OriginalNode.Span);
                     break;
-                case AbstractdBinaryType.Equals:
+                case AbstractBinaryType.Equals:
                     processor.Emit(InstructionOpcode.Ceq, node.OriginalNode.Span);
                     break;
-                case AbstractdBinaryType.NotEquals:
+                case AbstractBinaryType.NotEquals:
                     processor.Emit(InstructionOpcode.Ceq, node.OriginalNode.Span);
                     processor.Emit(InstructionOpcode.Ldc_i4_0, node.OriginalNode.Span);
                     processor.Emit(InstructionOpcode.Ceq, node.OriginalNode.Span);
                     break;
-                case AbstractdBinaryType.LessThan:
+                case AbstractBinaryType.LessThan:
                     processor.Emit(InstructionOpcode.Clt, node.OriginalNode.Span);
                     break;
-                case AbstractdBinaryType.LessThanOrEqual:
+                case AbstractBinaryType.LessThanOrEqual:
                     processor.Emit(InstructionOpcode.Cgt, node.OriginalNode.Span);
                     processor.Emit(InstructionOpcode.Ldc_i4_0, node.OriginalNode.Span);
                     processor.Emit(InstructionOpcode.Ceq, node.OriginalNode.Span);
                     break;
-                case AbstractdBinaryType.GreaterThan:
+                case AbstractBinaryType.GreaterThan:
                     processor.Emit(InstructionOpcode.Cgt, node.OriginalNode.Span);
                     break;
-                case AbstractdBinaryType.GreaterThanOrEqual:
+                case AbstractBinaryType.GreaterThanOrEqual:
                     processor.Emit(InstructionOpcode.Clt, node.OriginalNode.Span);
                     processor.Emit(InstructionOpcode.Ldc_i4_0, node.OriginalNode.Span);
                     processor.Emit(InstructionOpcode.Ceq, node.OriginalNode.Span);
@@ -581,7 +591,7 @@ namespace Nebula.Core.Emitting
             static IEnumerable<AbstractExpression> Flatten(AbstractExpression node)
             {
                 if (node is AbstractBinaryExpression binaryExpression &&
-                    binaryExpression.Operator.BinaryType == AbstractdBinaryType.Addition &&
+                    binaryExpression.Operator.BinaryType == AbstractBinaryType.Addition &&
                     binaryExpression.Left.ResultType == TypeSymbol.String &&
                     binaryExpression.Right.ResultType == TypeSymbol.String)
                 {
@@ -673,6 +683,13 @@ namespace Nebula.Core.Emitting
                 return;
             }
 
+            if(node.ResultType == TypeSymbol.Float)
+            {
+                float value = (float)node.ConstantValue.Value;
+                processor.Emit(InstructionOpcode.Ldc_r4, value, node.OriginalNode.Span);
+                return;
+            }
+
             if (node.ResultType == TypeSymbol.Bool)
             {
                 bool value = (bool)node.ConstantValue.Value;
@@ -714,7 +731,7 @@ namespace Nebula.Core.Emitting
             //{TypeSymbol.Char, TypeReference.Char},
             {TypeSymbol.Bool, TypeReference.Bool},
             {TypeSymbol.Int, TypeReference.Int},
-            //{TypeSymbol.Float, TypeReference.Float},
+            {TypeSymbol.Float, TypeReference.Float},
             {TypeSymbol.String, TypeReference.String},
             {TypeSymbol.Bundle, TypeReference.Bundle},
         };
