@@ -94,7 +94,10 @@ namespace Nebula.Commons.Reporting
         E0025 = ReportMessageProvider.ErrorOffset + 37,
         /// <summary></summary>
         E0026 = ReportMessageProvider.ErrorOffset + 38,
+        /// <summary></summary>
         E0027 = ReportMessageProvider.ErrorOffset + 39,
+        /// <summary></summary>
+        E0028 = ReportMessageProvider.ErrorOffset + 40,
     }
 
     /// <summary>
@@ -194,6 +197,8 @@ namespace Nebula.Commons.Reporting
     (ReportMessageCodes.E0026, ErrorMessages.InvalidBreakOrContinue);
         public static ReportMessageTemplate ErrorInvalidExpressionStatement =>
     (ReportMessageCodes.E0027, ErrorMessages.InvalidExpressionStatement);
+        public static ReportMessageTemplate ErrorFloatNoMarker =>
+    (ReportMessageCodes.E0028, ErrorMessages.FloatNoMarker);
 
         #endregion
     }

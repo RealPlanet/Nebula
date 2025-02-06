@@ -20,6 +20,10 @@ namespace Nebula.Commons.Text
         [DataMember]
         public Dictionary<string, DebugFunction> Functions { get; private set; } = [];
 
+        [DataMember]
+        public HashSet<string> NativeFunctions { get; private set; } = [];
+
+
         public DebugFile(string @namespace, string originalFileName, string md5Hash)
         {
             Namespace = @namespace;
@@ -28,10 +32,11 @@ namespace Nebula.Commons.Text
         }
 
         [JsonConstructor]
-        public DebugFile(string @namespace, string originalFileName, string mD5Hash, Dictionary<string, DebugFunction> functions)
+        public DebugFile(string @namespace, string originalFileName, string mD5Hash, Dictionary<string, DebugFunction> functions, HashSet<string> nativeFunctions)
             : this(@namespace, originalFileName, mD5Hash)
         {
             Functions = functions;
+            NativeFunctions = nativeFunctions;
         }
 
         public static DebugFile LoadFromFile(string filePath)
