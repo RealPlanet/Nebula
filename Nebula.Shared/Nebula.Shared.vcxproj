@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\DebuggerDefinitions.h" />
     <ClInclude Include="include\DiagnosticReport.h" />
     <ClInclude Include="include\EmitTokens.h" />
     <ClInclude Include="include\Instruction.h" />
