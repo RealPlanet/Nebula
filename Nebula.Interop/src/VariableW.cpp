@@ -1,9 +1,9 @@
 #include "VariableW.h"
-
+#include "InteropUtility.h"
 using namespace Nebula::Interop;
 using namespace Nebula::CodeEmitter::Types;
 
-VariableW::VariableW(const nebula::FrameVariable* ptrNative)
+VariableW::VariableW(nebula::FrameVariable* ptrNative)
     : m_pNative{ ptrNative }
 {
 }
@@ -28,4 +28,30 @@ System::Object^ Nebula::Interop::VariableW::Value::get()
     default:
         throw gcnew System::Exception("Unsupported value type");
     }
+}
+
+bool Nebula::Interop::VariableW::Set(System::String^ obj)
+{
+    System::Type^ t = obj->GetType();
+    if (Type == TypeIdentifier::String)
+    {
+        std::string nativeStr;
+        Nebula::Interop::MarshalString((System::String^)obj, nativeStr);
+        nebula::DataStackVariant variant{ nativeStr };
+        return m_pNative->SetValue(variant);
+    }
+
+    if (Type == TypeIdentifier::Int32)
+    {
+        int value;
+        if (!System::Int32::TryParse(obj, value))
+        {
+            return false;
+        }
+
+        nebula::DataStackVariant variant{ value };
+        return m_pNative->SetValue(variant); 
+    }
+
+    return false;
 }

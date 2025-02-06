@@ -37,7 +37,7 @@ namespace Nebula::Interop
 
         CallStackW^ GetStackFrameOf(int threadId);
         size_t GetCurrentThreadId();
-        array<int>^ GetCurrentOpcodeIndexForAllThreads();
+        array<int>^ GetNextOpcodeIndexForAllThreads();
         int GetCurrentOpcodeIndexForThread(int threadId);
         int AnyFrameJustStarted(System::String^ _namespace, System::String^ funcName);
         int AnyFrameAt(System::String^ _namespace, System::String^ funcName, int opcode);

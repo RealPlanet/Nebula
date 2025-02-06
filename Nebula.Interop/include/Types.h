@@ -8,8 +8,7 @@ namespace Nebula::CodeEmitter::Types
     {
         Unknown = nebula::DataStackVariantIndex::_UnknownType,
         Void = nebula::DataStackVariantIndex::_TypeVoid,
-        Char = nebula::DataStackVariantIndex::_TypeByte,
-        Bool = nebula::DataStackVariantIndex::_TypeBool,
+        //Char = nebula::DataStackVariantIndex::_TypeByte,
         Int32 = nebula::DataStackVariantIndex::_TypeInt32,
         Float = nebula::DataStackVariantIndex::_TypeFloat,
         String = nebula::DataStackVariantIndex::_TypeString,

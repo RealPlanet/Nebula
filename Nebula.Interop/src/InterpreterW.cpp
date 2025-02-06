@@ -3,6 +3,7 @@
 #include "Interpreter.h"
 #include "Script.h"
 #include "InteropUtility.h"
+#include "DebuggerDefinitions.h"
 
 #include <vector>
 #include <memory>
@@ -36,7 +37,7 @@ InterpreterW::!InterpreterW()
 
 bool InterpreterW::AddScripts(System::Collections::Generic::ICollection<System::String^>^ scriptPaths)
 {
-    for each (System::String ^ sPath in scriptPaths)
+    for each(System::String ^ sPath in scriptPaths)
     {
         std::string nativePath;
         MarshalString(sPath, nativePath);
@@ -109,10 +110,10 @@ size_t Nebula::Interop::InterpreterW::GetCurrentThreadId()
     return _virtualMachine->GetCurrentThreadId();
 }
 
-array<int>^ InterpreterW::GetCurrentOpcodeIndexForAllThreads()
+array<int>^ InterpreterW::GetNextOpcodeIndexForAllThreads()
 {
     const nebula::ThreadMap& threads = _virtualMachine->GetThreadMap();
-    array<int>^ result = gcnew array<int>(threads.Count());
+    array<int>^ result = gcnew array<int>((int)threads.Count());
 
     for (int i = 0; i < threads.Count(); i++)
     {
@@ -124,10 +125,7 @@ array<int>^ InterpreterW::GetCurrentOpcodeIndexForAllThreads()
         }
 
         const nebula::Frame* frame = stack.at(stack.size() - 1);
-        size_t index = frame->CurrentInstructionIndex();
-        result[i] = -1;
-        if (index != nebula::Frame::frame_not_started)
-            result[i] = index;
+        result[i] = frame->NextInstructionIndex();
     }
 
     return result;
@@ -147,11 +145,8 @@ int Nebula::Interop::InterpreterW::GetCurrentOpcodeIndexForThread(int threadId)
     }
 
     const nebula::Frame* frame = stack.at(stack.size() - 1);
-    size_t index = frame->CurrentInstructionIndex();
-    if (index == nebula::Frame::frame_not_started)
-        return -1;
-
-    return index;
+    size_t index = frame->NextInstructionIndex();
+    return (int)index;
 }
 
 int InterpreterW::AnyFrameJustStarted(System::String^ _namespace, System::String^ funcName)
@@ -166,7 +161,7 @@ int InterpreterW::AnyFrameJustStarted(System::String^ _namespace, System::String
 
         const nebula::Frame* frame = stack.at(stack.size() - 1);
         // We need JUST started
-        if (frame->CurrentInstructionIndex() == nebula::Frame::frame_not_started)
+        if (frame->NextInstructionIndex() != 0)
             continue;
 
         const nebula::Function* func = frame->GetFunction();
@@ -190,7 +185,7 @@ int InterpreterW::AnyFrameAt(System::String^ _namespace, System::String^ funcNam
             continue;
 
         const nebula::Frame* frame = stack.at(stack.size() - 1);
-        if (frame->CurrentInstructionIndex() != opcode)
+        if (frame->NextInstructionIndex() != opcode)
             continue;
 
         const nebula::Function* func = frame->GetFunction();

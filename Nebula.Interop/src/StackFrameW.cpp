@@ -3,7 +3,7 @@
 
 using namespace Nebula::Interop;
 
-StackFrameW::StackFrameW(const nebula::Frame* nativePtr)
+StackFrameW::StackFrameW(nebula::Frame* nativePtr)
     : m_pNative{ nativePtr }
 {
 
@@ -23,11 +23,9 @@ System::String^ StackFrameW::Namespace::get()
 }
 
 
-int StackFrameW::CurrentInstructionIndex::get()
+int StackFrameW::NextInstructionIndex::get()
 {
-    size_t index = m_pNative->CurrentInstructionIndex();
-    if (index == nebula::Frame::frame_not_started)
-        return -1;
+    size_t index = m_pNative->NextInstructionIndex();
     return static_cast<int>(index);
 }
 
@@ -49,7 +47,7 @@ VariableW^ Nebula::Interop::StackFrameW::GetLocalVariableAt(int index)
     if (index < 0 || index >= this->LocalCount)
         return nullptr;
 
-    const nebula::FrameVariable& v = m_pNative->Memory().LocalAt(index);
+    nebula::FrameVariable& v = m_pNative->Memory().LocalAt(index);
     return gcnew VariableW(&v);
 }
 
@@ -58,7 +56,7 @@ VariableW^ Nebula::Interop::StackFrameW::GetParameterVariableAt(int index)
     if (index < 0 || index >= this->ParameterCount)
         return nullptr;
 
-    const nebula::FrameVariable& v = m_pNative->Memory().ParamAt(index);
+    nebula::FrameVariable& v = m_pNative->Memory().ParamAt(index);
     return gcnew VariableW(&v);
 }
 
