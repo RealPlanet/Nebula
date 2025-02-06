@@ -283,9 +283,7 @@ void Interpreter::BuildErrorStack(Frame* fatalFrame)
         const std::string ns = current->GetFunction()->Namespace();
         const std::string funcName = current->GetFunction()->Name();
         std::string callstackLine = std::format("{}::{}(...) -> ", ns, funcName) + BuildInstructionLineForCallStack(current);
-        size_t labelIndex = current->CurrentInstructionIndex();
-        if (labelIndex == nebula::Frame::frame_not_started)
-            labelIndex = 0;
+        size_t labelIndex = current->NextInstructionIndex();
 
         //callstackLine.insert(0, spaceCount++, ' ');
         m_LastErrorCallstack->Append({ labelIndex, callstackLine });
@@ -295,9 +293,7 @@ void Interpreter::BuildErrorStack(Frame* fatalFrame)
 
 std::string Interpreter::BuildInstructionLineForCallStack(Frame* f)
 {
-    size_t labelIndex = f->CurrentInstructionIndex();
-    if (labelIndex == nebula::Frame::frame_not_started)
-        labelIndex = 0;
+    size_t labelIndex = f->NextInstructionIndex();
 
     auto& currInstruction = f->GetFunction()->Instructions()[labelIndex];
     VMInstruction currentOpcode = currInstruction.first;
