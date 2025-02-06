@@ -2,16 +2,19 @@
 
 #include "Frame.h"
 #include "Utility.h"
+#include "InterpreterStandardOutput.h"
 
 #include <chrono>
 #include <cassert>
 #include <stack>
+#include <iostream>
 
 using namespace nebula;
 
 Interpreter::Interpreter()
-    : m_LastErrorCallstack{ nullptr }
+    : m_LastErrorCallstack{ nullptr }, m_pStandardOutput{ nullptr }
 {
+    SetStandardOutput(new InterpreterStandardOutput());
 }
 
 Interpreter::~Interpreter()
@@ -20,6 +23,7 @@ Interpreter::~Interpreter()
     m_Threads.Clear();
     m_Scripts.clear();
     m_NativeFunctions.clear();
+    delete m_pStandardOutput;
     delete m_LastErrorCallstack;
 }
 
@@ -40,7 +44,7 @@ Interpreter::State Interpreter::Run()
             m_IsVMRunning.wait(true);
             continue;
         }
-            
+
         // Exit once we can no longer step
         if (!Step())
         {
@@ -108,6 +112,16 @@ bool Interpreter::AddScript(std::shared_ptr<Script> script)
         CreateFrameOnStack(&kvp.second, true);
     }
 
+    return true;
+}
+
+bool Interpreter::SetStandardOutput(IStreamWrapper* stream)
+{
+    if (stream == nullptr)
+        return false;
+
+    delete m_pStandardOutput;
+    m_pStandardOutput = stream;
     return true;
 }
 

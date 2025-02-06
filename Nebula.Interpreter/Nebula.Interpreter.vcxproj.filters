@@ -10,10 +10,13 @@
     <ClInclude Include="include\DataStack.h" />
     <ClInclude Include="include\Script.h" />
     <ClInclude Include="include\Bundle.h" />
-    <ClInclude Include="include\IScriptParser.h" />
+    <ClInclude Include="include\interfaces\IScriptParser.h" />
     <ClInclude Include="src\LiteralScriptParser.h" />
     <ClInclude Include="src\InstructionRegistry.h" />
     <ClInclude Include="include\FrameMemory.h" />
+    <ClInclude Include="include\interfaces\IStreamWrapper.h" />
+    <ClInclude Include="include\InterpreterStandardOutput.h" />
+    <ClInclude Include="include\AwaitableObject.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Interpreter.cpp" />
@@ -28,6 +31,7 @@
     <ClCompile Include="src\LiteralScriptParser.cpp" />
     <ClCompile Include="src\InstructionRegistry.cpp" />
     <ClCompile Include="src\FrameMemory.cpp" />
+    <ClCompile Include="src\InterpreterStandardOutput.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Script">

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IScriptParser.h"
+#include "interfaces\IScriptParser.h"
 
 #include "DiagnosticReport.h"
 #include "LanguageTypes.h"

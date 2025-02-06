@@ -3,7 +3,7 @@
 
 #include "Script.h"
 #include "Utility.h"
-#include "IScriptParser.h"
+#include "interfaces\IScriptParser.h"
 #include "LiteralScriptParser.h"
 #include "Function.h"
 

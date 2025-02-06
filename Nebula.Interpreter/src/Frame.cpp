@@ -5,7 +5,11 @@
 using namespace nebula;
 
 Frame::Frame(Frame* parent, const Function* f, bool discardParent)
-    : m_ParentFrame{ parent }, m_Memory{ f->Parameters().size(), f->Locals().size() }, m_FunctionDefinition{ f }, m_NextInstructionIndex{ 0 }, m_Scheduler{ this }
+    : m_ParentFrame{ parent },
+    m_Memory{ f->Parameters().size(), f->Locals().size() },
+    m_FunctionDefinition{ f },
+    m_NextInstructionIndex{ 0 },
+    m_Scheduler{ this }
 {
     const VariableList& params = f->Parameters();
     DataStack& dataStack = parent->Stack();
@@ -67,6 +71,11 @@ const std::string& Frame::Namespace()
     return m_FunctionDefinition->Namespace();
 }
 
+
+void Frame::SetScheduledSleep(const size_t& amount)
+{
+    m_Scheduler.Sleep(amount);
+}
 
 void Frame::SetNextInstruction(size_t label)
 {
