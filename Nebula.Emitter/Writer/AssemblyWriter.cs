@@ -33,6 +33,11 @@ namespace Nebula.CodeEmitter.Writer
             string fileName = Path.GetFileName(assembly.SourceCode.FileName);
             DebugFile outpuData = new(assembly.Namespace, fileName, assemblyChecksum);
 
+            foreach(var nativeFunc in assembly.TypeDefinition.NativeMethods)
+            {
+                outpuData.NativeFunctions.Add(nativeFunc.Name);
+            }
+
             foreach (MethodDefinition func in assembly.TypeDefinition.Methods)
             {
                 int funcLineNumber = -1; 

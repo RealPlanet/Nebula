@@ -4,8 +4,8 @@
     {
         public static TypeReference Unknown { get; } = new(TypeIdentifier.Unknown);
         public static TypeReference Void { get; } = new(TypeIdentifier.Void);
-        public static TypeReference Char { get; } = new(TypeIdentifier.Char);
-        public static TypeReference Bool { get; } = new(TypeIdentifier.Bool);
+        //public static TypeReference Char { get; } = new(TypeIdentifier.Char);
+        public static TypeReference Bool { get; } = new(TypeIdentifier.Int32);
         public static TypeReference Int { get; } = new(TypeIdentifier.Int32);
         public static TypeReference Float { get; } = new(TypeIdentifier.Float);
         public static TypeReference String { get; } = new(TypeIdentifier.String);
