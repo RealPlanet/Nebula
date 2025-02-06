@@ -24,7 +24,7 @@ namespace nebula
         inline void Dup()                               { m_Data.emplace_back(m_Data.back()); }
         inline void Push(TInt32 v)                      { m_Data.emplace_back(v); }
         inline void Push(TFloat v)                      { m_Data.emplace_back(v); }
-        inline void Push(TByte v)                       { m_Data.emplace_back(v); }
+        //inline void Push(TByte v)                       { m_Data.emplace_back(v); }
         inline void Push(const TString& v)              { m_Data.emplace_back(v); }
         inline void Push(const TBundle& v)              { m_Data.emplace_back(v); }
         inline void Push(const DataStackVariant& v)     { m_Data.emplace_back(v); }

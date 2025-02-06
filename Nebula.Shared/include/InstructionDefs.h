@@ -53,6 +53,7 @@ namespace nebula {
         Ldc_i4_0,	// Load constant i32 0
         Ldc_i4_1,	// Load constant i32 1
         Ldc_i4,		// Load constant i32
+        Ldc_r4,		// Load constant f32
         Ldc_s,		// Load string constant
         Ld_b,       // Load bundle [optional arg 'BundleName' ]
 

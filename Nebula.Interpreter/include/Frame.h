@@ -15,7 +15,7 @@ namespace nebula
     class Frame
     {
     public:
-        static constexpr auto frame_not_started{ static_cast<size_t>(-1) };
+        //static constexpr auto frame_not_started{ static_cast<size_t>(-1) };
         enum Status
         {
             FatalError, // Fatal error requires VM to stop
@@ -42,11 +42,11 @@ namespace nebula
         inline const FrameMemory& Memory() const { return m_Memory; };
         inline const Function* GetFunction() const { return m_FunctionDefinition; }
         inline InstructionErrorCode GetLastError() const { return m_LastErrorCode; }
-        inline size_t CurrentInstructionIndex() const { return m_NextInstructionIndex - 1; }
+        inline size_t NextInstructionIndex() const { return m_NextInstructionIndex; }
         const std::string& Namespace();
 
     public:
-        void SetScheduledSleep(const size_t& amount) { m_Scheduler.Sleep(amount); }
+        void SetScheduledSleep(const size_t& amount);
         void SetNextInstruction(size_t index);
 
     private:
