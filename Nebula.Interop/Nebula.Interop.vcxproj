@@ -112,6 +112,8 @@
     <ClInclude Include="include\VariableW.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\NativeToManagedStream.h" />
+    <ClCompile Include="src\NativeToManagedStream.cpp" />
     <ClCompile Include="src\CallStackW.cpp" />
     <ClCompile Include="src\InterpreterW.cpp" />
     <ClCompile Include="src\FunctionW.cpp" />

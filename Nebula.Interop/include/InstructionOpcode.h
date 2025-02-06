@@ -49,6 +49,7 @@ namespace Nebula::CodeEmitter
         Ldc_i4_0    = nebula::VMInstruction::Ldc_i4_0,
         Ldc_i4_1    = nebula::VMInstruction::Ldc_i4_1,
         Ldc_i4      = nebula::VMInstruction::Ldc_i4,
+        Ldc_r4      = nebula::VMInstruction::Ldc_r4,
         Ldc_s       = nebula::VMInstruction::Ldc_s,
         Ld_b        = nebula::VMInstruction::Ld_b,
 
