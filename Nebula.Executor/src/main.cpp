@@ -10,7 +10,6 @@
 #include <format>
 #include <variant>
 #include <chrono>
-#include <iostream>
 #include <thread>
 
 // Interpreter
@@ -18,6 +17,10 @@
 #include "DataStack.h"
 
 #include "ConsoleWriter.h"
+
+#include "interfaces\IStreamWrapper.h"
+
+#include "NebulaStandardLib.h"
 
 using namespace nebula::frontend;
 using namespace nebula;
@@ -33,34 +36,12 @@ static void PrintReport(shared::DiagnosticReport& report)
 
 static void BindNativeFunctions(Interpreter& vm)
 {
-    vm.BindNativeFunction("Write", [](Interpreter*, Frame* context) {
-        DataStackVariant& var = context->Stack().Peek();
-
-        const std::string& arg = nebula::ToString(var);
-        std::cout << arg;
-        context->Stack().Pop();
-        return nebula::InstructionErrorCode::None;
-        });
-
-    vm.BindNativeFunction("WriteLine", [](Interpreter*, Frame* context) {
-        DataStackVariant& messageVariant = context->Stack().Peek();
-        const std::string& arg = nebula::ToString(messageVariant);
-        std::cout << arg << "\n";
-        context->Stack().Pop();
-        return nebula::InstructionErrorCode::None;
-        });
-
-    vm.BindNativeFunction("HashString", [](Interpreter*, Frame* context) {
-        static std::hash<TString> h;
-
-        DataStackVariant& messageVariant = context->Stack().Peek();
-
-        std::string arg = nebula::ToString(messageVariant);
-        const TInt32 stringHash = (TInt32)h(arg);
-        context->Stack().Pop();
-        context->Stack().Push(stringHash);
-        return nebula::InstructionErrorCode::None;
-        });
+    auto* bindings = NEB_GET_ALL_NATIVE_BINDINGS();
+    for (auto& kvp : *bindings)
+    {
+        std::string bindingName{ kvp.first.data() };
+        vm.BindNativeFunction(bindingName, kvp.second);
+    }
 }
 
 static int PrintVMLastError(nebula::Interpreter& vm)
@@ -162,3 +143,5 @@ int main(int argc, char* argv[]) {
     /* DO NOT DUMP MEMORY HERE OTHERWISE STATIC STUFF WILL BE REPORTED */
     return ExecuteVM(scriptPaths);
 }
+
+
