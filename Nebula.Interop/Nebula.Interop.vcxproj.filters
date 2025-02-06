@@ -15,6 +15,7 @@
     <ClInclude Include="include\StackFrameW.h" />
     <ClInclude Include="include\LoggerW.h" />
     <ClInclude Include="include\VariableW.h" />
+    <ClInclude Include="include\NativeToManagedStream.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Includer.cpp" />
@@ -26,5 +27,6 @@
     <ClCompile Include="src\CallStackW.cpp" />
     <ClCompile Include="src\StackFrameW.cpp" />
     <ClCompile Include="src\VariableW.cpp" />
+    <ClCompile Include="src\NativeToManagedStream.cpp" />
   </ItemGroup>
 </Project>

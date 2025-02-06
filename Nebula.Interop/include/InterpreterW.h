@@ -2,6 +2,7 @@
 
 #include "CallStackW.h"
 #include "LoggerW.h"
+#include "NativeToManagedStream.h"
 
 namespace nebula
 {
@@ -26,6 +27,8 @@ namespace Nebula::Interop
         virtual ~InterpreterW();
 
         bool AddScripts(System::Collections::Generic::ICollection<System::String^>^ scriptPaths);
+        bool LoadNativesFromDll(System::String^ dllPath, System::Collections::Generic::List<System::String^>^ functions);
+        bool SetStandardOutput(System::IO::TextWriter^ stream);
 
         void Step();
 
@@ -53,6 +56,7 @@ namespace Nebula::Interop
         }
 
     private:
+        Nebula::Interop::Utility::NativeToManagedStream^ _streamRedirect;
         nebula::Interpreter* _virtualMachine;
         LoggerW^ _logger;
     };

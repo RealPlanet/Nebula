@@ -65,6 +65,52 @@ bool InterpreterW::AddScripts(System::Collections::Generic::ICollection<System::
     return true;
 }
 
+// Used for loadlibrary, TODO :: Figure out a better approch for non windows systems
+#include <windows.h>
+
+bool Nebula::Interop::InterpreterW::LoadNativesFromDll(System::String^ dllPath, System::Collections::Generic::List<System::String^>^ functions)
+{
+    //launchDebugger();
+    if (!System::IO::File::Exists(dllPath))
+        return false;
+
+    if (System::IO::Path::GetExtension(dllPath) != ".dll")
+        return false;
+
+    std::string nativePath;
+    MarshalString(dllPath, nativePath);
+    std::wstring wString = std::wstring(nativePath.begin(), nativePath.end());
+    HINSTANCE hGetProcIDDLL = LoadLibrary(wString.c_str());
+    if (!hGetProcIDDLL) {
+        return false;
+    }
+
+    const char* procGetBindingName = NEB_GET_NATIVE_BINDING_NAME;
+    nebula::NativeFunctionCallbackPtr(*funcPtr)(const char*) = (NEB_GET_BINDING_PTR)GetProcAddress(hGetProcIDDLL, procGetBindingName);
+    bool errorStatus = false;
+    if (funcPtr != nullptr)
+    {
+        for each (System::String ^ funcName in functions)
+        {
+            std::string nativeStrFunc;
+            MarshalString(funcName, nativeStrFunc);
+
+            nebula::NativeFunctionCallbackPtr bindingPtr = funcPtr(nativeStrFunc.c_str());
+            _virtualMachine->BindNativeFunction(nativeStrFunc, *bindingPtr);
+        }
+
+        errorStatus = true;
+    }
+
+    return errorStatus;
+}
+
+bool Nebula::Interop::InterpreterW::SetStandardOutput(System::IO::TextWriter^ stream)
+{
+    _streamRedirect = gcnew Nebula::Interop::Utility::NativeToManagedStream(stream);
+    return _virtualMachine->SetStandardOutput(_streamRedirect->GetNativeStream());
+}
+
 void InterpreterW::Init(bool startPaused)
 {
     _virtualMachine->Init(startPaused);
