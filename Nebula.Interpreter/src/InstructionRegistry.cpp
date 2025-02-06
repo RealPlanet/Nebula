@@ -8,6 +8,299 @@
 
 using namespace nebula;
 
+static InstructionErrorCode CastToInt(DataStackVariant& valueToCast, DataStack& stack)
+{
+    DataStackVariantIndex fromType = (DataStackVariantIndex)valueToCast.index();
+    if (fromType == DataStackVariantIndex::_TypeFloat)
+    {
+        TFloat fromValue = std::get<DataStackVariantIndex::_TypeFloat>(valueToCast);
+        stack.Pop();
+        stack.Push({ (TInt32)fromValue });
+        return InstructionErrorCode::None;
+    }
+
+    [[unlikely]]
+    if (fromType == DataStackVariantIndex::_TypeInt32)
+    {
+        TInt32 fromValue = std::get<DataStackVariantIndex::_TypeInt32>(valueToCast);
+        stack.Pop();
+        stack.Push({ (TInt32)fromValue });
+        return InstructionErrorCode::None;
+    }
+
+    return InstructionErrorCode::Fatal;
+}
+
+static InstructionErrorCode CastToFloat(DataStackVariant& valueToCast, DataStack& stack)
+{
+    DataStackVariantIndex fromType = (DataStackVariantIndex)valueToCast.index();
+    if (fromType == DataStackVariantIndex::_TypeInt32)
+    {
+        TInt32 fromValue = std::get<DataStackVariantIndex::_TypeInt32>(valueToCast);
+        stack.Pop();
+        stack.Push({ (TFloat)fromValue });
+        return InstructionErrorCode::None;
+    }
+
+    [[unlikely]]
+    if (fromType == DataStackVariantIndex::_TypeFloat)
+    {
+        TFloat fromValue = std::get<DataStackVariantIndex::_TypeFloat>(valueToCast);
+        stack.Pop();
+        stack.Push({ (TFloat)fromValue });
+        return InstructionErrorCode::None;
+    }
+
+    return InstructionErrorCode::Fatal;
+}
+
+static InstructionErrorCode SumDataStackVariants(DataStack& stack)
+{
+    DataStackVariant& a = stack.Peek();
+    DataStackVariant& b = stack.Peek(1);
+    if (const TInt32* iValA = std::get_if<TInt32>(&a))
+    {
+        stack.Pop();
+
+        if (const TInt32* iValB = std::get_if<TInt32>(&b))
+        {
+            stack.Pop();
+
+            TInt32 v = *iValA + *iValB;
+            stack.Push({ v });
+            return InstructionErrorCode::None;
+        }
+
+        if (const TFloat* fValB = std::get_if<TFloat>(&b))
+        {
+            stack.Pop();
+
+            TFloat v = *iValA + *fValB;
+            stack.Push({ v });
+            return InstructionErrorCode::None;
+        }
+
+        return InstructionErrorCode::Fatal;
+    }
+
+    if (const TFloat* fValA = std::get_if<TFloat>(&a))
+    {
+        stack.Pop();
+
+        if (const TInt32* iValB = std::get_if<TInt32>(&b))
+        {
+            stack.Pop();
+
+            TFloat v = *fValA + *iValB;
+            stack.Push({ v });
+            return InstructionErrorCode::None;
+        }
+
+        if (const TFloat* fValB = std::get_if<TFloat>(&b))
+        {
+            stack.Pop();
+
+            TFloat v = *fValA + *fValB;
+            stack.Push({ v });
+            return InstructionErrorCode::None;
+        }
+
+        return InstructionErrorCode::Fatal;
+    }
+
+    return InstructionErrorCode::Fatal;
+}
+
+static InstructionErrorCode SubDataStackVariants(DataStack& stack)
+{
+    DataStackVariant& a = stack.Peek();
+    DataStackVariant& b = stack.Peek(1);
+    if (const TInt32* iValA = std::get_if<TInt32>(&a))
+    {
+        stack.Pop();
+
+        if (const TInt32* iValB = std::get_if<TInt32>(&b))
+        {
+            stack.Pop();
+
+            TInt32 v = *iValA - *iValB;
+            stack.Push({ v });
+            return InstructionErrorCode::None;
+        }
+
+        if (const TFloat* fValB = std::get_if<TFloat>(&b))
+        {
+            stack.Pop();
+
+            TFloat v = *iValA - *fValB;
+            stack.Push({ v });
+            return InstructionErrorCode::None;
+        }
+
+        return InstructionErrorCode::Fatal;
+    }
+
+    if (const TFloat* fValA = std::get_if<TFloat>(&a))
+    {
+        stack.Pop();
+
+        if (const TInt32* iValB = std::get_if<TInt32>(&b))
+        {
+            stack.Pop();
+
+            TFloat v = *fValA - *iValB;
+            stack.Push({ v });
+            return InstructionErrorCode::None;
+        }
+
+        if (const TFloat* fValB = std::get_if<TFloat>(&b))
+        {
+            stack.Pop();
+
+            TFloat v = *fValA - *fValB;
+            stack.Push({ v });
+            return InstructionErrorCode::None;
+        }
+
+        return InstructionErrorCode::Fatal;
+    }
+
+    return InstructionErrorCode::Fatal;
+}
+
+static InstructionErrorCode MulDataStackVariants(DataStack& stack)
+{
+    DataStackVariant& a = stack.Peek();
+    DataStackVariant& b = stack.Peek(1);
+    if (const TInt32* iValA = std::get_if<TInt32>(&a))
+    {
+        stack.Pop();
+
+        if (const TInt32* iValB = std::get_if<TInt32>(&b))
+        {
+            stack.Pop();
+
+            TInt32 v = *iValA * *iValB;
+            stack.Push({ v });
+            return InstructionErrorCode::None;
+        }
+
+        if (const TFloat* fValB = std::get_if<TFloat>(&b))
+        {
+            stack.Pop();
+
+            TFloat v = *iValA * *fValB;
+            stack.Push({ v });
+            return InstructionErrorCode::None;
+        }
+
+        return InstructionErrorCode::Fatal;
+    }
+
+    if (const TFloat* fValA = std::get_if<TFloat>(&a))
+    {
+        stack.Pop();
+
+        if (const TInt32* iValB = std::get_if<TInt32>(&b))
+        {
+            stack.Pop();
+
+            TFloat v = *fValA * *iValB;
+            stack.Push({ v });
+            return InstructionErrorCode::None;
+        }
+
+        if (const TFloat* fValB = std::get_if<TFloat>(&b))
+        {
+            stack.Pop();
+
+            TFloat v = *fValA * *fValB;
+            stack.Push({ v });
+            return InstructionErrorCode::None;
+        }
+
+        return InstructionErrorCode::Fatal;
+    }
+
+    return InstructionErrorCode::Fatal;
+}
+
+static InstructionErrorCode DivDataStackVariants(DataStack& stack)
+{
+    DataStackVariant& a = stack.Peek();
+    DataStackVariant& b = stack.Peek(1);
+    if (const TInt32* iValA = std::get_if<TInt32>(&a))
+    {
+        stack.Pop();
+
+        if (const TInt32* iValB = std::get_if<TInt32>(&b))
+        {
+            stack.Pop();
+
+            if (iValB == 0)
+            {
+                return InstructionErrorCode::DivideByZero;
+            }
+
+            TInt32 v = *iValA / *iValB;
+            stack.Push({ v });
+            return InstructionErrorCode::None;
+        }
+
+        if (const TFloat* fValB = std::get_if<TFloat>(&b))
+        {
+            stack.Pop();
+
+            if (fValB == 0)
+            {
+                return InstructionErrorCode::DivideByZero;
+            }
+
+            TFloat v = *iValA / *fValB;
+            stack.Push({ v });
+            return InstructionErrorCode::None;
+        }
+
+        return InstructionErrorCode::Fatal;
+    }
+
+    if (const TFloat* fValA = std::get_if<TFloat>(&a))
+    {
+        stack.Pop();
+
+        if (const TInt32* iValB = std::get_if<TInt32>(&b))
+        {
+            stack.Pop();
+            if (iValB == 0)
+            {
+                return InstructionErrorCode::DivideByZero;
+            }
+
+            TFloat v = *fValA / *iValB;
+            stack.Push({ v });
+            return InstructionErrorCode::None;
+        }
+
+        if (const TFloat* fValB = std::get_if<TFloat>(&b))
+        {
+            stack.Pop();
+            if (fValB == 0)
+            {
+                return InstructionErrorCode::DivideByZero;
+            }
+
+            TFloat v = *fValA / *fValB;
+            stack.Push({ v });
+            return InstructionErrorCode::None;
+        }
+
+        return InstructionErrorCode::Fatal;
+    }
+
+    return InstructionErrorCode::Fatal;
+}
+
+
 InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, const RawArguments& args)
 {
     switch (opcode)
@@ -92,6 +385,14 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
         assert(p != nullptr);
         return { converted };
     }
+    case VMInstruction::Ldc_r4:
+    {
+        assert(args.size() == 1);
+        size_t processed = 0;
+        float converted = std::stof(args[0], &processed);
+        assert(processed == args[0].size());
+        return { converted };
+    }
     case VMInstruction::Ldc_i4_0:
     {
         return { 0 };
@@ -129,84 +430,22 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
     case VMInstruction::Add:
     {
         assert(stack.Size() >= 2);
-        DataStackVariant& a = stack.Peek();
-        DataStackVariant& b = stack.Peek(1);
-
-        assert(std::holds_alternative<TInt32>(a));
-        assert(std::holds_alternative<TInt32>(b));
-
-        int valA = std::get<DataStackVariantIndex::_TypeInt32>(a);
-        stack.Pop();
-
-        int valB = std::get<DataStackVariantIndex::_TypeInt32>(b);
-        stack.Pop();
-
-        TInt32 result = valA + valB;
-        stack.Push(result);
-
-        return InstructionErrorCode::None;
+        return SumDataStackVariants(stack);
     }
     case VMInstruction::Sub:
     {
         assert(stack.Size() >= 2);
-        DataStackVariant& b = stack.Peek();
-        DataStackVariant& a = stack.Peek(1);
-
-        assert(std::holds_alternative<TInt32>(a));
-        assert(std::holds_alternative<TInt32>(b));
-
-        TInt32 valA = std::get<DataStackVariantIndex::_TypeInt32>(a);
-        stack.Pop();
-        TInt32 valB = std::get<DataStackVariantIndex::_TypeInt32>(b);
-        stack.Pop();
-
-        TInt32 result = valA - valB;
-        stack.Push(result);
-
-        return InstructionErrorCode::None;
+        return SubDataStackVariants(stack);
     }
     case VMInstruction::Mul:
     {
         assert(stack.Size() >= 2);
-        DataStackVariant& b = stack.Peek();
-        DataStackVariant& a = stack.Peek(1);
-
-        assert(std::holds_alternative<TInt32>(a));
-        assert(std::holds_alternative<TInt32>(b));
-
-        TInt32 valA = std::get<DataStackVariantIndex::_TypeInt32>(a);
-        stack.Pop();
-        TInt32 valB = std::get<DataStackVariantIndex::_TypeInt32>(b);
-        stack.Pop();
-
-        TInt32 result = valA * valB;
-        stack.Push(result);
-
-        return InstructionErrorCode::None;
+        return MulDataStackVariants(stack);
     }
     case VMInstruction::Div:
     {
         assert(stack.Size() >= 2);
-        DataStackVariant& b = stack.Peek();
-        DataStackVariant& a = stack.Peek(1);
-
-        assert(std::holds_alternative<TInt32>(a));
-        assert(std::holds_alternative<TInt32>(b));
-
-        TInt32 div = std::get<DataStackVariantIndex::_TypeInt32>(b);
-        stack.Pop();
-        if (div == 0)
-        {
-            return InstructionErrorCode::DivideByZero;
-        }
-
-        TInt32 valA = std::get<DataStackVariantIndex::_TypeInt32>(a);
-        stack.Pop();
-
-        TInt32 result = valA / div;
-        stack.Push(result);
-
-        return InstructionErrorCode::None;
+        return DivDataStackVariants(stack);
     }
     case VMInstruction::Rem:
     {
@@ -352,6 +591,14 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
         assert(std::holds_alternative<TInt32>(args[0]));
 
         stack.Push(std::get<DataStackVariantIndex::_TypeInt32>(args[0]));
+        return InstructionErrorCode::None;
+    }
+    case VMInstruction::Ldc_r4:
+    {
+        assert(args.size() == 1);
+        assert(std::holds_alternative<TFloat>(args[0]));
+
+        stack.Push(std::get<DataStackVariantIndex::_TypeFloat>(args[0]));
         return InstructionErrorCode::None;
     }
     case VMInstruction::Ldc_s:
@@ -725,8 +972,9 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
     }
     case VMInstruction::ConvType:
     {
-        assert(std::holds_alternative<TInt32>(args[0]));
+        assert(std::holds_alternative<TInt32>(args[0]) || std::holds_alternative<TFloat>(args[0]));
         TInt32 targetType = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
+
         DataStackVariant& prevValue = stack.Peek();
 
         switch (targetType)
@@ -737,6 +985,14 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
             stack.Pop();
             stack.Push(value);
             break;
+        }
+        case DataStackVariantIndex::_TypeFloat:
+        {
+            return CastToFloat(prevValue, stack);
+        }
+        case DataStackVariantIndex::_TypeInt32:
+        {
+            return CastToInt(prevValue, stack);
         }
         default:
             __debugbreak(); //  should Not happen in normal operation

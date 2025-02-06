@@ -216,6 +216,7 @@ namespace nebula {
             {"ldc_i4_0",	VMInstruction::Ldc_i4_0		},
             {"ldc_i4_1",	VMInstruction::Ldc_i4_1		},
             {"ldc_i4",		VMInstruction::Ldc_i4		},
+            {"ldc_r4",		VMInstruction::Ldc_r4		},
             {"ldc_s",		VMInstruction::Ldc_s		},
             {"ld_b",		VMInstruction::Ld_b		    },
             {"ldarg",		VMInstruction::Ldarg		},
