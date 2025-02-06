@@ -97,7 +97,7 @@ namespace Nebula.Commons.Reporting.Strings {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Binary operator &apos;{0}&apos; is not defined for types &apos;{1&apos; and &apos;{2}&apos;..
+        ///   Looks up a localized string similar to Binary operator &apos;{0}&apos; is not defined for types &apos;{1}&apos; and &apos;{2}&apos;..
         /// </summary>
         internal static string BinaryOperatorNotDefined {
             get {
@@ -201,6 +201,15 @@ namespace Nebula.Commons.Reporting.Strings {
         internal static string FieldDoesNotExist {
             get {
                 return ResourceManager.GetString("FieldDoesNotExist", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The float number &apos;{0}&apos; does not end with &apos;f&apos;.
+        /// </summary>
+        internal static string FloatNoMarker {
+            get {
+                return ResourceManager.GetString("FloatNoMarker", resourceCulture);
             }
         }
         

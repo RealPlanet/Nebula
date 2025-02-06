@@ -130,7 +130,7 @@
     <value>Bad character input '{0}'.</value>
   </data>
   <data name="BinaryOperatorNotDefined" xml:space="preserve">
-    <value>Binary operator '{0}' is not defined for types '{1' and '{2}'.</value>
+    <value>Binary operator '{0}' is not defined for types '{1}' and '{2}'.</value>
   </data>
   <data name="BinderFunctionAlreadyExists" xml:space="preserve">
     <value>Function symbol '{0}' already declared.</value>
@@ -236,5 +236,8 @@
   </data>
   <data name="InvalidExpressionStatement" xml:space="preserve">
     <value>Only assignment and call expressions can be used as a statement.</value>
+  </data>
+  <data name="FloatNoMarker" xml:space="preserve">
+    <value>The float number '{0}' does not end with 'f'</value>
   </data>
 </root>
