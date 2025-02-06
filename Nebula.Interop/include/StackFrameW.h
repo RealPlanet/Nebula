@@ -9,7 +9,7 @@ namespace Nebula::Interop
     public ref class StackFrameW
     {
     public:
-        StackFrameW(const nebula::Frame* nativePtr);
+        StackFrameW(nebula::Frame* nativePtr);
 
         VariableW^ GetLocalVariableAt(int index);
         VariableW^ GetParameterVariableAt(int index);
@@ -25,7 +25,7 @@ namespace Nebula::Interop
             System::String^ get();
         }
 
-        property int CurrentInstructionIndex
+        property int NextInstructionIndex
         {
             int get();
         }
@@ -46,6 +46,6 @@ namespace Nebula::Interop
         }
 
     private:
-        const nebula::Frame* m_pNative;
+        nebula::Frame* m_pNative;
     };
 }

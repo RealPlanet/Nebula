@@ -8,7 +8,9 @@ namespace Nebula::Interop
     public ref class VariableW
     {
     public:
-        VariableW(const nebula::FrameVariable* ptrNative);
+        VariableW(nebula::FrameVariable* ptrNative);
+
+        bool Set(System::String^ obj);
 
     public:
         property Nebula::CodeEmitter::Types::TypeIdentifier Type
@@ -22,7 +24,7 @@ namespace Nebula::Interop
         }
 
     private:
-        const nebula::FrameVariable* m_pNative;
+        nebula::FrameVariable* m_pNative;
     };
 }
 
