@@ -1,4 +1,4 @@
-#include "IScriptParser.h"
+#include "interfaces\IScriptParser.h"
 
 #include <cwctype>
 #include <string>

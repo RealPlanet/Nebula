@@ -11,11 +11,15 @@
 #include "Script.h"
 #include "Instruction.h"
 #include "ErrorCallStack.h"
+#include "interfaces\IStreamWrapper.h"
 
 namespace nebula
 {
     // Function pointer definition to bind Nebula function calls to C++ calls
     using NativeFunctionCallback = ::std::function<InstructionErrorCode(Interpreter*, Frame*)>;
+    using NativeFunctionCallbackPtr = InstructionErrorCode(*)(Interpreter*, Frame*);
+
+    class IStreamWrapper;
 
     // Core of the virtual machine
     class Interpreter
@@ -47,15 +51,22 @@ namespace nebula
         State Stop();
         void Reset();
 
-        shared::ErrorCallStack* GetFatalErrorCallstack() { return m_LastErrorCallstack; }
-
         // Native functions are responsible to fetch the data from the parent data stack
         bool BindNativeFunction(const std::string& name, const NativeFunctionCallback callback);
         bool AddScript(std::shared_ptr<Script> script);
+        bool SetStandardOutput(IStreamWrapper* stream);
+
 
         bool Step();
-        const ThreadMap& GetThreadMap() { return m_Threads; }
+
+        // Getters
+    public:
         const size_t GetCurrentThreadId() const { return m_CurrentThreadIndex; }
+
+        const ThreadMap& GetThreadMap() { return m_Threads; }
+        IStreamWrapper* StandardOutput() { return m_pStandardOutput; }
+        shared::ErrorCallStack* GetFatalErrorCallstack() { return m_LastErrorCallstack; }
+
     private:
         bool CheckAndSetExitState();
 
@@ -89,5 +100,7 @@ namespace nebula
 
         int m_MaxExecutionTime = 10;// Milliseconds
         std::chrono::steady_clock::time_point m_LastSchedulingUpdate{};
+
+        IStreamWrapper* m_pStandardOutput;
     };
 }
