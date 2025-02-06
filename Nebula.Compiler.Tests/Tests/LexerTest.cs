@@ -202,7 +202,6 @@ namespace Nebula.Core.Lexing.Tests
 
         #endregion
 
-
         #region Helpers
 
         /// <summary>
@@ -395,6 +394,9 @@ namespace Nebula.Core.Lexing.Tests
                 (NodeType.IdentifierToken, "a"),
                 (NodeType.IdentifierToken, "abc"),
                 (NodeType.NumberToken, "1"),
+                (NodeType.NumberToken, "123"),
+                (NodeType.NumberToken, ".1f"),
+                (NodeType.NumberToken, "15.1f"),
                 (NodeType.NumberToken, "123"),
                 (NodeType.StringToken, "\"abc\""),
                 (NodeType.StringToken, "\"ab\"\"c\""),

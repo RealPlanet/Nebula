@@ -10,21 +10,14 @@ namespace Nebula.Core.Parsing.Tests
     [TestClass]
     public class ParserTests
     {
-        private static Expression ParseExpression(string text)
+        [TestMethod]
+        [DynamicData(nameof(GetCanParseData))]
+        public void Parser_CanParseCorrectly(NodeType expectedType, string text)
         {
-            StringBuilder sb = new();
-            sb.AppendLine("func void main() {");
-            sb.AppendLine(text);
-            sb.AppendLine("}");
-
-
-            SourceCode sourceCode = SourceCode.From(sb.ToString(), nameof(ParseExpression));
-            CompilationUnit root = Parser.Parse(sourceCode, out Commons.Reporting.Report _);
-            Assert.AreEqual(1, root.Functions.Count);
-            FunctionDeclaration member = root.Functions[0];
-            Assert.AreEqual(1, member.Body.Statements.Length);
-            Assert.IsInstanceOfType<ExpressionStatement>(member.Body.Statements[0]);
-            return ((ExpressionStatement)member.Body.Statements[0]).Expression;
+            Expression a = ParseExpression(text);
+            Assert.AreEqual(NodeType.LiteralExpression, a.Type);
+            LiteralExpression litExp = (LiteralExpression)a;
+            Assert.AreEqual(expectedType, litExp.Literal.Type);
         }
 
         [TestMethod]
@@ -149,6 +142,23 @@ namespace Nebula.Core.Parsing.Tests
             }
         }
 
+        private static Expression ParseExpression(string text)
+        {
+            StringBuilder sb = new();
+            sb.AppendLine("func void main() {");
+            sb.AppendLine(text);
+            sb.AppendLine("}");
+
+
+            SourceCode sourceCode = SourceCode.From(sb.ToString(), nameof(ParseExpression));
+            CompilationUnit root = Parser.Parse(sourceCode, out Commons.Reporting.Report _);
+            Assert.AreEqual(1, root.Functions.Count);
+            FunctionDeclaration member = root.Functions[0];
+            Assert.AreEqual(1, member.Body.Statements.Length);
+            Assert.IsInstanceOfType<ExpressionStatement>(member.Body.Statements[0]);
+            return ((ExpressionStatement)member.Body.Statements[0]).Expression;
+        }
+
         public static IEnumerable<object[]> GetBinaryOperatorPairsData
         {
             get
@@ -174,6 +184,23 @@ namespace Nebula.Core.Parsing.Tests
                         yield return new object[] { unary, binary };
                     }
                 }
+            }
+        }
+
+        public static IEnumerable<object[]> GetCanParseData
+        {
+            get
+            {
+                List<(NodeType, string)> dataList = new()
+                {
+                    (NodeType.NumberToken, "1"),
+                    (NodeType.NumberToken, "125"),
+                    (NodeType.NumberToken, "1.25f"),
+                    (NodeType.NumberToken, ".25f"),
+                };
+
+                foreach (var i in dataList)
+                    yield return new object[] { i.Item1, i.Item2 };
             }
         }
     }
