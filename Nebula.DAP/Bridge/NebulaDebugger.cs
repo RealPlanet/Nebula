@@ -5,9 +5,11 @@ using Nebula.Debugger.Bridge.Objects;
 using Nebula.Interop;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Nebula.Debugger.Bridge
 {
@@ -19,6 +21,7 @@ namespace Nebula.Debugger.Bridge
 
         public event EventHandler? ExecutionEnd;
         public event EventHandler? DebugFilesChanged;
+        public event EventHandler<string>? OnStdOut;
         #endregion
 
         #region Properties
@@ -38,6 +41,7 @@ namespace Nebula.Debugger.Bridge
         private readonly ILogger _logger;
         private readonly Dictionary<string, DebugFile> _dbgFiles = [];
         private StateInformation _latestStateInformation;
+        private Task _vmStdoutTask;
         #endregion
 
         public NebulaDebugger(DebuggerConfiguration configuration, ILogger logger)
@@ -50,18 +54,34 @@ namespace Nebula.Debugger.Bridge
             Breakpoints = new BreakpointManager(this);
 
             _logger.LogInformation("Debugger constructed");
-
             //DebugFilesChanged += ReloadLineNumberCache;
+            _vmStdoutTask = Task.Run(ReadInterpreterStandardOut);
         }
 
-        //private void ReloadLineNumberCache(object? sender, EventArgs e)
-        //{
-        //    _debuggableLines.Clear();
-        //    var lines = _dbgFiles.Values.SelectMany(s => s.Functions.Values)
-        //        .SelectMany(v => v.InstructionLines);
-        //    foreach (var l in lines)
-        //        _debuggableLines.Add(l);
-        //}
+        private async Task ReadInterpreterStandardOut()
+        {
+#if DEBUG
+            if (!System.Diagnostics.Debugger.IsAttached)
+                System.Diagnostics.Debugger.Launch();
+#endif
+
+            MemoryStream stream = new();
+            StreamWriter writer = new(stream);
+            StreamReader reader = new(stream);
+            _interpreter.SetStandardOutput(writer);
+            while(!_tokenSource.IsCancellationRequested)
+            {
+                // TODO :: Exiting the VM should close stream, as a result this readline will interrupt and we can exit gracefully
+                string data = reader.ReadLine() ?? string.Empty;
+                if (string.IsNullOrEmpty(data))
+                {
+                    await Task.Yield();
+                    continue;
+                }
+
+                OnStdOut?.Invoke(this, data + "\n");
+            }            
+        }
 
         #region Initialization
 
@@ -87,7 +107,7 @@ namespace Nebula.Debugger.Bridge
             // Continue step
             if (threadId < 0)
             {
-                int[] startingOpcodes = _interpreter.GetCurrentOpcodeIndexForAllThreads();
+                int[] startingOpcodes = _interpreter.GetNextOpcodeIndexForAllThreads();
 
                 _interpreter.Step();
 
@@ -99,15 +119,15 @@ namespace Nebula.Debugger.Bridge
                     StackFrameW frame = earlyStoppingStack.LastFrame;
                     DebugFile currentDbgInfo = DebugFiles[frame.Namespace];
                     DebugFunction currentDbgFunction = currentDbgInfo.Functions[frame.FunctionName];
-                    int currentOpcodeIndex = frame.CurrentInstructionIndex;
+                    int nextOpcodeIndex = frame.NextInstructionIndex;
 
 
                     int startingLine = currentDbgFunction.LineNumber;
                     if (startingOpcodes[earlyStoppedThread] >= 0)
                         startingLine = currentDbgFunction.InstructionLines[startingOpcodes[earlyStoppedThread]];
                     int steppedLine = currentDbgFunction.LineNumber;
-                    if (currentOpcodeIndex >= 0)
-                        steppedLine = currentDbgFunction.InstructionLines[currentOpcodeIndex];
+                    if (nextOpcodeIndex >= 0)
+                        steppedLine = currentDbgFunction.InstructionLines[nextOpcodeIndex];
 
                     if (startingLine != steppedLine)
                     {
@@ -135,20 +155,31 @@ namespace Nebula.Debugger.Bridge
                 StackFrameW frame = stack.LastFrame;
                 DebugFile currentDbgInfo = DebugFiles[frame.Namespace];
                 DebugFunction currentDbgFunction = currentDbgInfo.Functions[frame.FunctionName];
-                int currentOpcode = frame.CurrentInstructionIndex;
-
+                int nextOpcodeIndex = frame.NextInstructionIndex;
+         
                 int numberOfSteps = 0;
-                int lineNumber = currentDbgFunction.InstructionLines[currentOpcode];
-                if (currentOpcode < currentDbgFunction.InstructionLines.Count)
+                int lineNumber = -1;
+                if (nextOpcodeIndex >= 0)
+                    lineNumber = currentDbgFunction.InstructionLines[nextOpcodeIndex];
+
+                if (nextOpcodeIndex < currentDbgFunction.InstructionLines.Count)
                 {
-                    while (currentOpcode < frame.InstructionCount &&
-                        currentDbgFunction.InstructionLines[currentOpcode + numberOfSteps] == lineNumber)
+                    if (nextOpcodeIndex < 0)
                     {
-                        numberOfSteps++;
+                        // Func has not started yet
+                        numberOfSteps++; // Skip just one
+                    }
+                    else
+                    {
+                        while (nextOpcodeIndex + numberOfSteps < frame.InstructionCount &&
+                            currentDbgFunction.InstructionLines[nextOpcodeIndex + numberOfSteps] == lineNumber)
+                        {
+                            numberOfSteps++;
+                        }
                     }
                 }
 
-                int targetOpcode = frame.CurrentInstructionIndex + numberOfSteps;
+                int targetOpcode = frame.NextInstructionIndex + numberOfSteps;
                 // If we want to step in we'll never reach the target opcode because w'd have to step over the function call
                 if (isStepIn)
                 {
@@ -157,11 +188,11 @@ namespace Nebula.Debugger.Bridge
 
                 bool exitLoop = false;
                 while (!exitLoop &&
-                    frame.CurrentInstructionIndex != targetOpcode &&
-                    frame.CurrentInstructionIndex < frame.InstructionCount) // Happens when we do the last opcode
+                    frame.NextInstructionIndex != targetOpcode &&
+                    frame.NextInstructionIndex < frame.InstructionCount) // Happens when we do the last opcode
                 {
                     // This condition triggers when we are about to execute a return statement in a function and thus de-allocating the frame
-                    exitLoop = frame.CurrentInstructionIndex + 1 == targetOpcode &&
+                    exitLoop = frame.NextInstructionIndex == targetOpcode &&
                         targetOpcode == frame.InstructionCount - 1;
 
                     _interpreter.Step();
@@ -180,7 +211,10 @@ namespace Nebula.Debugger.Bridge
                     }
                     else
                     {
-                        int currentLineNumber = currentDbgFunction.InstructionLines[frame.CurrentInstructionIndex];
+                        int currentLineNumber = -1;
+                        if (frame.NextInstructionIndex >= 0)
+                            currentLineNumber = currentDbgFunction.InstructionLines[frame.NextInstructionIndex];
+
                         // This is to prevent breaking on the same line because of a breakpoint
                         // If we started from this line then we likely broke here
                         if (lineNumber != currentLineNumber)
@@ -202,6 +236,13 @@ namespace Nebula.Debugger.Bridge
                 if (_interpreter.State == InterpreterState.Exited)
                     ExecutionEnd?.Invoke(this, EventArgs.Empty);
             }
+
+            // TODO :: If we have the following
+            // - 0 brfalse 2
+            // - 1  exit
+            // - 2 continue
+            // And brfalse jumped next index will be 2 and current index will evaluate to 1
+            // as a result debugger will show us inside the IF
 
             return true;
         }
@@ -274,7 +315,7 @@ namespace Nebula.Debugger.Bridge
 
         #region API
 
-        public bool LoadScripts(ICollection<string> scripts)
+        public bool InitDebugger(ICollection<string> scripts, string nativeDllBindings)
         {
             if (!_interpreter.AddScripts(scripts))
             {
@@ -311,7 +352,23 @@ namespace Nebula.Debugger.Bridge
                 });
             }
 
-            return true;
+            var uniqueNativeFunctions = _dbgFiles.SelectMany(f => f.Value.NativeFunctions)
+                .Distinct()
+                .ToList();
+
+            if(string.IsNullOrEmpty(nativeDllBindings))
+            {
+                if(uniqueNativeFunctions.Count > 0)
+                {
+                    // TODO Report error!
+                    return false;
+                }
+
+                return true;
+            }
+
+            // TODO :: Error check!
+            return _interpreter.LoadNativesFromDll(nativeDllBindings, uniqueNativeFunctions);
         }
 
         public void Dispose()
@@ -349,7 +406,7 @@ namespace Nebula.Debugger.Bridge
 
         internal int GetLineNumber(NebulaStackFrame f)
         {
-            int opcode = f.NativeFrame.CurrentInstructionIndex;
+            int opcode = f.NativeFrame.NextInstructionIndex;
             DebugFunction debugFunc = GetDebugInfo(f)!;
             if (opcode >= 0)
             {

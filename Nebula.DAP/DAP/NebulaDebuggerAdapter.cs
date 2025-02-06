@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Messages;
 using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Utilities;
 using Nebula.Debugger.Bridge;
 using Nebula.Debugger.Bridge.Objects;
+using Nebula.Interop;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -19,6 +20,12 @@ namespace Nebula.Debugger.DAP
     public sealed class NebulaDebuggerAdapter
         : DebugAdapterBase
     {
+        private enum ExitReason
+        {
+            NormalExit,
+            InitError,
+        }
+
         private readonly DebuggerConfiguration _configuration;
         private readonly ILogger _logger;
         private readonly NebulaDebugger _nebulaDebugger;
@@ -36,13 +43,23 @@ namespace Nebula.Debugger.DAP
             _logger = logger;
             _nebulaDebugger = new NebulaDebugger(debuggerConfiguration, logger);
             _nebulaDebugger.ExecutionEnd += OnExecutionEnd;
+            _nebulaDebugger.OnStdOut += OnStdOutFromNative;
             InitializeProtocolClient(debuggerConfiguration.InStream, debuggerConfiguration.Outstream);
+        }
+
+        private void OnStdOutFromNative(object? sender, string e)
+        {
+            Protocol.SendEvent(new OutputEvent(e)
+            {
+                Category = OutputEvent.CategoryValue.Stdout
+            });
         }
 
         private void OnExecutionEnd(object? sender, EventArgs e)
         {
             _tokSource.Cancel();
             _runEvent.Reset();
+            _nebulaDebugger.Dispose();
         }
 
         #region Private
@@ -110,11 +127,34 @@ namespace Nebula.Debugger.DAP
                         newStopEvent.AllThreadsStopped = true;
                         PostStopReason(newStopEvent);
                     }
-                        
+
                 }
             }
 
-            Protocol.SendEvent(new ExitedEvent(exitCode: 0));
+            PostTerminationEvents();
+        }
+
+        private void PostTerminationEvents(ExitReason reason = ExitReason.NormalExit)
+        {
+            StringWriter message = new StringWriter();
+            OutputEvent.CategoryValue messageType = OutputEvent.CategoryValue.Console;
+
+            message.WriteLine(">> Terminating debugger <<");
+
+            switch(reason)
+            {
+                case ExitReason.InitError:
+                    message.WriteLine(" One or more initialization errors stopped the debugger!");
+                    break;
+            }
+
+            OutputEvent outputEvent = new OutputEvent()
+            {
+                Output = message.ToString(),
+                Category = messageType,
+            };
+            Protocol.SendEvent(outputEvent);
+            Protocol.SendEvent(new ExitedEvent(exitCode: (int)reason));
             Protocol.SendEvent(new TerminatedEvent());
         }
 
@@ -144,6 +184,7 @@ namespace Nebula.Debugger.DAP
         private void LoadDebuggerScripts(LaunchArguments arguments)
         {
             string rootFolder = arguments.ConfigurationProperties.GetValueAsString("workspace");
+            string nativeBindingSource = arguments.ConfigurationProperties.GetValueAsString("native_binding_dll");
 
             List<string> additionalFolders = [];
             additionalFolders.Add(rootFolder);
@@ -160,7 +201,10 @@ namespace Nebula.Debugger.DAP
             }
 
             string[] scriptFiles = GetScriptsToLoad(additionalFolders.ToArray());
-            _nebulaDebugger.LoadScripts(scriptFiles);
+            if(!_nebulaDebugger.InitDebugger(scriptFiles, nativeBindingSource))
+            {
+                OnExecutionEnd(this, EventArgs.Empty);
+            }
         }
 
         private string[] GetScriptsToLoad(string[] folders)
@@ -200,6 +244,7 @@ namespace Nebula.Debugger.DAP
             {
                 SupportsSingleThreadExecutionRequests = false, // All or nothing
                 SupportsConfigurationDoneRequest = true,
+                SupportsSetVariable = true,
                 SupportsFunctionBreakpoints = true,
                 SupportsDebuggerProperties = true,
                 SupportsInstructionBreakpoints = false,
@@ -378,6 +423,12 @@ namespace Nebula.Debugger.DAP
 
             _dbgThread = Task.Run(TaskDbgThread, _tokSource.Token);
 
+
+            if(_dbgThread.IsCanceled)
+            {
+                PostTerminationEvents(ExitReason.InitError);
+            }
+
             if (_configuration.StepOnEntry)
             {
                 PostStopReason(StoppedEvent.ReasonValue.Entry, 0);
@@ -481,6 +532,28 @@ namespace Nebula.Debugger.DAP
 
             return response;
         }
+        #endregion
+
+        #region Expression Operations
+
+        protected override SetVariableResponse HandleSetVariableRequest(SetVariableArguments arguments)
+        {
+            NebulaScope? myScope = _nebulaDebugger.Threads
+                .SelectMany(t => t.Value.StackTrace)
+                .SelectMany(f => f.Scopes)
+                .FirstOrDefault(s => s.ScopeId == arguments.VariablesReference);
+
+            var myVar = myScope!.Variables.First(v => v.Name == arguments.Name);
+            myVar.NativeVariable.Set(arguments.Value);
+
+            return new()
+            {
+                VariablesReference = arguments.VariablesReference,
+                Type = myVar.Type,
+                Value = myVar.Value
+            };
+        }
+
         #endregion
 
         #endregion

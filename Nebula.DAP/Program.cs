@@ -7,6 +7,10 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
+using System.Runtime.Serialization;
+using System.Threading;
 
 namespace Nebula.Debugger
 {
@@ -20,6 +24,10 @@ namespace Nebula.Debugger
         [CommandLineArgument("stopOnEntry", DefaultValue = false, IsRequired = false)]
         [Description("If true immediately halt execution of code")]
         public bool StepOnEntry { get; set; }
+
+        [CommandLineArgument("server_port", DefaultValue = 0, IsRequired = false)]
+        [Description("Server port")]
+        public int ServerPort { get; set; }
     }
 
     internal class Program
@@ -44,7 +52,6 @@ namespace Nebula.Debugger
             if (arguments.DebugDAP)
                 System.Diagnostics.Debugger.Launch();
 
-
             DebuggerConfiguration configuration = new(Console.OpenStandardInput(), Console.OpenStandardOutput())
             {
                 StepOnEntry = arguments.StepOnEntry,
@@ -52,6 +59,12 @@ namespace Nebula.Debugger
 
             AppLogger = CreateFileLogger();
             AppLogger.LogInformation("Debugger start");
+
+            if (arguments.ServerPort != 0)
+            {
+                RunServer(arguments, configuration);
+                return 0;
+            }
 
             // Standard mode - run with the adapter connected to the process's stdin and stdout
             NebulaDebuggerAdapter adapter = new(configuration, AppLogger);
@@ -88,11 +101,10 @@ namespace Nebula.Debugger
             return logger;
         }
 
-        /*
-          private static void RunServer(ProgramArgs args)
+        private static void RunServer(ProgramArgs args, DebuggerConfiguration configuration)
         {
-            Console.WriteLine(Invariant($"Waiting for connections on port {args.ServerPort}..."));
-            SampleDebugAdapter adapter = null;
+            Console.WriteLine(FormattableString.Invariant($"Waiting for connections on port {args.ServerPort}..."));
+            NebulaDebuggerAdapter adapter = null;
 
             Thread listenThread = new Thread(() =>
             {
@@ -102,13 +114,13 @@ namespace Nebula.Debugger
                 while (true)
                 {
                     Socket clientSocket = listener.AcceptSocket();
-                    Thread clientThread = new Thread(() =>
+                    Thread clientThread = new(() =>
                     {
                         Console.WriteLine("Accepted connection");
 
                         using (Stream stream = new NetworkStream(clientSocket))
                         {
-                            adapter = new SampleDebugAdapter(stream, stream);
+                            adapter = new NebulaDebuggerAdapter(configuration, AppLogger);
                             adapter.Protocol.LogMessage += (sender, e) => Console.WriteLine(e.Message);
                             adapter.Protocol.DispatcherError += (sender, e) =>
                             {
@@ -121,41 +133,17 @@ namespace Nebula.Debugger
                         }
 
                         Console.WriteLine("Connection closed");
-                    });
-
-                    clientThread.Name = "DebugServer connection thread";
+                    })
+                    {
+                        Name = "DebugServer connection thread"
+                    };
                     clientThread.Start();
                 }
             });
-
-            Thread keypressThread;
-            if (args.StepOnEnter)
-            {
-                Console.WriteLine("Will step when ENTER is pressed.");
-                keypressThread = new Thread(() =>
-                {
-                    ConsoleKeyInfo keyInfo;
-
-                    while (true)
-                    {
-                        keyInfo = Console.ReadKey();
-                        if (keyInfo.Key == ConsoleKey.Enter && adapter != null)
-                        {
-                            Console.WriteLine("Forcing step");
-                            adapter.ExitBreakCore(0, true);
-                        }
-                    }
-                });
-
-                keypressThread.Name = "Keypress listener thread";
-                keypressThread.Start();
-            }
 
             listenThread.Name = "DebugServer listener thread";
             listenThread.Start();
             listenThread.Join();
         }
-    }
-         */
     }
 }
