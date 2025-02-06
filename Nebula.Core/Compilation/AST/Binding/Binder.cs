@@ -115,7 +115,8 @@ namespace Nebula.Core.Binding
                 // Now that all types have been declared we can bind the function declarations
                 foreach (NativeFunctionDeclaration function in _currentUnit.NativeFunction)
                 {
-                    BindNativeFunctionDeclaration(function);
+                    FunctionSymbol nativeFunction = BindNativeFunctionDeclaration(function);
+                    _currentProgram.NativeFunctions.Add(nativeFunction);
                 }
 
                 foreach (FunctionDeclaration function in _currentUnit.Functions)
@@ -961,6 +962,7 @@ namespace Nebula.Core.Binding
         {
             "bool" => TypeSymbol.Bool,
             "int" => TypeSymbol.Int,
+            "float" => TypeSymbol.Float,
             "string" => TypeSymbol.String,
             //"any" => TypeSymbol.Any,
             "void" => TypeSymbol.Void,

@@ -18,6 +18,7 @@ namespace Nebula.Core.Binding
             ResultType = value switch
             {
                 bool => TypeSymbol.Bool,
+                float => TypeSymbol.Float,
                 int => TypeSymbol.Int,
                 string => TypeSymbol.String,
                 _ => throw new Exception($"Unexpected literal '{value}' of type '{value.GetType()}'"),

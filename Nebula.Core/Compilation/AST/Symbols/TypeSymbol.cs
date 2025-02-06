@@ -10,6 +10,7 @@ namespace Nebula.Core.Binding.Symbols
         //public static readonly TypeSymbol Any = new("any");
         public static readonly TypeSymbol Bool = new("bool");
         public static readonly TypeSymbol Int = new("int");
+        public static readonly TypeSymbol Float = new("float");
         public static readonly TypeSymbol String = new("string");
         public static readonly TypeSymbol Void = new("void");
         public static readonly TypeSymbol Bundle = new("bundle");
@@ -31,8 +32,6 @@ namespace Nebula.Core.Binding.Symbols
             {
                 case TypeIdentifier.Void:
                     return TypeSymbol.Void;
-                case TypeIdentifier.Bool:
-                    return TypeSymbol.Bool;
                 case TypeIdentifier.Int32:
                     return TypeSymbol.Int;
                 case TypeIdentifier.String:

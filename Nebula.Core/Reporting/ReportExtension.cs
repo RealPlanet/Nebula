@@ -182,6 +182,12 @@ namespace Nebula.Core.Reporting
             string message = string.Format(template, text, type);
             r.PushCode(code, message, location);
         }
+        public static void ReportFloatMustEndWithMarker(this Report r, TextLocation location, string text)
+        {
+            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorFloatNoMarker;
+            string message = string.Format(template, text);
+            r.PushCode(code, message, location);
+        }
         public static void ReportUndefinedUnaryOperator(this Report r, TextLocation location, string text, TypeSymbol boundType)
         {
             (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorUnaryOperatorNotDefined;
