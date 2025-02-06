@@ -9,5 +9,6 @@ namespace Nebula.CodeEmitter
     {
         public ICollection<BundleDefinition> Bundles { get; } = [];
         public ICollection<MethodDefinition> Methods { get; } = [];
+        public ICollection<NativeMethodDefinition> NativeMethods { get; } = [];
     }
 }
