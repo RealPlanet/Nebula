@@ -14,6 +14,7 @@
     <ClInclude Include="include\EmitTokens.h" />
     <ClInclude Include="include\ErrorCallStack.h" />
     <ClInclude Include="include\Instruction.h" />
+    <ClInclude Include="include\DebuggerDefinitions.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DiagnosticReport.cpp" />
