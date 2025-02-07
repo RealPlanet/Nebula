@@ -38,6 +38,8 @@ namespace nebula {
         // Threads
         Call_t,
         Wait,
+        Wait_n,
+        Notify,
 
         // Math
         Add,
@@ -158,6 +160,10 @@ namespace nebula {
             return "call_t";
         case VMInstruction::Wait:
             return "wait";
+        case VMInstruction::Wait_n:
+            return "wait_n";
+        case VMInstruction::Notify:
+            return "notify";
         case VMInstruction::Add:
             return "add";
         case VMInstruction::Sub:
@@ -207,6 +213,8 @@ namespace nebula {
             {"cgt",			VMInstruction::Cgt			},
             {"call_t",		VMInstruction::Call_t		},
             {"wait",		VMInstruction::Wait			},
+            {"wait_n",		VMInstruction::Wait_n		},
+            {"notify",		VMInstruction::Notify		},
             {"add",			VMInstruction::Add			},
             {"sub",			VMInstruction::Sub			},
             {"mul",			VMInstruction::Mul			},
