@@ -1,0 +1,15 @@
+namespace "FloatMath";
+
+native void WriteLine(string s);
+
+func void main() autoexec
+{
+    float first = 1.25f;
+    const float second = .75f;
+    float res = first + second;
+    int castedToInt = int(first);
+
+    WriteLine("castedToInt should be 1 -> " + string(castedToInt));
+
+    WriteLine("Adding 1.25 and 0.75-> " + string(res));
+}
