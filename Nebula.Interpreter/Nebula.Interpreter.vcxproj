@@ -29,6 +29,7 @@
   <ItemGroup>
     <ClInclude Include="include\Interpreter.h" />
     <ClInclude Include="include\InterpreterStandardOutput.h" />
+    <ClCompile Include="src\AwaitableObject.cpp" />
     <ClCompile Include="src\InterpreterStandardOutput.cpp" />
     <ClCompile Include="src\FrameMemory.cpp" />
     <ClCompile Include="src\InstructionRegistry.cpp" />

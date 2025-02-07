@@ -48,7 +48,7 @@ namespace nebula
     public:
         void SetScheduledSleep(const size_t& amount);
         void SetNextInstruction(size_t index);
-
+        void WaitForNotification(AwaitableObject*, const std::string& notification);
     private:
         // The read-only definition of this function
         const Function* m_FunctionDefinition;
