@@ -85,3 +85,8 @@ void Frame::SetNextInstruction(size_t label)
 
     m_NextInstructionIndex = label;
 }
+
+void Frame::WaitForNotification(AwaitableObject* notifier, const std::string& notification)
+{
+    m_Scheduler.WaitForNotification(notifier, notification);
+}

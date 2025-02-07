@@ -32,6 +32,7 @@
     <ClCompile Include="src\InstructionRegistry.cpp" />
     <ClCompile Include="src\FrameMemory.cpp" />
     <ClCompile Include="src\InterpreterStandardOutput.cpp" />
+    <ClCompile Include="src\AwaitableObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Script">

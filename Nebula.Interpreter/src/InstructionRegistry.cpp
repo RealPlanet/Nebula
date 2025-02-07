@@ -113,8 +113,9 @@ static InstructionErrorCode SumDataStackVariants(DataStack& stack)
 
 static InstructionErrorCode SubDataStackVariants(DataStack& stack)
 {
-    DataStackVariant& a = stack.Peek();
-    DataStackVariant& b = stack.Peek(1);
+    DataStackVariant& b = stack.Peek();
+    DataStackVariant& a = stack.Peek(1);
+
     if (const TInt32* iValA = std::get_if<TInt32>(&a))
     {
         stack.Pop();
@@ -170,8 +171,8 @@ static InstructionErrorCode SubDataStackVariants(DataStack& stack)
 
 static InstructionErrorCode MulDataStackVariants(DataStack& stack)
 {
-    DataStackVariant& a = stack.Peek();
-    DataStackVariant& b = stack.Peek(1);
+    DataStackVariant& b = stack.Peek();
+    DataStackVariant& a = stack.Peek(1);
     if (const TInt32* iValA = std::get_if<TInt32>(&a))
     {
         stack.Pop();
@@ -227,8 +228,8 @@ static InstructionErrorCode MulDataStackVariants(DataStack& stack)
 
 static InstructionErrorCode DivDataStackVariants(DataStack& stack)
 {
-    DataStackVariant& a = stack.Peek();
-    DataStackVariant& b = stack.Peek(1);
+    DataStackVariant& b = stack.Peek();
+    DataStackVariant& a = stack.Peek(1);
     if (const TInt32* iValA = std::get_if<TInt32>(&a))
     {
         stack.Pop();
@@ -323,6 +324,8 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
     case VMInstruction::Neg:
     case VMInstruction::Not:
     case VMInstruction::Xor:
+    case VMInstruction::Wait_n: // String on stack
+    case VMInstruction::Notify: // String on stack
     {
         return { /* No arguments */ };
     }
@@ -547,6 +550,40 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
     {
         TInt32& millis = std::get<TInt32>(stack.Peek());
         context->SetScheduledSleep(((size_t)millis) * 1000);
+        stack.Pop();
+
+        return InstructionErrorCode::None;
+    }
+    case VMInstruction::Wait_n:
+    {
+        assert(args.size() == 0);
+        assert(std::holds_alternative<TString>(stack.Peek()));
+
+        // Load the string to notify
+        TString stringToNotify = std::get<TString>(stack.Peek());
+        stack.Pop();
+
+        // Load the bundle that will notify this message
+        assert(std::holds_alternative<TBundle>(stack.Peek()));
+        TBundle& bundle = std::get<TBundle>(stack.Peek());
+        context->WaitForNotification(bundle.get(), stringToNotify);
+        stack.Pop();
+
+        return InstructionErrorCode::None;
+    }
+    case VMInstruction::Notify:
+    {
+        assert(args.size() == 0);
+        assert(std::holds_alternative<TString>(stack.Peek()));
+
+        // Load the string to notify
+        TString stringToNotify = std::get<TString>(stack.Peek());
+        stack.Pop();
+
+        // Load the bundle that will notify this message
+        assert(std::holds_alternative<TBundle>(stack.Peek()));
+        TBundle& bundle = std::get<TBundle>(stack.Peek());
+        bundle->Notify(stringToNotify);
         stack.Pop();
 
         return InstructionErrorCode::None;

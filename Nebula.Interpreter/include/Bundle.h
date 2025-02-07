@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "LanguageTypes.h"
+#include "AwaitableObject.h"
 
 namespace nebula
 {
@@ -48,6 +49,7 @@ namespace nebula
 
     // In memory rapresentation of a bundle
     class Bundle
+        : public AwaitableObject
     {
     public:
         static std::shared_ptr<Bundle> FromDefinition(const BundleDefinition& definition);
