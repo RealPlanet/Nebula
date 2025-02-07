@@ -17,6 +17,7 @@ namespace nebula::stdlib
     nebula::InstructionErrorCode WriteLine(nebula::Interpreter*, nebula::Frame*);
     nebula::InstructionErrorCode Write(nebula::Interpreter*, nebula::Frame*);
     nebula::InstructionErrorCode HashString(nebula::Interpreter*, nebula::Frame*);
+    nebula::InstructionErrorCode GetCurrentTimeMillis(nebula::Interpreter*, nebula::Frame*);
 }
 
 extern "C"
