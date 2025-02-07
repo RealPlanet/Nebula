@@ -1,0 +1,47 @@
+namespace "NotificationTest";
+
+native int GetCurrentTimeMillis();
+native void WriteLine(string msg);
+
+bundle WorkTask
+{
+    int id;
+    string status;
+    string msg_done;
+}
+
+func void main() autoexec
+{
+    WriteLine("The main thread will create a new bundle, pass it to an async function and wait until it's work is done!");
+    WorkTask taskResult = 0;
+    taskResult.id = 1;
+    taskResult.status = "Pending";
+    // This is the message to use
+    taskResult.msg_done = "AWAITER_DONE";
+
+    WriteLine("The bundle has id '" + string(taskResult.id) + "' and status: " + taskResult.status);
+    int startingTime = GetCurrentTimeMillis();
+
+    async work_task(taskResult, 10);
+
+    taskResult waittill taskResult.msg_done;
+    int endTime = GetCurrentTimeMillis();
+    int timePassed = endTime - startingTime;
+    float timePassedSeconds = timePassed / 1000f;
+
+    WriteLine("Task has finished!");
+    WriteLine("Task took to finish" + string(timePassedSeconds) + " seconds");
+    WriteLine("Awaiter status is now ->" + taskResult.status);
+}
+
+func void work_task(WorkTask awaiter, int workTime)
+{
+    WriteLine("Starting async task... this will take some time!");
+    wait workTime;
+    WriteLine("Task is finished, notifying listeners!");
+
+    awaiter.status = "DONE";
+
+    // This can be a const, or any expression that results in a string
+    awaiter notify awaiter.msg_done + "";
+}

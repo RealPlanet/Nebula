@@ -18,7 +18,7 @@ func void main() autoexec
     
     enemyEnt.IsAlive = true;
     enemyEnt.Name = "Zombie";
-    enemyEnt.NativePtr = EntityPtrFromName(enemyEnt.Name);  
+    enemyEnt.NativePtr = EntityPtrFromName(enemyEnt.Name); 
 
     CommonBundles::PrintEntity(enemyEnt);
 }
