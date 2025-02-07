@@ -200,6 +200,12 @@ namespace Nebula.Core.Emitting
                 case AbstractNodeType.WaitStatement:
                     EmitWaitStatement(processor, (AbstractWaitStatement)node);
                     break;
+                case AbstractNodeType.WaitNotificationStatement:
+                    EmitWaitNotificationStatement(processor, (AbstractWaitNotificationStatement)node);
+                    break;
+                case AbstractNodeType.NotifyStatement:
+                    EmitNotifyStatement(processor, (AbstractNotifyStatement)node);
+                    break;
                 default:
                     throw new Exception($"Unexpected node type '{node.Type}'");
             }
@@ -209,6 +215,20 @@ namespace Nebula.Core.Emitting
         {
             EmitExpression(processor, node.TimeExpression);
             processor.Emit(InstructionOpcode.Wait, node.OriginalNode.Span);
+        }
+
+        private void EmitWaitNotificationStatement(NILProcessor processor, AbstractWaitNotificationStatement node)
+        {
+            EmitExpression(processor, node.BundleToWaitOn);
+            EmitExpression(processor, node.NotifyExpression);
+            processor.Emit(InstructionOpcode.Wait_n, node.OriginalNode.Span);
+        }
+
+        private void EmitNotifyStatement(NILProcessor processor, AbstractNotifyStatement node)
+        {
+            EmitExpression(processor, node.BundleToNotifyFrom);
+            EmitExpression(processor, node.NotifyExpression);
+            processor.Emit(InstructionOpcode.Notify, node.OriginalNode.Span);
         }
 
         private void EmitReturnStatement(NILProcessor processor, AbstractReturnStatement node)

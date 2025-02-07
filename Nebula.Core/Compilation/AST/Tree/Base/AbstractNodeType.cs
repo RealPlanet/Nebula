@@ -11,6 +11,8 @@
         VariableDeclaration,
         NamespaceDeclaration,
         WaitStatement,
+        WaitNotificationStatement,
+        NotifyStatement,
         IfStatement,
         WhileStatement,
         DoWhileStatement,

@@ -67,6 +67,8 @@
         ContinueKeyword,
         ReturnKeyword,
         WaitKeyword,
+        WaitNotificationKeyword,
+        NotifyKeyword,
         NativeKeyword,
 
         BlockStatement,         // Generic sequence of nodes surrounded by an open and close { }
@@ -74,6 +76,8 @@
         IfStatement,
         ReturnStatement,
         WaitStatement,
+        WaitNotificationStatement,
+        NotifyStatement,
         ContinueStatement,
         BreakStatement,
         WhileStatement,

@@ -800,6 +800,8 @@ namespace Nebula.Core.Binding
             NodeType.BlockStatement => BindBlockStatement((BlockStatement)syntax),
             NodeType.ExpressionStatement => BindExpressionStatement((ExpressionStatement)syntax),
             NodeType.WaitStatement => BindWaitStatement((WaitStatement)syntax),
+            NodeType.WaitNotificationStatement => BindWaitNotificationStatement((WaitNotificationStatement)syntax),
+            NodeType.NotifyStatement => BindNotifyStatement((NotifyStatement)syntax),
             NodeType.IfStatement => BindIfStatement((IfStatement)syntax),
             NodeType.WhileStatement => BindWhileStatement((WhileStatement)syntax),
             NodeType.DoWhileStatement => BindDoWhileStatement((DoWhileStatement)syntax),
@@ -810,7 +812,6 @@ namespace Nebula.Core.Binding
             NodeType.VariableDeclarationCollection => BindVariableDeclarations((VariableDeclarationCollection)syntax),
             _ => throw new Exception($"Unexpected syntax '{syntax.Type}'"),
         };
-
         private static AbstractExpressionStatement BindErrorStatement(Node syntax) => new(syntax, new AbstractErrorExpression(syntax));
 
 
@@ -903,6 +904,41 @@ namespace Nebula.Core.Binding
             return new AbstractWaitStatement(expr, timeExpr);
         }
 
+        private AbstractStatement BindNotifyStatement(NotifyStatement syntax)
+        {
+            AbstractExpression nameExpression = BindNameExpression(syntax.Identifier);
+            if (nameExpression is AbstractVariableExpression ave && ave.Variable.Type != TypeSymbol.Bundle)
+            {
+                _binderReport.ReportIdentifierNotOfType(syntax.Identifier.Location, ave.Variable.Name, TypeSymbol.Bundle);
+            }
+
+            AbstractExpression notifyExpr = BindExpression(syntax.Expression, canBeVoid: false);
+            if (notifyExpr is not AbstractErrorExpression && notifyExpr.ResultType != TypeSymbol.String)
+            {
+                _binderReport.ReportWaitMustBeNumber(notifyExpr, TypeSymbol.String);
+                notifyExpr = new AbstractErrorExpression(notifyExpr.OriginalNode);
+            }
+
+            return new AbstractNotifyStatement(syntax, nameExpression, notifyExpr);
+        }
+
+        private AbstractStatement BindWaitNotificationStatement(WaitNotificationStatement syntax)
+        {
+            AbstractExpression nameExpression = BindNameExpression(syntax.Identifier);
+            if (nameExpression is AbstractVariableExpression ave && ave.Variable.Type != TypeSymbol.Bundle)
+            {
+                _binderReport.ReportIdentifierNotOfType(syntax.Identifier.Location, ave.Variable.Name, TypeSymbol.Bundle);
+            }
+
+            AbstractExpression notifyExpr = BindExpression(syntax.Expression, canBeVoid: false);
+            if (notifyExpr is not AbstractErrorExpression && notifyExpr.ResultType != TypeSymbol.String)
+            {
+                _binderReport.ReportWaitMustBeNumber(notifyExpr, TypeSymbol.String);
+                notifyExpr = new AbstractErrorExpression(notifyExpr.OriginalNode);
+            }
+
+            return new AbstractWaitNotificationStatement(syntax, nameExpression, notifyExpr);
+        }
         private AbstractStatement BindIfStatement(IfStatement syntax)
         {
             AbstractExpression condition = BindExpression(syntax.Condition, TypeSymbol.Bool);

@@ -21,9 +21,10 @@ namespace Nebula.Core.Lowering
             AbstractNodeType.ConditionalGotoStatement => RewriteConditionalGotoStatement((AbstractConditionalGotoStatement)node),
             AbstractNodeType.ReturnStatement => RewriteReturnStatement((AbstractReturnStatement)node),
             AbstractNodeType.WaitStatement => RewriteWaitStatement((AbstractWaitStatement)node),
+            AbstractNodeType.WaitNotificationStatement => RewriteWaitNotificationStatement((AbstractWaitNotificationStatement)node),
+            AbstractNodeType.NotifyStatement => RewriteNotifyStatement((AbstractNotifyStatement)node),
             _ => throw new Exception($"Unexpected node: {node.Type}"),
         };
-
         public virtual AbstractStatement RewriteNopStatement(AbstractNopStatement node) => node;
 
         public virtual AbstractExpression RewriteExpression(AbstractExpression node) => node.Type switch
@@ -270,7 +271,7 @@ namespace Nebula.Core.Lowering
             return new AbstractReturnStatement(node.OriginalNode, expression);
         }
 
-        private AbstractStatement RewriteWaitStatement(AbstractWaitStatement node)
+        protected virtual AbstractWaitStatement RewriteWaitStatement(AbstractWaitStatement node)
         {
             AbstractExpression rewrittenExpression = RewriteExpression(node.TimeExpression);
             if (rewrittenExpression == node.TimeExpression)
@@ -279,5 +280,22 @@ namespace Nebula.Core.Lowering
             return new AbstractWaitStatement(node.OriginalNode, rewrittenExpression);
         }
 
+        protected virtual AbstractNotifyStatement RewriteNotifyStatement(AbstractNotifyStatement node)
+        {
+            AbstractExpression rewrittenExpression = RewriteExpression(node.NotifyExpression);
+            if (rewrittenExpression == node.NotifyExpression)
+                return node;
+
+            return new AbstractNotifyStatement(node.OriginalNode, node.BundleToNotifyFrom, rewrittenExpression);
+        }
+
+        protected virtual AbstractWaitNotificationStatement RewriteWaitNotificationStatement(AbstractWaitNotificationStatement node)
+        {
+            AbstractExpression rewrittenExpression = RewriteExpression(node.NotifyExpression);
+            if (rewrittenExpression == node.NotifyExpression)
+                return node;
+
+            return new AbstractWaitNotificationStatement(node.OriginalNode, node.BundleToWaitOn, rewrittenExpression);
+        }
     }
 }

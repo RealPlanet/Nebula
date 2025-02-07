@@ -6,6 +6,7 @@ using Nebula.Core.Parsing.Expressions;
 using Nebula.Core.Parsing.Lexing;
 using Nebula.Core.Parsing.Statements;
 using Nebula.Core.Reporting;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -354,6 +355,18 @@ namespace Nebula.Core.Parsing
                             return ParseVariableDeclarations();
                         }
 
+                        if(Current.Type == NodeType.IdentifierToken &&
+                            Peek(1).Type == NodeType.WaitNotificationKeyword)
+                        {
+                            return ParseWaitNotificationStatement();
+                        }
+
+                        if (Current.Type == NodeType.IdentifierToken &&
+                            Peek(1).Type == NodeType.NotifyKeyword)
+                        {
+                            return ParseNotifyStatement();
+                        }
+
                         //if(Current.Type == NodeType.BundleKeyword &&
                         //    Peek(1).Type == NodeType.IdentifierToken)
                         //{
@@ -368,7 +381,27 @@ namespace Nebula.Core.Parsing
             }
         }
 
-        private Statement ParseWaitStatement()
+        private Statement ParseNotifyStatement()
+        {
+            NameExpression identifier = ParseVariableNameExpression();
+            Token keyword = MatchToken(NodeType.NotifyKeyword);
+            Expression expression = ParseExpression();
+            Token semicolon = MatchToken(NodeType.SemicolonToken);
+
+            return new NotifyStatement(_currentSource, identifier, keyword, expression, semicolon);
+        }
+
+        private Statement ParseWaitNotificationStatement()
+        {
+            NameExpression identifier = ParseVariableNameExpression();
+            Token keyword = MatchToken(NodeType.WaitNotificationKeyword);
+            Expression expression = ParseExpression();
+            Token semicolon = MatchToken(NodeType.SemicolonToken);
+
+            return new WaitNotificationStatement(_currentSource, identifier, keyword, expression, semicolon);
+        }
+
+        private WaitStatement ParseWaitStatement()
         {
             Token keyword = MatchToken(NodeType.WaitKeyword);
             Expression time = ParseExpression();
@@ -626,7 +659,7 @@ namespace Nebula.Core.Parsing
             return ParseVariableNameExpression();
         }
 
-        private Expression ParseVariableNameExpression()
+        private NameExpression ParseVariableNameExpression()
         {
             Token name = MatchToken(NodeType.IdentifierToken);
             if (Current.Type == NodeType.DotToken)
