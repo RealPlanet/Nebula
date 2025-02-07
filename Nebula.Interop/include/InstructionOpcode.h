@@ -34,6 +34,8 @@ namespace Nebula::CodeEmitter
         // Threads
         Call_t = nebula::VMInstruction::Call_t,
         Wait = nebula::VMInstruction::Wait,
+        Wait_n = nebula::VMInstruction::Wait_n,
+        Notify = nebula::VMInstruction::Notify,
 
         // Math
         Add = nebula::VMInstruction::Add,
