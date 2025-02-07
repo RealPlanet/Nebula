@@ -555,6 +555,10 @@ namespace Nebula.Core.Parsing.Lexing
             TextSpan span = new(_tokenStart, len);
             TextLocation location = new(_source, span);
 
+            // This is for integer numbers with terminator at the end
+            if (!hasFoundDecimal && Current == 'f')
+                hasFoundDecimal = true;
+
             if (hasFoundDecimal)
             {
                 if (Current != 'f')

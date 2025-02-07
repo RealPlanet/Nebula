@@ -44,6 +44,8 @@ namespace Nebula.Core.Graph
                         case AbstractNodeType.ExpressionStatement:
                         //case BoundNodeType.SEQUENCE_POINT_STATEMENT:
                         case AbstractNodeType.WaitStatement:
+                        case AbstractNodeType.WaitNotificationStatement:
+                        case AbstractNodeType.NotifyStatement:
                         case AbstractNodeType.LabelStatement:
                             {
                                 if (isLastStatementInBlock)
