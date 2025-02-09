@@ -12,7 +12,7 @@
 using namespace nebula;
 
 Interpreter::Interpreter()
-    : m_LastErrorCallstack{ nullptr }, m_pStandardOutput{ nullptr }
+    : m_LastErrorCallstack{ nullptr }, m_pStandardOutput{ nullptr }, m_Memory{ this }
 {
     SetStandardOutput(new InterpreterStandardOutput());
 }
@@ -130,6 +130,8 @@ bool Interpreter::Step()
     if (CheckAndSetExitState())
         return false; // Early exit
 
+    m_Memory.Collect();
+
     if (ShouldScheduleNewFrame())
     {
         SwapExecutingThread();
@@ -167,6 +169,8 @@ bool Interpreter::CheckAndSetExitState()
     if (!m_Threads.HasCallStacks())
     {
         SetState(State::Exited);
+        m_Memory.Collect(true);
+        assert(m_Memory.Empty());
         return true;
     }
 

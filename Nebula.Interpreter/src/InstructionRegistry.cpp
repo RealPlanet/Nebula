@@ -677,7 +677,8 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
             return InstructionErrorCode::BundleNotFound;
         }
 
-        stack.Push(Bundle::FromDefinition(*bundleDefinition));
+        TBundle bundle = interpreter->m_Memory.AllocBundle(*bundleDefinition);
+        stack.Push(bundle);
         return InstructionErrorCode::None;
     }
     case VMInstruction::LdBloc:
