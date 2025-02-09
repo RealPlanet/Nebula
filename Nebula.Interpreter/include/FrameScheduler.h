@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AwaitableObject.h"
+#include "interfaces/AwaitableObject.h"
 #include <map>
 
 namespace nebula

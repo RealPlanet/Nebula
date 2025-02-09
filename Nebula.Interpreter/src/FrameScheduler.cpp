@@ -1,6 +1,6 @@
 #include "Utility.h"
 #include "FrameScheduler.h"
-#include "AwaitableObject.h"
+#include "interfaces/AwaitableObject.h"
 
 using namespace nebula;
 

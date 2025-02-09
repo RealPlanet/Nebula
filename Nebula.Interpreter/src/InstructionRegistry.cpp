@@ -763,15 +763,16 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
         TInt32 bundleIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[1]);
 
         FrameVariable& var = context->Memory().LocalAt(localIndex);
-        DataStackVariant value = stack.Peek();
-        stack.Pop();
-
+        DataStackVariant& value = stack.Peek();
         TBundle bundlePtr = std::get<DataStackVariantIndex::_TypeBundle>(var.Value());
+
         if (bundlePtr->SetAt(bundleIndex, value))
         {
+            stack.Pop();
             return InstructionErrorCode::None;
         }
 
+        stack.Pop();
         // Types don't match
         return InstructionErrorCode::Fatal;
     }
@@ -782,14 +783,15 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 
         FrameVariable& var = context->Memory().ParamAt(localIndex);
         DataStackVariant value = stack.Peek();
-        stack.Pop();
 
         TBundle bundlePtr = std::get<DataStackVariantIndex::_TypeBundle>(var.Value());
         if (bundlePtr->SetAt(bundleIndex, value))
         {
+            stack.Pop();
             return InstructionErrorCode::None;
         }
 
+        stack.Pop();
         // Types don't match
         return InstructionErrorCode::Fatal;
     }
@@ -798,12 +800,14 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
         TInt32 localIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
         FrameVariable& var = context->Memory().LocalAt(localIndex);
         DataStackVariant value = stack.Peek();
-        stack.Pop();
 
         if (var.SetValue(value))
         {
+            stack.Pop();
             return InstructionErrorCode::None;
         }
+
+        stack.Pop();
         // Types don't match
         return InstructionErrorCode::Fatal;
     }

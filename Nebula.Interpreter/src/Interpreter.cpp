@@ -137,7 +137,6 @@ bool Interpreter::Step()
 
     Frame* currentFrame = GetCurrentCallstack()->back();
     Frame::Status frameStatus = currentFrame->Tick(this);
-
     switch (frameStatus)
     {
     case Frame::Status::FatalError:

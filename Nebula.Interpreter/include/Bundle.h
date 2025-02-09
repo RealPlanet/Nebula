@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "LanguageTypes.h"
-#include "AwaitableObject.h"
+#include "interfaces/AwaitableObject.h"
 
 namespace nebula
 {
@@ -38,6 +38,7 @@ namespace nebula
         const std::string& Name() { return m_Name; }
         DataStackVariantIndex FieldType() const { return m_AcceptedType; };
         const DataStackVariant& FieldValue() const { return m_Value; }
+        DataStackVariant& FieldValue() { return m_Value; }
 
         bool SetValue(DataStackVariant&, bool allowTypeMismatch = false);
 
@@ -58,9 +59,11 @@ namespace nebula
         const std::string& Name() { return m_Name; }
         size_t FieldCount() const { return m_Fields.size(); }
 
-        const DataStackVariant& Get(int index);
-        const DataStackVariant& GetByName(const std::string& name);
+        DataStackVariant& Get(int index);
+        DataStackVariant& GetByName(const std::string& name);
+
         bool SetAt(int index, DataStackVariant& data);
+        void ClearFields() { m_Fields.clear(); }
 
     private:
         Bundle() = default;
