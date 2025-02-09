@@ -5,6 +5,7 @@
 
 #include "LanguageTypes.h"
 #include "interfaces/AwaitableObject.h"
+#include "interfaces/AllocatedObject.h"
 
 namespace nebula
 {
@@ -50,7 +51,7 @@ namespace nebula
 
     // In memory rapresentation of a bundle
     class Bundle
-        : public AwaitableObject
+        : public AllocatedObject, public AwaitableObject
     {
     public:
         static std::shared_ptr<Bundle> FromDefinition(const BundleDefinition& definition);

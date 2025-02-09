@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\interfaces\AllocatedObject.h" />
     <ClInclude Include="include\interfaces\AwaitableObject.h" />
     <ClInclude Include="include\interfaces\IStreamWrapper.h" />
     <ClInclude Include="include\Bundle.h" />
@@ -23,12 +24,15 @@
     <ClInclude Include="include\interfaces\IScriptParser.h" />
     <ClInclude Include="include\ThreadMap.h" />
     <ClInclude Include="include\Script.h" />
+    <ClInclude Include="include\InterpreterMemory.h" />
     <ClInclude Include="src\InstructionRegistry.h" />
     <ClInclude Include="src\LiteralScriptParser.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Interpreter.h" />
     <ClInclude Include="include\InterpreterStandardOutput.h" />
+    <ClCompile Include="src\AllocatedObject.cpp" />
+    <ClCompile Include="src\InterpreterMemory.cpp" />
     <ClCompile Include="src\AwaitableObject.cpp" />
     <ClCompile Include="src\InterpreterStandardOutput.cpp" />
     <ClCompile Include="src\FrameMemory.cpp" />

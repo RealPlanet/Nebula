@@ -17,6 +17,8 @@
     <ClInclude Include="include\interfaces\IStreamWrapper.h" />
     <ClInclude Include="include\InterpreterStandardOutput.h" />
     <ClInclude Include="include\interfaces\AwaitableObject.h" />
+    <ClInclude Include="include\InterpreterMemory.h" />
+    <ClInclude Include="include\interfaces\AllocatedObject.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Interpreter.cpp" />
@@ -33,6 +35,8 @@
     <ClCompile Include="src\FrameMemory.cpp" />
     <ClCompile Include="src\InterpreterStandardOutput.cpp" />
     <ClCompile Include="src\AwaitableObject.cpp" />
+    <ClCompile Include="src\InterpreterMemory.cpp" />
+    <ClCompile Include="src\AllocatedObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Script">

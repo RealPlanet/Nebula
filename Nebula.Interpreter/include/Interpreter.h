@@ -11,6 +11,7 @@
 #include "Script.h"
 #include "Instruction.h"
 #include "ErrorCallStack.h"
+#include "InterpreterMemory.h"
 #include "interfaces\IStreamWrapper.h"
 
 namespace nebula
@@ -102,5 +103,6 @@ namespace nebula
         std::chrono::steady_clock::time_point m_LastSchedulingUpdate{};
 
         IStreamWrapper* m_pStandardOutput;
+        InterpreterMemory m_Memory;
     };
 }
