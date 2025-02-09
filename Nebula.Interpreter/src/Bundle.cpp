@@ -28,7 +28,7 @@ bool BundleField::SetValue(DataStackVariant& value, bool allowTypeMismatch)
 }
 
 BundleDefinition::BundleDefinition(const std::string& name)
-    : m_BundleName{name}, m_Fields{}
+    : m_BundleName{ name }, m_Fields{}
 {
 }
 
@@ -51,13 +51,13 @@ std::shared_ptr<Bundle> Bundle::FromDefinition(const BundleDefinition& definitio
     return result;
 }
 
-const DataStackVariant& Bundle::Get(int index)
+DataStackVariant& Bundle::Get(int index)
 {
     BundleField& f = m_Fields[index];
     return f.FieldValue();
 }
 
-const DataStackVariant& Bundle::GetByName(const std::string& name)
+DataStackVariant& Bundle::GetByName(const std::string& name)
 {
     for (auto f : m_Fields)
     {

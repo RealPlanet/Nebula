@@ -1,6 +1,6 @@
 #include <cassert>
 
-#include "AwaitableObject.h"
+#include "interfaces/AwaitableObject.h"
 
 using namespace nebula;
 

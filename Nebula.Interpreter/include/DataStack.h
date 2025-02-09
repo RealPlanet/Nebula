@@ -28,6 +28,9 @@ namespace nebula
         inline void Push(const TString& v)              { m_Data.emplace_back(v); }
         inline void Push(const TBundle& v)              { m_Data.emplace_back(v); }
         inline void Push(const DataStackVariant& v)     { m_Data.emplace_back(v); }
+
+        std::vector<DataStackVariant>::iterator begin() { return m_Data.begin(); }
+        std::vector<DataStackVariant>::iterator  end() { return m_Data.end(); }
        
     private:
         std::vector<DataStackVariant> m_Data;

@@ -16,7 +16,7 @@
     <ClInclude Include="include\FrameMemory.h" />
     <ClInclude Include="include\interfaces\IStreamWrapper.h" />
     <ClInclude Include="include\InterpreterStandardOutput.h" />
-    <ClInclude Include="include\AwaitableObject.h" />
+    <ClInclude Include="include\interfaces\AwaitableObject.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Interpreter.cpp" />

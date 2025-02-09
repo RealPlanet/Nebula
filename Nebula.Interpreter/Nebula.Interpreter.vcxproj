@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\AwaitableObject.h" />
+    <ClInclude Include="include\interfaces\AwaitableObject.h" />
     <ClInclude Include="include\interfaces\IStreamWrapper.h" />
     <ClInclude Include="include\Bundle.h" />
     <ClInclude Include="include\DataStack.h" />
