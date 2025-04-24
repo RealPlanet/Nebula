@@ -39,21 +39,20 @@ When a threaded function returns the return type is ignored and any return data 
 
 ## What nebula implements currently (in no particular order):
 
-| Feature                                              | Is implemented   |
-| -----------                                          |---------         |
-| Built-in standard library*                           | ❌               |
-| Debug symbols for runtime debugging\*                 | 🟨                 |
+| Feature                                              | Is implemented    |
+| -----------                                          |---------          |
+| Built-in standard library\*                          | ✅               |
+| Debug symbols for runtime debugging\*\*              | 🟨               |
 | Single-thread async routines                         | ✅               |
 | Threads can sleep any amount of time                 | ✅               |
 | Binding to native functions for function calls       | ✅               |
 | Standard control flow keywords                       | ✅               |
-| Floating point data                                  | ❌               |
+| Floating point data                                  | ✅               |
 | Namespaces                                           | ✅               |
 
-\* Due to the nature of the language each implementation must define its own native bindings.
-To avoid forcing the hand of the implementer none are required.
+\* With the developement on the debugger plugin a standard library has been implemented, the virtual machine is now able to load bindings from Nebula.StandardLib.dll and other libraries through a standardized 'extern \"C\"' series of methods
 
-\* An initial implementation through the Debug Adapter Protocol has been commited. A VSCode extension will be released eventually. 
+\*\* An initial implementation through the Debug Adapter Protocol has been commited. A VSCode extension will be released eventually. 
 ![image example_dbg](https://RealPlanet.github.io/assets/ref/nebula/example_dbg_1.png)
 ## Thanks
 A big thanks to [Immo Landwerth](https://www.youtube.com/@ImmoLandwerth), this project initially started from his youtube series as a custom language compiled to IL
