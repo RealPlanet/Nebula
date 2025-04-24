@@ -31,6 +31,8 @@ namespace nebula
 
         std::vector<DataStackVariant>::iterator begin() { return m_Data.begin(); }
         std::vector<DataStackVariant>::iterator  end() { return m_Data.end(); }
+        std::vector<DataStackVariant>::const_iterator   begin() const{ return m_Data.begin(); }
+        std::vector<DataStackVariant>::const_iterator   end() const { return m_Data.end(); }
        
     private:
         std::vector<DataStackVariant> m_Data;

@@ -16,6 +16,7 @@ namespace nebula
 
         TInt32					AsInt32() const { return std::get<DataStackVariantIndex::_TypeInt32>(_value); }
         const std::string&      AsString() const { return std::get<DataStackVariantIndex::_TypeString>(_value); }
+        const TBundle*          AsBundle() const { return std::get_if<TBundle>(&_value); }
 
     private:
         DataStackVariantIndex _type{ DataStackVariantIndex::_UnknownType };

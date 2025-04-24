@@ -20,13 +20,12 @@ namespace nebula
         TBundle AllocBundle(const BundleDefinition& definition);
 
         void Collect(bool force = false);
+        void Sweep();
         bool Empty() { return m_AllocatedObjects.empty(); }
 
     private:
-        void ReleaseUnreferencedObjects();
-
         Interpreter* m_pParent;
-        std::unordered_set<AllocableObjectPtr> m_AllocatedObjects;
+        std::list<AllocableObjectPtr> m_AllocatedObjects;
         size_t m_iGCThreshold;
     };
 }

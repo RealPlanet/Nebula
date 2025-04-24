@@ -37,6 +37,7 @@ namespace nebula
         Status Tick(Interpreter*);
 
         inline DataStack& Stack() { return m_Stack; }
+        inline const DataStack& Stack() const { return m_Stack; }
         inline FrameMemory& Memory() { return m_Memory; }
         inline Frame* Parent() { return m_ParentFrame; }
         inline const FrameMemory& Memory() const { return m_Memory; };

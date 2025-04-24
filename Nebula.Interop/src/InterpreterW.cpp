@@ -171,7 +171,7 @@ array<int>^ InterpreterW::GetNextOpcodeIndexForAllThreads()
         }
 
         const nebula::Frame* frame = stack.at(stack.size() - 1);
-        result[i] = frame->NextInstructionIndex();
+        result[i] = static_cast<int>(frame->NextInstructionIndex());
     }
 
     return result;

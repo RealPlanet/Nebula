@@ -7,6 +7,9 @@ namespace nebula
     {
         friend class InterpreterMemory;
 
+    protected:
+        bool m_bIsMarked{ false };
+
     public:
         AllocatedObject() = default;
         virtual ~AllocatedObject() = default;
