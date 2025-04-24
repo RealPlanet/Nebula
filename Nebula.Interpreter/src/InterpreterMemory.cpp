@@ -62,6 +62,8 @@ InterpreterMemory::InterpreterMemory(Interpreter* parent)
 
 TBundle InterpreterMemory::AllocBundle(const BundleDefinition& definition)
 {
+    // Attempt to free memory at each allocation
+    Collect();
     // This shared pointer is passed around function frames
     TBundle ptr = Bundle::FromDefinition(definition);
     // Keep track of the allocated objectsw

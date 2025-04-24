@@ -19,6 +19,10 @@ Interpreter::Interpreter()
 
 Interpreter::~Interpreter()
 {
+    // Run gc to avoid leaks
+    m_Memory.Collect(true);
+    assert(m_Memory.Empty());
+
     SetState(State::Exited);
     m_Threads.Clear();
     m_Scripts.clear();
@@ -130,8 +134,6 @@ bool Interpreter::Step()
     if (CheckAndSetExitState())
         return false; // Early exit
 
-    m_Memory.Collect();
-
     if (ShouldScheduleNewFrame())
     {
         SwapExecutingThread();
@@ -169,8 +171,6 @@ bool Interpreter::CheckAndSetExitState()
     if (!m_Threads.HasCallStacks())
     {
         SetState(State::Exited);
-        m_Memory.Collect(true);
-        assert(m_Memory.Empty());
         return true;
     }
 
