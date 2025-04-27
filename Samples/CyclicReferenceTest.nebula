@@ -1,0 +1,23 @@
+namespace "CyclicReferenceTest";
+
+bundle BRef
+{
+    BRef reference;
+}
+
+func void Main() autoexec
+{
+    for(int i = 0; i < 99999; i += 1)
+    {
+        LeakMemory();
+    }
+}
+
+func void LeakMemory()  
+{
+    BRef a = 0;
+    BRef b = 0;
+
+    a.reference = b;
+    b.reference = a;
+}
