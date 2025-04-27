@@ -7,10 +7,10 @@
 
 namespace nebula
 {
-    class AllocatedObject;
+    class IGCObject;
     class Interpreter;
 
-    using AllocableObjectPtr = std::shared_ptr<AllocatedObject>;
+    using AllocableObjectPtr = std::shared_ptr<IGCObject>;
 
     class InterpreterMemory
     {
@@ -21,11 +21,11 @@ namespace nebula
 
         void Collect(bool force = false);
         void Sweep();
-        bool Empty() { return m_AllocatedObjects.empty(); }
+        bool Empty() { return m_IGCObjects.empty(); }
 
     private:
         Interpreter* m_pParent;
-        std::list<AllocableObjectPtr> m_AllocatedObjects;
+        std::list<AllocableObjectPtr> m_IGCObjects;
         size_t m_iGCThreshold;
     };
 }

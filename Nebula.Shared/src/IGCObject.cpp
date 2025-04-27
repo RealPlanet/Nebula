@@ -1,36 +1,35 @@
+#include "interfaces/IGCObject.h"
 #include <cassert>
-
-#include "interfaces/AwaitableObject.h"
 
 using namespace nebula;
 
-AwaitableObject::~AwaitableObject()
+IGCObject::~IGCObject()
 {
     assert(m_Listeners.empty());
 }
 
-void AwaitableObject::Subscribe(INotificationListener* listener)
+void IGCObject::Subscribe(INotificationListener* listener)
 {
     assert(listener);
     m_Listeners.insert(listener);
     listener->m_ConnectedNotifiers.insert(this);
 }
 
-void AwaitableObject::Unsubscribe(INotificationListener* listener)
+void IGCObject::Unsubscribe(INotificationListener* listener)
 {
     assert(listener);
     listener->m_ConnectedNotifiers.erase(this);
     m_Listeners.erase(listener);
 }
 
-void AwaitableObject::Unsubscribe(std::unordered_set<INotificationListener*>::iterator& it)
+void IGCObject::Unsubscribe(std::unordered_set<INotificationListener*>::iterator& it)
 {
     INotificationListener* listener = *it;
     listener->m_ConnectedNotifiers.erase(this);
     it = m_Listeners.erase(it);
 }
 
-void AwaitableObject::Notify(const std::string& notification)
+void IGCObject::Notify(const std::string& notification)
 {
     std::hash<std::string> hasher;
     size_t notifHash = hasher(notification);
@@ -49,7 +48,7 @@ void AwaitableObject::Notify(const std::string& notification)
     }
 }
 
-//void AwaitableObject::Notify(const size_t& notification)
+//void IGCObject::Notify(const size_t& notification)
 //{
 //    for (auto it = m_Listeners.begin(); it != m_Listeners.end();)
 //    {
@@ -65,18 +64,3 @@ void AwaitableObject::Notify(const std::string& notification)
 //        }
 //    }
 //}
-
-INotificationListener::~INotificationListener()
-{
-    UnsubscribeFromAll();
-}
-
-void INotificationListener::UnsubscribeFromAll()
-{
-    for (AwaitableObject* notifier : m_ConnectedNotifiers)
-    {
-        notifier->Unsubscribe(this);
-    }
-
-    m_ConnectedNotifiers.clear();
-}

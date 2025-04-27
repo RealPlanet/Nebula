@@ -1,10 +1,10 @@
 #include "Utility.h"
 #include "FrameScheduler.h"
-#include "interfaces/AwaitableObject.h"
+#include "interfaces/IGCObject.h"
 
 using namespace nebula;
 
-static void AddOrUpdateWaitingHashSet(std::map<AwaitableObject*, std::unordered_set<size_t>>& map, AwaitableObject* notifier, size_t hash)
+static void AddOrUpdateWaitingHashSet(std::map<IGCObject*, std::unordered_set<size_t>>& map, IGCObject* notifier, size_t hash)
 {
     auto it = map.find(notifier);
     if (it == map.end())
@@ -30,13 +30,13 @@ void FrameScheduler::Sleep(size_t amount)
     m_SleepAmount = GetCurrentMillis() + amount;
 }
 
-//void FrameScheduler::WaitForNotification(AwaitableObject* notifier, size_t hash)
+//void FrameScheduler::WaitForNotification(IGCObject* notifier, size_t hash)
 //{
 //    AddOrUpdateWaitingHashSet(m_WaitingHashes, notifier, hash);
 //    notifier->Subscribe(this);
 //}
 
-void FrameScheduler::WaitForNotification(AwaitableObject* notifier, const std::string& str)
+void FrameScheduler::WaitForNotification(IGCObject* notifier, const std::string& str)
 {
     std::hash<std::string> hasher;
     size_t hash = hasher(str);
@@ -60,7 +60,7 @@ bool FrameScheduler::IsSleeping()
     return false;
 }
 
-bool FrameScheduler::OnNotification(AwaitableObject* sender, const size_t notification)
+bool FrameScheduler::OnNotification(IGCObject* sender, const size_t notification)
 {
     auto it = m_WaitingHashes.find(sender);
     if (it == m_WaitingHashes.end())

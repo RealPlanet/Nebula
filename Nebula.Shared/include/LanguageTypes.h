@@ -3,6 +3,7 @@
 #include <memory>
 #include <variant>
 #include <string>
+#include "interfaces/IGCObject.h"
 
 namespace nebula
 {

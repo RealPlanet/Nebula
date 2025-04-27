@@ -34,7 +34,7 @@ static void GatherStackRoots(Interpreter* vm, std::vector<AllocableObjectPtr>& f
                 const FrameVariable& fv = memory.LocalAt(j);
                 if (const TBundle* bundle = std::get_if<TBundle>(&fv.Value()))
                 {
-                    foundRoots.push_back(std::dynamic_pointer_cast<AllocatedObject>(*bundle));
+                    foundRoots.push_back(std::dynamic_pointer_cast<IGCObject>(*bundle));
                 }
             }
 
@@ -45,7 +45,7 @@ static void GatherStackRoots(Interpreter* vm, std::vector<AllocableObjectPtr>& f
                 const DataStackVariant& variant = *it;
                 if (const TBundle* bundle = std::get_if<TBundle>(&variant))
                 {
-                    foundRoots.push_back(std::dynamic_pointer_cast<AllocatedObject>(*bundle));
+                    foundRoots.push_back(std::dynamic_pointer_cast<IGCObject>(*bundle));
                 }
 
                 it++;
@@ -56,7 +56,7 @@ static void GatherStackRoots(Interpreter* vm, std::vector<AllocableObjectPtr>& f
 }
 
 InterpreterMemory::InterpreterMemory(Interpreter* parent)
-    : m_pParent{ parent }, m_AllocatedObjects{}, m_iGCThreshold{ g_MinGCThreshold }
+    : m_pParent{ parent }, m_IGCObjects{}, m_iGCThreshold{ g_MinGCThreshold }
 {
 }
 
@@ -67,14 +67,14 @@ TBundle InterpreterMemory::AllocBundle(const BundleDefinition& definition)
     // This shared pointer is passed around function frames
     TBundle ptr = Bundle::FromDefinition(definition);
     // Keep track of the allocated objectsw
-    m_AllocatedObjects.push_back(dynamic_pointer_cast<AllocatedObject>(ptr));
+    m_IGCObjects.push_back(dynamic_pointer_cast<IGCObject>(ptr));
     return ptr;
 }
 
 void InterpreterMemory::Collect(bool force)
 {
     Interpreter* vm = m_pParent;
-    size_t startingSize = m_AllocatedObjects.size();
+    size_t startingSize = m_IGCObjects.size();
 
     if (force || startingSize >= m_iGCThreshold)
     {
@@ -101,7 +101,7 @@ void InterpreterMemory::Collect(bool force)
                     auto& variant = bundle->Get(f);
                     if (variant.index() == DataStackVariantIndex::_TypeBundle)
                     {
-                        AllocableObjectPtr childPtr = std::dynamic_pointer_cast<AllocatedObject>(std::get<TBundle>(variant));
+                        AllocableObjectPtr childPtr = std::dynamic_pointer_cast<IGCObject>(std::get<TBundle>(variant));
                         if (childPtr->m_bIsMarked)
                             continue;
 
@@ -114,7 +114,7 @@ void InterpreterMemory::Collect(bool force)
 
         Sweep();
 
-        size_t reductionAmount = startingSize - m_AllocatedObjects.size();
+        size_t reductionAmount = startingSize - m_IGCObjects.size();
         size_t quarter = startingSize / 4;
         if (reductionAmount < quarter)
         {
@@ -132,8 +132,8 @@ void InterpreterMemory::Collect(bool force)
 
 void nebula::InterpreterMemory::Sweep()
 {
-    auto it = m_AllocatedObjects.begin();
-    while (it != m_AllocatedObjects.end())
+    auto it = m_IGCObjects.begin();
+    while (it != m_IGCObjects.end())
     {
         AllocableObjectPtr obj = *it;
         // We didn't reach it, so release it
@@ -144,7 +144,7 @@ void nebula::InterpreterMemory::Sweep()
                 bundle->ClearFields();
             }
 
-            it = m_AllocatedObjects.erase(it);
+            it = m_IGCObjects.erase(it);
         }
         else
         {

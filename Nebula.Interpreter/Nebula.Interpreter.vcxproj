@@ -11,9 +11,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\interfaces\AllocatedObject.h" />
-    <ClInclude Include="include\interfaces\AwaitableObject.h" />
-    <ClInclude Include="include\interfaces\IStreamWrapper.h" />
     <ClInclude Include="include\Bundle.h" />
     <ClInclude Include="include\DataStack.h" />
     <ClInclude Include="include\FrameMemory.h" />
@@ -21,7 +18,6 @@
     <ClInclude Include="include\FrameScheduler.h" />
     <ClInclude Include="include\Frame.h" />
     <ClInclude Include="include\CallStack.h" />
-    <ClInclude Include="include\interfaces\IScriptParser.h" />
     <ClInclude Include="include\ThreadMap.h" />
     <ClInclude Include="include\Script.h" />
     <ClInclude Include="include\InterpreterMemory.h" />
