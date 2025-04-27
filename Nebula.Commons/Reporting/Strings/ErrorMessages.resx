@@ -240,4 +240,7 @@
   <data name="FloatNoMarker" xml:space="preserve">
     <value>The float number '{0}' does not end with 'f'</value>
   </data>
+  <data name="FloatTooManyMarkers" xml:space="preserve">
+    <value>too many decimal points in number</value>
+  </data>
 </root>

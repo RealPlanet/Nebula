@@ -214,6 +214,15 @@ namespace Nebula.Commons.Reporting.Strings {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to too many decimal points in number.
+        /// </summary>
+        internal static string FloatTooManyMarkers {
+            get {
+                return ResourceManager.GetString("FloatTooManyMarkers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Function &apos;{0}&apos; already declared..
         /// </summary>
         internal static string FunctionAlreadyExists {

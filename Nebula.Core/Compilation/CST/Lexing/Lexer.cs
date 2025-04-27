@@ -545,7 +545,9 @@ namespace Nebula.Core.Parsing.Lexing
                 Current != 0)
             {
                 if (Current == '.')
+                {
                     hasFoundDecimal = true;
+                }
 
                 _currentPosition++;
             }
@@ -554,6 +556,12 @@ namespace Nebula.Core.Parsing.Lexing
             string numberText = _source.ToString(_tokenStart, len);
             TextSpan span = new(_tokenStart, len);
             TextLocation location = new(_source, span);
+
+            if (Current == '.' && hasFoundDecimal)
+            {
+                _report.TooManyDecimalPointsInNumber(location);
+                return;
+            }
 
             // This is for integer numbers with terminator at the end
             if (!hasFoundDecimal && Current == 'f')

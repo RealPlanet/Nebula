@@ -188,6 +188,13 @@ namespace Nebula.Core.Reporting
             string message = string.Format(template, text);
             r.PushCode(code, message, location);
         }
+
+        public static void TooManyDecimalPointsInNumber(this Report r, TextLocation location)
+        {
+            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorFloatTooManyMarkers;
+            r.PushCode(code, template, location);
+        }
+
         public static void ReportUndefinedUnaryOperator(this Report r, TextLocation location, string text, TypeSymbol boundType)
         {
             (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorUnaryOperatorNotDefined;

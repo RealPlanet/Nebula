@@ -98,6 +98,8 @@ namespace Nebula.Commons.Reporting
         E0027 = ReportMessageProvider.ErrorOffset + 39,
         /// <summary></summary>
         E0028 = ReportMessageProvider.ErrorOffset + 40,
+        /// <summary></summary>
+        E0029 = ReportMessageProvider.ErrorOffset + 41,
     }
 
     /// <summary>
@@ -199,6 +201,9 @@ namespace Nebula.Commons.Reporting
     (ReportMessageCodes.E0027, ErrorMessages.InvalidExpressionStatement);
         public static ReportMessageTemplate ErrorFloatNoMarker =>
     (ReportMessageCodes.E0028, ErrorMessages.FloatNoMarker);
+
+        public static ReportMessageTemplate ErrorFloatTooManyMarkers =>
+    (ReportMessageCodes.E0029, ErrorMessages.FloatTooManyMarkers);
 
         #endregion
     }

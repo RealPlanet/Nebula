@@ -218,6 +218,9 @@ namespace Nebula.Core.Lexing.Tests
                 return true;
             }
 
+            if(type1 == NodeType.NumberToken && type2.IsKeyword())
+                return true;
+
             if (type1 == NodeType.StringToken && type2 == NodeType.StringToken)
                 return true;
 
@@ -225,6 +228,9 @@ namespace Nebula.Core.Lexing.Tests
                 return true;
 
             if (type1 == NodeType.NumberToken && type2 == NodeType.DotToken)
+                return true;
+
+            if (type1 == NodeType.DotToken && type2 == NodeType.NumberToken)
                 return true;
 
             if (type1 == NodeType.IdentifierToken && type2 == NodeType.IdentifierToken)
