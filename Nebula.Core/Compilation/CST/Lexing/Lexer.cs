@@ -78,6 +78,18 @@ namespace Nebula.Core.Parsing.Lexing
                         _currentPosition++;
                         break;
                     }
+                case '[':
+                    {
+                        _type = NodeType.OpenSquareBracketToken;
+                        _currentPosition++;
+                        break;
+                    }
+                case ']':
+                    {
+                        _type = NodeType.ClosedSquareBracketToken;
+                        _currentPosition++;
+                        break;
+                    }
                 case '(':
                     {
                         _type = NodeType.OpenParenthesisToken;

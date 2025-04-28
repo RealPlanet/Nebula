@@ -12,6 +12,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Xml.Linq;
 
 namespace Nebula.Core.Parsing
 {
@@ -218,14 +219,41 @@ namespace Nebula.Core.Parsing
         {
             Token first = MatchToken(NodeType.IdentifierToken);
 
+            // For bundle delcarations outside scope
             if (Current.Type == NodeType.DoubleColonToken)
             {
                 Token doubleColon = MatchToken(NodeType.DoubleColonToken);
                 Token typeName = MatchToken(NodeType.IdentifierToken);
-                return new TypeClause(_currentSource, first, doubleColon, typeName);
+                RankSpecifier? rs = ParseRankSpecifier();
+                return new TypeClause(_currentSource, first, doubleColon, typeName, rs);
             }
 
-            return new TypeClause(_currentSource, null, null, first);
+            RankSpecifier? rankSpecifier = ParseRankSpecifier();
+            return new TypeClause(_currentSource, null, null, first, rankSpecifier);
+        }
+
+        private RankSpecifier? ParseRankSpecifier()
+        {
+            if (Current.Type != NodeType.OpenSquareBracketToken)
+                return null;
+
+            Token open = MatchToken(NodeType.OpenSquareBracketToken);
+
+            NodeType separator = NodeType.CommaToken;
+            TokenSeparatedList<Token> parameters = new(separator);
+            while (Current.Type != NodeType.ClosedParenthesisToken && Current.Type != NodeType.EndOfFileToken)
+            {
+                if (Current.Type != NodeType.CommaToken)
+                {
+                    break;
+                }
+
+                Token comma = MatchToken(separator);
+                parameters.AppendSeparator(comma);
+            }
+
+            Token close = MatchToken(NodeType.ClosedSquareBracketToken);
+            return new RankSpecifier(_currentSource, open, parameters, close);
         }
 
         private TokenSeparatedList<Token> ParseAttributeList()
@@ -340,22 +368,35 @@ namespace Nebula.Core.Parsing
                     }
                 default:
                     {
-                        if (Current.Type == NodeType.IdentifierToken &&
-                            Peek(1).Type == NodeType.IdentifierToken)
+                        bool isBaseVariableDefinition = Current.Type == NodeType.IdentifierToken &&
+                            Peek(1).Type == NodeType.IdentifierToken;
+
+                        if (isBaseVariableDefinition)
                         {
                             return ParseVariableDeclarations();
                         }
 
-                        // Variable declaration with type from another namespace
-                        if (Current.Type == NodeType.IdentifierToken &&
+                        bool isVariableDefinitionWithRank = Current.Type == NodeType.IdentifierToken &&
+                            Peek(1).Type == NodeType.OpenSquareBracketToken &&
+                           (Peek(2).Type == NodeType.CommaToken || Peek(2).Type == NodeType.ClosedSquareBracketToken);
+
+                        if(isVariableDefinitionWithRank)
+                        {
+                            return ParseVariableDeclarations();
+                        }
+
+                        // This also executes if with namespace and rank
+                        bool isVariableDefinitionWithNamespace = Current.Type == NodeType.IdentifierToken &&
                             Peek(1).Type == NodeType.DoubleColonToken &&
                             Peek(2).Type == NodeType.IdentifierToken &&
-                            Peek(3).Type != NodeType.OpenParenthesisToken)
+                            Peek(3).Type != NodeType.OpenParenthesisToken;
+                        // Variable declaration with type from another namespace
+                        if (isVariableDefinitionWithNamespace)
                         {
                             return ParseVariableDeclarations();
                         }
 
-                        if(Current.Type == NodeType.IdentifierToken &&
+                        if (Current.Type == NodeType.IdentifierToken &&
                             Peek(1).Type == NodeType.WaitNotificationKeyword)
                         {
                             return ParseWaitNotificationStatement();
@@ -645,9 +686,21 @@ namespace Nebula.Core.Parsing
                     {
                         return ParseStringLiteral();
                     }
+                case NodeType.OpenSquareBracketToken:
+                    {
+                        return ParseExpressionList();
+                    }
             }
 
             return ParseNameOrFunctionCallExpression();
+        }
+
+        private DefaultInitializationExpression ParseExpressionList()
+        {
+            Token open = MatchToken(NodeType.OpenSquareBracketToken);
+            Token close = MatchToken(NodeType.ClosedSquareBracketToken);
+
+            return new DefaultInitializationExpression(_currentSource, open, close);
         }
 
         private Expression ParseNameOrFunctionCallExpression()
@@ -669,6 +722,14 @@ namespace Nebula.Core.Parsing
                 return new BundleFieldAccessExpression(_currentSource, name, accessToken, fieldName);
             }
 
+            if(Current.Type == NodeType.OpenSquareBracketToken)
+            {
+                Token openSquare = MatchToken(NodeType.OpenSquareBracketToken);
+                Expression accessExpression = ParseExpression();
+                Token closeSquare = MatchToken(NodeType.ClosedSquareBracketToken);
+                return new ArrayAccessExpression(_currentSource, name, openSquare, accessExpression, closeSquare);
+            }
+
             return new NameExpression(_currentSource, name);
         }
 
@@ -680,6 +741,24 @@ namespace Nebula.Core.Parsing
             if (Peek(1).Type == NodeType.DotToken)
             {
                 return Peek(3);
+            }
+
+            if(Peek(1).Type == NodeType.OpenSquareBracketToken)
+            {
+                int peekOffset = 2;
+                NodeType currentType = Peek(peekOffset).Type;
+                // Skip entire expression assuming it is correct
+                while(currentType != NodeType.ClosedSquareBracketToken &&
+                    currentType != NodeType.EndOfFileToken)
+                {
+                    peekOffset++;
+                    currentType = Peek(peekOffset).Type;
+                }
+
+                if(currentType == NodeType.ClosedSquareBracketToken)
+                {
+                    return Peek(peekOffset + 1);
+                }
             }
 
             return Peek(1);

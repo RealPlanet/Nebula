@@ -1,0 +1,14 @@
+namespace "TypedArray";
+
+native void WriteLine(string s);
+
+func void main() autoexec
+{
+    int myIndex = 2;
+    string[] array = [];
+    array[0] = "Not this one";
+    array[1] = "Closer!";
+    array[2] = "Found me!";
+
+    WriteLine(array[myIndex]);
+}

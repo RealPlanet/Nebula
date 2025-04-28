@@ -12,13 +12,15 @@ namespace Nebula.Core.Parsing
         public Token? Namespace { get; }
         public Token? DoubleColonToken { get; }
         public Token Identifier { get; }
+        public RankSpecifier? RankSpecifier { get; }
 
-        public TypeClause(SourceCode sourceCode, Token? @namespace, Token? doubleColonToken, Token identifier)
+        public TypeClause(SourceCode sourceCode, Token? @namespace, Token? doubleColonToken, Token identifier, RankSpecifier? rank)
             : base(sourceCode)
         {
             Namespace = @namespace;
             DoubleColonToken = doubleColonToken;
             Identifier = identifier;
+            RankSpecifier = rank;
         }
 
         public override IEnumerable<Node> GetChildren()
@@ -30,6 +32,9 @@ namespace Nebula.Core.Parsing
             }
 
             yield return Identifier;
+
+            if (RankSpecifier != null)
+                yield return RankSpecifier;
         }
     }
 }
