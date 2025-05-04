@@ -6,7 +6,7 @@ namespace Nebula.Core.Binding.Symbols
     public sealed class BundleSymbol
         : Symbol
     {
-        public override SymbolType SymbolType => SymbolType.Bundle;
+        public override SymbolType SymbolType => SymbolType.Object;
         public BundleDeclaration Declaration { get; }
         public ImmutableArray<AbstractBundleField> Fields { get; }
 

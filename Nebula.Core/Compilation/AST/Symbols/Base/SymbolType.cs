@@ -8,6 +8,7 @@
         Parameter,
         Type,
         Attribute,
-        Bundle,
+        Object,
+        Array
     }
 }

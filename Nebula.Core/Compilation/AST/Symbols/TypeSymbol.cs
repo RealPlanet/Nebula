@@ -2,7 +2,7 @@
 
 namespace Nebula.Core.Binding.Symbols
 {
-    public sealed class TypeSymbol
+    public class TypeSymbol
         : Symbol
     {
         #region Static
@@ -13,18 +13,17 @@ namespace Nebula.Core.Binding.Symbols
         public static readonly TypeSymbol Float = new("float");
         public static readonly TypeSymbol String = new("string");
         public static readonly TypeSymbol Void = new("void");
-        public static readonly TypeSymbol Bundle = new("bundle");
-
-        public string? Alias { get; private set; }
-        public string? Namespace { get; private set; }
-        public bool IsNamedBundle => IsBundle && !string.IsNullOrEmpty(Alias);
+        public static readonly TypeSymbol BaseObject = new("object");
+        public static readonly TypeSymbol BaseArray = new("array");
 
         public bool IsError => this == Error;
         public bool IsBool => this == Bool;
         public bool IsInt => this == Int;
         public bool IsString => this == String;
         public bool IsVoid => this == Void;
-        public bool IsBundle => this == Bundle;
+        public bool IsArray => this is ArrayTypeSymbol;
+
+        public bool IsObject => this is ObjectTypeSymbol;
 
         public static TypeSymbol TypeFromEnum(TypeIdentifier identifier)
         {
@@ -36,25 +35,15 @@ namespace Nebula.Core.Binding.Symbols
                     return TypeSymbol.Int;
                 case TypeIdentifier.String:
                     return TypeSymbol.String;
-                case TypeIdentifier.Bundle:
-                    return TypeSymbol.Bundle;
                 default:
                     throw new System.Exception($"Unknown type: {identifier}");
             }
         }
 
-        public static TypeSymbol GetNamedBundleType(string @namespace, string bundleType)
-        {
-            return new TypeSymbol(Bundle.Name)
-            {
-                Namespace = @namespace,
-                Alias = bundleType
-            };
-        }
         #endregion
 
         public override SymbolType SymbolType => SymbolType.Type;
-        private TypeSymbol(string name)
+        protected TypeSymbol(string name)
             : base(name)
         {
         }

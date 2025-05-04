@@ -366,10 +366,8 @@ namespace Nebula.Core.Binding
             return boundBundle;
         }
 
-        private AbstractExpression BindBundleFieldAssignmentExpression(AssignmentExpression syntax)
+        private AbstractExpression BindBundleFieldAssignmentExpression(AssignmentExpression syntax, BundleFieldAccessExpression bundleAccess)
         {
-            BundleFieldAccessExpression bundleAccess = (BundleFieldAccessExpression)syntax.Identifier;
-
             string? name = bundleAccess.Identifier.Text;
             string fieldName = bundleAccess.FieldName.Text;
 
@@ -396,7 +394,34 @@ namespace Nebula.Core.Binding
                 return new AbstractErrorExpression(syntax);
             }
 
-            return new AbstractBundleFieldAssignment(syntax, localVariable, fieldToAccess, boundExpression);
+            return new AbstractBundleFieldAssignmentExpression(syntax, localVariable, fieldToAccess, boundExpression);
+        }
+
+        private AbstractExpression BindArrayAssignmentExpression(AssignmentExpression syntax, ArrayAccessExpression arrayAccess)
+        {
+            string? name = arrayAccess.Identifier.Text;
+            // Get the array which is in a variable
+            VariableSymbol? localVariable = BindVariableReference(arrayAccess.Identifier);
+            if (localVariable is null)
+            {
+                return new AbstractErrorExpression(syntax);
+            }
+
+            AbstractExpression expressionToAssign = BindExpression(syntax.RightExpr);
+            if (syntax.Operator.Type != NodeType.EqualsToken)
+            {
+                _binderReport.ReportUndefinedBinaryOperator(syntax.Operator.Location, syntax.Operator.Text, localVariable.Type, expressionToAssign.ResultType);
+                return new AbstractErrorExpression(syntax);
+            }
+
+            AbstractExpression indexExpression = BindExpression(arrayAccess.AccessExpression);
+            if (indexExpression.ResultType != TypeSymbol.Int)
+            {
+                _binderReport.ReportCannotConvertType(indexExpression.OriginalNode.Location, indexExpression.ResultType, TypeSymbol.Int);
+                return new AbstractErrorExpression(syntax);
+            }
+
+            return new AbstractArrayAssignmentExpression(syntax, localVariable, indexExpression, expressionToAssign);
         }
 
         private AbstractExpression BindBundleAccessExpression(BundleFieldAccessExpression syntax)
@@ -413,7 +438,7 @@ namespace Nebula.Core.Binding
                 return new AbstractErrorExpression(syntax);
             }
 
-            if (variable.Type != TypeSymbol.Bundle)
+            if (!variable.Type.IsObject)
             {
                 _binderReport.ReportPrimitiveTypesDontHaveFields(variable.Name, syntax.Identifier.Location);
                 return new AbstractErrorExpression(syntax);
@@ -438,21 +463,53 @@ namespace Nebula.Core.Binding
             return new AbstractBundleFieldAccessExpression(syntax, variable, fieldToAccess);
         }
 
+        private AbstractExpression BindArrayAccessExpression(ArrayAccessExpression syntax)
+        {
+            if (syntax.Identifier.IsMissing)
+            {
+                // This means the token was inserted by the parser and already reported the error
+                return new AbstractErrorExpression(syntax);
+            }
+
+
+            VariableSymbol? variable = BindVariableReference(syntax.Identifier);
+            if (variable == null)
+            {
+                return new AbstractErrorExpression(syntax);
+            }
+
+            if (!variable.Type.IsArray)
+            {
+                // TODO Report, must be array
+                //_binderReport.ReportPrimitiveTypesDontHaveFields(variable.Name, syntax.Identifier.Location);
+                return new AbstractErrorExpression(syntax);
+            }
+
+            AbstractExpression indexExpression = BindExpression(syntax.AccessExpression);
+            if (indexExpression.ResultType != TypeSymbol.Int)
+            {
+                _binderReport.ReportCannotConvertType(indexExpression.OriginalNode.Location, indexExpression.ResultType, TypeSymbol.Int);
+                return new AbstractErrorExpression(syntax);
+            }
+
+            return new AbstractArrayAccessExpression(syntax, variable, indexExpression);
+        }
+
         private BundleSymbol? GetBundleSymbol(VariableSymbol variable)
         {
-            if (variable.Type.IsNamedBundle)
+            if (variable.Type is ObjectTypeSymbol objType)
             {
-                if (variable.Type.Alias is null)
+                if (objType.Name is null)
                 {
-                    throw new NullReferenceException(nameof(variable.Type.Alias));
+                    throw new NullReferenceException(nameof(objType.Name));
                 }
 
-                if (variable.Type.Namespace is null)
+                if (objType.Namespace is null)
                 {
-                    throw new NullReferenceException(nameof(variable.Type.Namespace));
+                    throw new NullReferenceException(nameof(objType.Namespace));
                 }
 
-                if (_currentProgram.References.TryGetBundle(variable.Type.Namespace, variable.Type.Alias, out BundleSymbol? bundle))
+                if (_currentProgram.References.TryGetBundle(objType.Namespace, objType.Name, out BundleSymbol? bundle))
                 {
                     return bundle;
                 }
@@ -571,18 +628,25 @@ namespace Nebula.Core.Binding
             NodeType.UnaryExpression => BindUnaryExpression((UnaryExpression)expr),
             NodeType.BinaryExpression => BindBinaryExpression((BinaryExpression)expr),
             NodeType.NameExpression => BindNameExpression((NameExpression)expr),
+            NodeType.ArrayAccessExpression => BindArrayAccessExpression((ArrayAccessExpression)expr),
             NodeType.BundleFieldAccessExpression => BindBundleAccessExpression((BundleFieldAccessExpression)expr),
             NodeType.AssignmentExpression => BindAssignmentExpression((AssignmentExpression)expr),
             NodeType.CallExpression => BindCallExpression((CallExpression)expr),
+            NodeType.DefaultInitializationExpression => BindDefaultInitializationExpression((DefaultInitializationExpression)expr),
             _ => throw new Exception($"Unexpected syntax '{expr.Type}'"),
         };
         private AbstractExpression BindParanthesizedExpression(ParenthesizedExpression syntax) => BindExpression(syntax.Expression);
 
         private AbstractExpression BindAssignmentExpression(AssignmentExpression expr)
         {
-            if (expr.Identifier is BundleFieldAccessExpression)
+            if (expr.Identifier is BundleFieldAccessExpression bundleExpr)
             {
-                return BindBundleFieldAssignmentExpression(expr);
+                return BindBundleFieldAssignmentExpression(expr, bundleExpr);
+            }
+
+            if (expr.Identifier is ArrayAccessExpression arrayExpr)
+            {
+                return BindArrayAssignmentExpression(expr, arrayExpr);
             }
 
             NameExpression nameExpression = (NameExpression)expr.Identifier;
@@ -697,6 +761,11 @@ namespace Nebula.Core.Binding
             return new AbstractCallExpression(expr, expr.IsAsyncCall, expr.Namespace?.Text, function, boundArguments);
         }
 
+        private AbstractExpression BindDefaultInitializationExpression(DefaultInitializationExpression expr)
+        {
+            return new AbstractDefaultInitializationExpression(expr, null);
+        }
+
         private FunctionSymbol? TryLookupFunctionSymbol(CallExpression callExpression)
         {
             if (callExpression.Namespace != null && callExpression.Namespace.Text != _currentProgram.Namespace.Text)
@@ -780,6 +849,7 @@ namespace Nebula.Core.Binding
                 bool isAllowedExpression = es.Expression.Type == AbstractNodeType.ErrorExpression ||
                                             es.Expression.Type == AbstractNodeType.AssignmentExpression ||
                                             es.Expression.Type == AbstractNodeType.BundleFieldAssignmentExpression ||
+                                            es.Expression.Type == AbstractNodeType.ArrayAssignmentExpression ||
                                             es.Expression.Type == AbstractNodeType.CallExpression ||
                                             es.Expression.Type == AbstractNodeType.CompoundAssignmentExpression;
                 if (!isAllowedExpression)
@@ -907,9 +977,9 @@ namespace Nebula.Core.Binding
         private AbstractStatement BindNotifyStatement(NotifyStatement syntax)
         {
             AbstractExpression nameExpression = BindNameExpression(syntax.Identifier);
-            if (nameExpression is AbstractVariableExpression ave && ave.Variable.Type != TypeSymbol.Bundle)
+            if (nameExpression is AbstractVariableExpression ave && !ave.Variable.Type.IsObject)
             {
-                _binderReport.ReportIdentifierNotOfType(syntax.Identifier.Location, ave.Variable.Name, TypeSymbol.Bundle);
+                _binderReport.ReportIdentifierNotOfType(syntax.Identifier.Location, ave.Variable.Name, TypeSymbol.BaseObject);
             }
 
             AbstractExpression notifyExpr = BindExpression(syntax.Expression, canBeVoid: false);
@@ -925,9 +995,9 @@ namespace Nebula.Core.Binding
         private AbstractStatement BindWaitNotificationStatement(WaitNotificationStatement syntax)
         {
             AbstractExpression nameExpression = BindNameExpression(syntax.Identifier);
-            if (nameExpression is AbstractVariableExpression ave && ave.Variable.Type != TypeSymbol.Bundle)
+            if (nameExpression is AbstractVariableExpression ave && !ave.Variable.Type.IsObject)
             {
-                _binderReport.ReportIdentifierNotOfType(syntax.Identifier.Location, ave.Variable.Name, TypeSymbol.Bundle);
+                _binderReport.ReportIdentifierNotOfType(syntax.Identifier.Location, ave.Variable.Name, TypeSymbol.BaseObject);
             }
 
             AbstractExpression notifyExpr = BindExpression(syntax.Expression, canBeVoid: false);
@@ -970,7 +1040,7 @@ namespace Nebula.Core.Binding
             {
                 if (_currentProgram.References.TryGetBundle(typeClause.Namespace.Text, typeName, out BundleSymbol? _))
                 {
-                    return TypeSymbol.GetNamedBundleType(typeClause.Namespace.Text, typeName);
+                    return new ObjectTypeSymbol(typeClause.Namespace.Text, typeName);
                 }
             }
             else
@@ -984,11 +1054,22 @@ namespace Nebula.Core.Binding
                 // Check if this is a user defined bundle
                 if (_currentUnit.Bundles.Any(b => b.Name.Text == typeName))
                 {
-                    return TypeSymbol.GetNamedBundleType(_currentProgram.Namespace.Text, typeName);
+                    return new ObjectTypeSymbol(_currentProgram.Namespace.Text, typeName);
                 }
 
                 _binderReport.ReportUndefinedType(typeClause.Identifier);
                 return TypeSymbol.Error;
+            }
+
+            if(type is not null && typeClause.RankSpecifier != null && typeClause.RankSpecifier.Rank > 0)
+            {
+                if(typeClause.RankSpecifier.Rank != 1)
+                {
+                    throw new NotImplementedException("Multi dimensional array are not supported");
+                }
+
+                // This is an array type
+                return new ArrayTypeSymbol(type, typeClause.RankSpecifier.Rank);
             }
 
             return type!;
@@ -1002,7 +1083,6 @@ namespace Nebula.Core.Binding
             "string" => TypeSymbol.String,
             //"any" => TypeSymbol.Any,
             "void" => TypeSymbol.Void,
-            "bundle" => TypeSymbol.Bundle,
             _ => null,
         };
     }

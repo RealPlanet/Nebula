@@ -46,7 +46,7 @@ namespace Nebula.Core.Emitting
             NamespaceStatement nsToken = (NamespaceStatement)program.Namespace.OriginalNode;
             _currentContext = new(ModuleName, program.Namespace.Text, new(1, 0, 0), program.SourceCode);
 
-            foreach(var nativeFunc in program.NativeFunctions)
+            foreach (var nativeFunc in program.NativeFunctions)
             {
                 EmitNativeFunctionDeclaration(nativeFunc);
             }
@@ -280,29 +280,93 @@ namespace Nebula.Core.Emitting
             VariableDefinition variableDefinition = new(typeReference, node.Variable.Name, processor.Body.Variables.Count);
             _currentContext.Locals.Add(node.Variable, variableDefinition);
             processor.Body.Variables.Add(variableDefinition);
-            // Emit an instruction to allocate bundle
-            if (typeReference == TypeReference.Bundle && node.Initializer is AbstractConversionExpression)
-            {
-                string typeNamespace = string.Empty;
-                string typedName = string.Empty;
-                if (!string.IsNullOrEmpty(node.Variable.Type.Namespace))
-                    typeNamespace = node.Variable.Type.Namespace;
 
-                if (!string.IsNullOrEmpty(node.Variable.Type.Alias))
-                    typedName = node.Variable.Type.Alias;
+            // Emit an instruction to allocate bundle
+            if (typeReference == TypeReference.Bundle && node.Variable.Type is ObjectTypeSymbol objTypeSymbol)
+            {
+                ExtractBundleNamespaceAndName(objTypeSymbol, out string typeNamespace, out string typedName);
 
                 object arguments = typedName;
                 if (_currentContext.Assembly.Namespace != typeNamespace)
                 {
                     arguments = new string[] { typeNamespace, typedName };
                 }
+
                 processor.Emit(InstructionOpcode.Ld_b, arguments, node.OriginalNode.Span);
                 processor.Emit(InstructionOpcode.Stloc, variableDefinition, node.OriginalNode.Span);
                 return;
             }
 
+            if (typeReference == TypeReference.Array)
+            {
+                ArrayTypeSymbol arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
+                TypeReference arrayValueType = _knownTypes[arraySymbol.ValueType];
+
+                StoreNewArrIntoLocal(processor, variableDefinition, arraySymbol, arrayValueType, node.OriginalNode.Span);
+                return;
+            }
+
             EmitExpression(processor, node.Initializer);
             processor.Emit(InstructionOpcode.Stloc, variableDefinition, node.OriginalNode.Span);
+        }
+
+        private void StoreNewArrIntoLocal(NILProcessor processor,
+                                          VariableDefinition variableDefinition,
+                                          ArrayTypeSymbol arraySymbol,
+                                          TypeReference baseValueType,
+                                          TextSpan nodeSpan)
+        {
+            object arguments = ExtractNewArrArguments(arraySymbol, baseValueType);
+
+            processor.Emit(InstructionOpcode.NewArr, arguments, nodeSpan);
+            processor.Emit(InstructionOpcode.Stloc, variableDefinition, nodeSpan);
+        }
+
+        private void StoreNewArrIntoParameter(NILProcessor processor,
+                                          ParameterDefinition parameter,
+                                          ArrayTypeSymbol arraySymbol,
+                                          TypeReference baseValueType,
+                                          TextSpan nodeSpan)
+        {
+            object arguments = ExtractNewArrArguments(arraySymbol, baseValueType);
+
+            processor.Emit(InstructionOpcode.NewArr, arguments, nodeSpan);
+            processor.Emit(InstructionOpcode.StArg, parameter, nodeSpan);
+        }
+
+        private object ExtractNewArrArguments(ArrayTypeSymbol arraySymbol, TypeReference baseValueType)
+        {
+            object arguments = baseValueType.Name;
+            if (arraySymbol.ValueType.IsObject)
+            {
+                ExtractBundleNamespaceAndName((ObjectTypeSymbol)arraySymbol.ValueType, out string typeNamespace, out string typedName);
+                if (_currentContext.Assembly.Namespace != typeNamespace)
+                {
+                    arguments = new object[] { baseValueType, typeNamespace, typedName };
+                }
+                else
+                {
+                    arguments = new object[] { baseValueType, typedName };
+                }
+            }
+
+            if (arraySymbol.ValueType.IsArray)
+            {
+                throw new NotSupportedException("Array within array is not supported!");
+            }
+
+            return arguments;
+        }
+
+        private static void ExtractBundleNamespaceAndName(ObjectTypeSymbol objTypeSymbol, out string typeNamespace, out string typedName)
+        {
+            typeNamespace = string.Empty;
+            typedName = string.Empty;
+            if (!string.IsNullOrEmpty(objTypeSymbol.Namespace))
+                typeNamespace = objTypeSymbol.Namespace;
+
+            if (!string.IsNullOrEmpty(objTypeSymbol.Name))
+                typedName = objTypeSymbol.Name;
         }
 
         private void EmitExpressionStatement(NILProcessor processor, AbstractExpressionStatement node)
@@ -345,7 +409,10 @@ namespace Nebula.Core.Emitting
                     EmitVariableExpression(processor, (AbstractVariableExpression)node);
                     break;
                 case AbstractNodeType.BundleFieldAssignmentExpression:
-                    EmitBundleFieldAssignmentExpression(processor, (AbstractBundleFieldAssignment)node);
+                    EmitBundleFieldAssignmentExpression(processor, (AbstractBundleFieldAssignmentExpression)node);
+                    break;
+                case AbstractNodeType.ArrayAssignmentExpression:
+                    EmitArrayAssignmentExpression(processor, (AbstractArrayAssignmentExpression)node);
                     break;
                 case AbstractNodeType.AssignmentExpression:
                     EmitAssignmentExpression(processor, (AbstractAssignmentExpression)node);
@@ -363,7 +430,7 @@ namespace Nebula.Core.Emitting
 
         private void EmitConversionExpression(NILProcessor processor, AbstractConversionExpression node)
         {
-            EmitExpression(processor, node.Expression);      
+            EmitExpression(processor, node.Expression);
             processor.Emit(InstructionOpcode.ConvType, _knownTypes[node.ResultType], node.OriginalNode.Span);
         }
 
@@ -384,7 +451,7 @@ namespace Nebula.Core.Emitting
             processor.Emit(callInstruction, arguments, node.OriginalNode.Span);
         }
 
-        private void EmitBundleFieldAssignmentExpression(NILProcessor processor, AbstractBundleFieldAssignment node)
+        private void EmitBundleFieldAssignmentExpression(NILProcessor processor, AbstractBundleFieldAssignmentExpression node)
         {
             if (node.BundleVariable is ParameterSymbol parameter)
             {
@@ -410,17 +477,59 @@ namespace Nebula.Core.Emitting
                 node.OriginalNode.Span); // Writes value into local
         }
 
+        private void EmitArrayAssignmentExpression(NILProcessor processor, AbstractArrayAssignmentExpression node)
+        {
+            if(node.ArrayVariable is ParameterSymbol parameter)
+            {
+                ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
+                processor.Emit(InstructionOpcode.Ldarg, parameterDefinition.Index, node.OriginalNode.Span);
+            }
+            else
+            {
+                VariableDefinition? variableDefinition = _currentContext.Locals[node.ArrayVariable];
+                processor.Emit(InstructionOpcode.Ldloc, variableDefinition, node.OriginalNode.Span);
+            }
+
+            EmitExpression(processor, node.IndexExpression);
+            EmitExpression(processor, node.Expression);
+            processor.Emit(InstructionOpcode.StElem, node.OriginalNode.Span);
+        }
+
         private void EmitAssignmentExpression(NILProcessor processor, AbstractAssignmentExpression node)
         {
             if (node.Variable is ParameterSymbol parameter)
             {
                 ParameterDefinition? parameterDefinition = _currentContext.Parameters[node.Variable];
+                if (parameter.Type == TypeSymbol.BaseObject)
+                {
+                    throw new NotImplementedException();
+                }
+
+                if(parameter.Type == TypeSymbol.BaseArray)
+                {
+                    EmitArrayParameterReassignment(processor, parameterDefinition, node);
+                    return;
+                }
+
                 EmitExpression(processor, node.Expression);
                 processor.Emit(InstructionOpcode.Dup, node.OriginalNode.Span); // Takes current value on stack and pushes it again
                 processor.Emit(InstructionOpcode.StArg, parameterDefinition, node.OriginalNode.Span); // Writes value into parameter
+                return;
             }
 
             VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
+
+            if (node.Variable.Type == TypeSymbol.BaseObject)
+            {
+                throw new NotImplementedException();
+            }
+
+            if (node.Variable.Type == TypeSymbol.BaseArray)
+            {
+                EmitArrayLocalReassignment(processor, variableDefinition, node);
+                return;
+            }
+
             EmitExpression(processor, node.Expression);
             processor.Emit(InstructionOpcode.Dup, node.OriginalNode.Span); // Takes current value on stack and pushes it again
             processor.Emit(InstructionOpcode.Stloc, variableDefinition, node.OriginalNode.Span); // Writes value into local
@@ -431,12 +540,14 @@ namespace Nebula.Core.Emitting
             // TODO :: Rethink how variables vs bundles are handled to simplify the instruction set
             if (node.Variable is ParameterSymbol parameter)
             {
+                ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
+
                 InstructionOpcode paramOpcode = InstructionOpcode.Ldarg;
-                object? paramArg = parameter.OrdinalPosition;
+                object paramArg = parameterDefinition.Index;
                 if (node is AbstractBundleFieldAccessExpression fParam)
                 {
                     paramOpcode = InstructionOpcode.LdBarg;
-                    paramArg = new int[] { parameter.OrdinalPosition, fParam.Field.OrdinalPosition };
+                    paramArg = new int[] { parameterDefinition.Index, fParam.Field.OrdinalPosition };
                 }
 
                 processor.Emit(paramOpcode, paramArg, node.OriginalNode.Span);
@@ -448,7 +559,7 @@ namespace Nebula.Core.Emitting
 
             VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
             InstructionOpcode opcode = InstructionOpcode.Ldloc;
-            object? argument = variableDefinition;
+            object argument = variableDefinition;
             if (node is AbstractBundleFieldAccessExpression f)
             {
                 opcode = InstructionOpcode.LdBloc;
@@ -703,7 +814,7 @@ namespace Nebula.Core.Emitting
                 return;
             }
 
-            if(node.ResultType == TypeSymbol.Float)
+            if (node.ResultType == TypeSymbol.Float)
             {
                 float value = (float)node.ConstantValue.Value;
                 processor.Emit(InstructionOpcode.Ldc_r4, value, node.OriginalNode.Span);
@@ -753,7 +864,22 @@ namespace Nebula.Core.Emitting
             {TypeSymbol.Int, TypeReference.Int},
             {TypeSymbol.Float, TypeReference.Float},
             {TypeSymbol.String, TypeReference.String},
-            {TypeSymbol.Bundle, TypeReference.Bundle},
+            {TypeSymbol.BaseObject, TypeReference.Bundle},
+            {TypeSymbol.BaseArray, TypeReference.Array},
         };
+
+        private void EmitArrayParameterReassignment(NILProcessor processor, ParameterDefinition parameter, AbstractAssignmentExpression node)
+        {
+            var arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
+            TypeReference typeReference = _knownTypes[arraySymbol.ValueType];
+            StoreNewArrIntoParameter(processor, parameter, arraySymbol, typeReference, node.OriginalNode.Span);
+        }
+
+        private void EmitArrayLocalReassignment(NILProcessor processor, VariableDefinition variableDefinition, AbstractAssignmentExpression node)
+        {
+            var arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
+            TypeReference typeReference = _knownTypes[arraySymbol.ValueType];
+            StoreNewArrIntoLocal(processor, variableDefinition, arraySymbol, typeReference, node.OriginalNode.Span);
+        }
     }
 }

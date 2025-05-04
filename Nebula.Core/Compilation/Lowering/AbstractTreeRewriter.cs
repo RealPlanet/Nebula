@@ -1,4 +1,5 @@
 ﻿using Nebula.Core.Binding;
+using Nebula.Core.Parsing.Expressions;
 using System;
 using System.Collections.Immutable;
 
@@ -36,9 +37,11 @@ namespace Nebula.Core.Lowering
             AbstractNodeType.BinaryExpression => RewriteBinaryExpression((AbstractBinaryExpression)node),
             AbstractNodeType.VariableExpression => RewriteVariableExpression((AbstractVariableExpression)node),
             AbstractNodeType.AssignmentExpression => RewriteAssignmentExpression((AbstractAssignmentExpression)node),
-            AbstractNodeType.BundleFieldAssignmentExpression => RewriteBundleFieldAssignmentExpression((AbstractBundleFieldAssignment)node),
+            AbstractNodeType.BundleFieldAssignmentExpression => RewriteBundleFieldAssignmentExpression((AbstractBundleFieldAssignmentExpression)node),
+            AbstractNodeType.ArrayAssignmentExpression => RewriteArrayAssignmentExpression((AbstractArrayAssignmentExpression)node),
             AbstractNodeType.CallExpression => RewriteCallExpression((AbstractCallExpression)node),
             AbstractNodeType.ConversionExpression => RewriteConversionExpression((AbstractConversionExpression)node),
+            AbstractNodeType.DefaultInitializationExpression => RewriteDefaultInitializationExpression((AbstractDefaultInitializationExpression)node),
             _ => throw new Exception($"Unexpected node: {node.Type}"),
         };
 
@@ -49,6 +52,12 @@ namespace Nebula.Core.Lowering
                 return node;
 
             return new AbstractConversionExpression(node.OriginalNode, node.ResultType, expression);
+        }
+
+        protected virtual AbstractExpression RewriteDefaultInitializationExpression(AbstractDefaultInitializationExpression node)
+        {
+            // Nothing to do yet
+            return node;
         }
 
         protected virtual AbstractStatement RewriteConditionalGotoStatement(AbstractConditionalGotoStatement node)
@@ -200,13 +209,23 @@ namespace Nebula.Core.Lowering
             return new AbstractAssignmentExpression(node.OriginalNode, node.Variable, expression);
         }
 
-        protected virtual AbstractExpression RewriteBundleFieldAssignmentExpression(AbstractBundleFieldAssignment node)
+        protected virtual AbstractExpression RewriteBundleFieldAssignmentExpression(AbstractBundleFieldAssignmentExpression node)
         {
             AbstractExpression expression = RewriteExpression(node.Expression);
             if (expression == node.Expression)
                 return node;
 
-            return new AbstractBundleFieldAssignment(node.OriginalNode, node.BundleVariable, node.FieldToAssign, expression);
+            return new AbstractBundleFieldAssignmentExpression(node.OriginalNode, node.BundleVariable, node.FieldToAssign, expression);
+        }
+
+        protected virtual AbstractExpression RewriteArrayAssignmentExpression(AbstractArrayAssignmentExpression node)
+        {
+            AbstractExpression indexExpression = RewriteExpression(node.IndexExpression);
+            AbstractExpression expression = RewriteExpression(node.Expression);
+            if (expression == node.Expression && indexExpression == node.IndexExpression)
+                return node;
+
+            return new AbstractArrayAssignmentExpression(node.OriginalNode, node.ArrayVariable, indexExpression, expression);
         }
 
         protected virtual AbstractExpression RewriteCompoundAssignmentExpression(AbstractCompoundAssignmentExpression node)

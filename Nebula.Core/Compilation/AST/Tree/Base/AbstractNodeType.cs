@@ -25,12 +25,14 @@
         // Expression
         ErrorExpression,
         LiteralExpression,
+        DefaultInitializationExpression,
         CompoundAssignmentExpression,
         UnaryExpression,
         BinaryExpression,
         VariableExpression,
         AssignmentExpression,
         BundleFieldAssignmentExpression,
+        ArrayAssignmentExpression,
         CallExpression,
         ConversionExpression,
     }
