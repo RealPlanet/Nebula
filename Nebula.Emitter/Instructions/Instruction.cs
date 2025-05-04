@@ -51,6 +51,7 @@ namespace Nebula.CodeEmitter
                 InstructionOpcode.Ld_b => GetLdBArgumentString(),
                 InstructionOpcode.AddStr => ((int)Operand!).ToString(),
                 InstructionOpcode.Br or InstructionOpcode.Brtrue or InstructionOpcode.Brfalse => Operand!.ToString()!,
+                InstructionOpcode.NewArr => ProcessNewArrayOperand(),
                 _ => string.Empty,
             };
         }
@@ -89,6 +90,19 @@ namespace Nebula.CodeEmitter
         private string ProcessArrayOperand()
         {
             if (Operand is int[] array)
+            {
+                return CreateSeparatedList(array, ' ');
+            }
+
+            throw new ArgumentException();
+        }
+
+        private string ProcessNewArrayOperand()
+        {
+            if (Operand is string typeName)
+                return typeName;
+
+            if (Operand is string[] array)
             {
                 return CreateSeparatedList(array, ' ');
             }

@@ -10,6 +10,7 @@
         public static TypeReference Float { get; } = new(TypeIdentifier.Float);
         public static TypeReference String { get; } = new(TypeIdentifier.String);
         public static TypeReference Bundle { get; } = new(TypeIdentifier.Bundle);
+        public static TypeReference Array { get; } = new(TypeIdentifier.Array);
 
         public TypeIdentifier Identifier { get; }
 
