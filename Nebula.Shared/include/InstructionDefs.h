@@ -57,7 +57,8 @@ namespace nebula {
         Ldc_i4,		// Load constant i32
         Ldc_r4,		// Load constant f32
         Ldc_s,		// Load string constant
-        Ld_b,       // Load bundle [optional arg 'BundleName' ]
+        Ld_b,       // Load bundle [ObjectNamespace] ObjectType
+        NewArr,     // Load array DataStackIndex [ObjectNamespace] ObjectType
 
         // Load variables
         Ldarg,
@@ -70,6 +71,7 @@ namespace nebula {
         StBloc,     // Store data in local bundle
         StArg,
         StBArg,
+        StElem,     // Replaces the array element at a given index with the value on the evaluation stack
 
         LastInstruction
     };
@@ -235,6 +237,7 @@ namespace nebula {
             {"stbarg",		VMInstruction::StBArg		},
             {"ldbloc",		VMInstruction::LdBloc		},
             {"ldbarg",		VMInstruction::LdBarg		},
+            {"newarr",		VMInstruction::NewArr		},
         };
 
         auto instPair = instructionMap.find(s);

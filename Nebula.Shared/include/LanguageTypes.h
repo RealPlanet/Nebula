@@ -34,6 +34,7 @@ namespace nebula
         _TypeFloat,
         _TypeString,
         _TypeBundle,
+        _TypeArray,
         _TypeVoid, // Does not exist in the stack but is used while compiling code
         //_TypeBool, // Does not exist in the stack but is used while compiling code
         _UnknownType,
@@ -41,7 +42,7 @@ namespace nebula
     };
 
     //using DataStackVariant = std::variant<TByte, TInt32, TFloat, TString, TBundle>;
-    using DataStackVariant = std::variant<TInt32, TFloat, TString, TBundle>;
+    using DataStackVariant = std::variant<TInt32, TFloat, TString, TBundle, TArray>;
 
     DataStackVariantIndex StringToStackValue(const std::string& str);
 

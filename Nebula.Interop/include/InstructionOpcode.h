@@ -54,6 +54,7 @@ namespace Nebula::CodeEmitter
         Ldc_r4      = nebula::VMInstruction::Ldc_r4,
         Ldc_s       = nebula::VMInstruction::Ldc_s,
         Ld_b        = nebula::VMInstruction::Ld_b,
+        NewArr      = nebula::VMInstruction::NewArr,
 
         // Load variables
         Ldarg       = nebula::VMInstruction::Ldarg,
@@ -66,5 +67,6 @@ namespace Nebula::CodeEmitter
         StBloc      = nebula::VMInstruction::StBloc,
         StArg       = nebula::VMInstruction::StArg,
         StBArg      = nebula::VMInstruction::StBArg,
+        StElem      = nebula::VMInstruction::StElem,
     };
 }

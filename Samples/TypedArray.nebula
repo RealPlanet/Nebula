@@ -12,3 +12,9 @@ func void main() autoexec
 
     WriteLine(array[myIndex]);
 }
+
+func void passArray(string[] arr)
+{
+    arr[1] = "Change!";
+    arr = [];
+}

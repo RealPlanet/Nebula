@@ -13,5 +13,6 @@ namespace Nebula::CodeEmitter::Types
         Float = nebula::DataStackVariantIndex::_TypeFloat,
         String = nebula::DataStackVariantIndex::_TypeString,
         Bundle = nebula::DataStackVariantIndex::_TypeBundle,
+        Array = nebula::DataStackVariantIndex::_TypeArray,
     };
 }
