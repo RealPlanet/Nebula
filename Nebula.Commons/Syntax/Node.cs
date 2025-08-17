@@ -1,5 +1,4 @@
 ﻿using Nebula.Commons.Text;
-using Nebula.Core.Compilation;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -54,19 +53,26 @@ namespace Nebula.Commons.Syntax
             Token? token = node as Token;
 
             if (toConsoleOutput)
+            {
                 Console.ForegroundColor = ConsoleColor.DarkGray;
+            }
 
             if (token is not null)
             {
                 foreach (Trivia? trivia in token.LeadingTrivia)
                 {
                     if (toConsoleOutput)
+                    {
                         Console.ForegroundColor = ConsoleColor.DarkGray;
+                    }
+
                     textWriter.Write(indent);
                     textWriter.Write("├──");
 
                     if (toConsoleOutput)
+                    {
                         Console.ForegroundColor = ConsoleColor.DarkGreen;
+                    }
 
                     textWriter.WriteLine($"L: {trivia.Type}");
                 }
@@ -76,13 +82,17 @@ namespace Nebula.Commons.Syntax
             string tokenMarker = !hasTrailingTrivia && isLast ? "└──" : "├──";
 
             if (toConsoleOutput)
+            {
                 Console.ForegroundColor = ConsoleColor.DarkGray;
+            }
 
             textWriter.Write(indent);
             textWriter.Write(tokenMarker);
 
             if (toConsoleOutput)
+            {
                 Console.ForegroundColor = node is Token ? ConsoleColor.Blue : ConsoleColor.Cyan;
+            }
 
             textWriter.Write(node.Type);
 
@@ -92,7 +102,9 @@ namespace Nebula.Commons.Syntax
             }
 
             if (toConsoleOutput)
+            {
                 Console.ResetColor();
+            }
 
             textWriter.WriteLine();
 
@@ -104,12 +116,17 @@ namespace Nebula.Commons.Syntax
                     string triviaMarker = isLast && isLastTrailingTrivia ? "└──" : "├──";
 
                     if (toConsoleOutput)
+                    {
                         Console.ForegroundColor = ConsoleColor.DarkGray;
+                    }
+
                     textWriter.Write(indent);
                     textWriter.Write(triviaMarker);
 
                     if (toConsoleOutput)
+                    {
                         Console.ForegroundColor = ConsoleColor.DarkGreen;
+                    }
 
                     textWriter.WriteLine($"T: {trivia.Type}");
                 }

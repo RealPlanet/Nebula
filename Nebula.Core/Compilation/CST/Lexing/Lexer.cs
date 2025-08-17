@@ -1,8 +1,7 @@
 ﻿using Nebula.Commons.Reporting;
 using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
-using Nebula.Core.Binding.Symbols;
-using Nebula.Core.Compilation;
+using Nebula.Core.Compilation.AST.Symbols;
 using Nebula.Core.Reporting;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -10,7 +9,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-namespace Nebula.Core.Parsing.Lexing
+namespace Nebula.Core.Compilation.CST.Lexing
 {
     public sealed class Lexer
     {
@@ -384,7 +383,9 @@ namespace Nebula.Core.Parsing.Lexing
 
             Debug.Assert(_tokenStart != _currentPosition);
             if (_tokenStart == _currentPosition)
+            {
                 _currentPosition++;
+            }
         }
 
         #region Trivia
@@ -425,7 +426,9 @@ namespace Nebula.Core.Parsing.Lexing
                         {
                             // if the trivia is trailing then it stops at the first line break or whitespace
                             if (!leading)
+                            {
                                 isDone = true;
+                            }
 
                             ReadLineBreak();
                             break;
@@ -465,9 +468,14 @@ namespace Nebula.Core.Parsing.Lexing
                         break;
                     default:
                         if (!char.IsWhiteSpace(Current))
+                        {
                             done = true;
+                        }
                         else
+                        {
                             _currentPosition++;
+                        }
+
                         break;
                 }
             }
@@ -552,7 +560,7 @@ namespace Nebula.Core.Parsing.Lexing
         {
             _type = NodeType.NumberToken;
             bool hasFoundDecimal = false;
-            while ((char.IsDigit(Current) || (Current == '.' && !hasFoundDecimal)) &&
+            while ((char.IsDigit(Current) || Current == '.' && !hasFoundDecimal) &&
                 !char.IsWhiteSpace(Current) &&
                 Current != 0)
             {
@@ -577,7 +585,9 @@ namespace Nebula.Core.Parsing.Lexing
 
             // This is for integer numbers with terminator at the end
             if (!hasFoundDecimal && Current == 'f')
+            {
                 hasFoundDecimal = true;
+            }
 
             if (hasFoundDecimal)
             {

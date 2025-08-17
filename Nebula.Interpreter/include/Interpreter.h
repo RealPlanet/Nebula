@@ -56,7 +56,7 @@ namespace nebula
         bool BindNativeFunction(const std::string& name, const NativeFunctionCallback callback);
         bool AddScript(std::shared_ptr<Script> script);
         bool SetStandardOutput(IStreamWrapper* stream);
-
+        bool ClearStandardOutput();
 
         bool Step();
 

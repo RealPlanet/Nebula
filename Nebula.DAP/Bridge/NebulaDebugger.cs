@@ -1,15 +1,15 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Messages;
+using Nebula.Commons.Debugger;
 using Nebula.Commons.Text;
 using Nebula.Debugger.Bridge.Objects;
-using Nebula.Interop;
+using Nebula.Interop.SafeHandles;
+using Nebula.Interop.Structures;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Nebula.Debugger.Bridge
 {
@@ -30,64 +30,45 @@ namespace Nebula.Debugger.Bridge
         internal DebuggerConfiguration Configuration { get; }
         internal IReadOnlyDictionary<string, DebugFile> DebugFiles => _dbgFiles;
         internal BreakpointManager Breakpoints { get; }
-        internal InterpreterState VmState => _interpreter.State;
+        internal VirtualMachine.State VmState => _interpreter.VMState;
         internal Dictionary<string, Source> DAPSources { get; } = new();
 
         #endregion
 
         #region Fields
         private readonly CancellationTokenSource _tokenSource = new();
-        private readonly InterpreterW _interpreter;
+        private readonly VirtualMachine _interpreter;
         private readonly ILogger _logger;
         private readonly Dictionary<string, DebugFile> _dbgFiles = [];
         private StateInformation _latestStateInformation;
-        private Task _vmStdoutTask;
         #endregion
 
         public NebulaDebugger(DebuggerConfiguration configuration, ILogger logger)
         {
-            InteropLogger loggerBridge = new(logger);
             Configuration = configuration;
             _logger = logger;
-            _interpreter = new(loggerBridge);
+            _interpreter = new();
+            _interpreter.RedirectStdOutput(OnStdOutWrite, OnStdOutLine);
             _latestStateInformation = new(this);
             Breakpoints = new BreakpointManager(this);
 
             _logger.LogInformation("Debugger constructed");
             //DebugFilesChanged += ReloadLineNumberCache;
-            _vmStdoutTask = Task.Run(ReadInterpreterStandardOut);
         }
 
-        private async Task ReadInterpreterStandardOut()
+        private void OnStdOutLine(string message) => OnStdOut?.Invoke(this, $"{message}\n");
+        private void OnStdOutWrite(string message) => OnStdOut?.Invoke(this, message);
+
+        private void OnScriptParseError(string path, ReportType type, string message)
         {
-#if DEBUG
-            if (!System.Diagnostics.Debugger.IsAttached)
-                System.Diagnostics.Debugger.Launch();
-#endif
-
-            MemoryStream stream = new();
-            StreamWriter writer = new(stream);
-            StreamReader reader = new(stream);
-            _interpreter.SetStandardOutput(writer);
-            while(!_tokenSource.IsCancellationRequested)
-            {
-                // TODO :: Exiting the VM should close stream, as a result this readline will interrupt and we can exit gracefully
-                string data = reader.ReadLine() ?? string.Empty;
-                if (string.IsNullOrEmpty(data))
-                {
-                    await Task.Yield();
-                    continue;
-                }
-
-                OnStdOut?.Invoke(this, data + "\n");
-            }            
+            _logger.LogInformation($"[{path}] [{type}] {message}");
         }
 
         #region Initialization
 
         public void Init()
         {
-            _interpreter.Init(true);
+            _interpreter.Initialize(true);
         }
 
         public void StopAndReset()
@@ -107,7 +88,7 @@ namespace Nebula.Debugger.Bridge
             // Continue step
             if (threadId < 0)
             {
-                int[] startingOpcodes = _interpreter.GetNextOpcodeIndexForAllThreads();
+                int[] startingOpcodes = _interpreter.NextOpcodesOfAllThreads;
 
                 _interpreter.Step();
 
@@ -115,8 +96,8 @@ namespace Nebula.Debugger.Bridge
                 if (ShouldEarlyExitFromStepping(out int earlyStoppedThread, out stopReason))
                 {
                     // Only consider early exits when we move at least one line for the stopping thread, otherwise we'll keep breaking on the same breakpoint
-                    CallStackW earlyStoppingStack = _interpreter.GetStackFrameOf(earlyStoppedThread);
-                    StackFrameW frame = earlyStoppingStack.LastFrame;
+                    Callstack earlyStoppingStack = _interpreter.GetCallstackOfThread(earlyStoppedThread);
+                    Interop.Structures.Frame frame = earlyStoppingStack.LastFrame;
                     DebugFile currentDbgInfo = DebugFiles[frame.Namespace];
                     DebugFunction currentDbgFunction = currentDbgInfo.Functions[frame.FunctionName];
                     int nextOpcodeIndex = frame.NextInstructionIndex;
@@ -124,10 +105,15 @@ namespace Nebula.Debugger.Bridge
 
                     int startingLine = currentDbgFunction.LineNumber;
                     if (startingOpcodes[earlyStoppedThread] >= 0)
+                    {
                         startingLine = currentDbgFunction.InstructionLines[startingOpcodes[earlyStoppedThread]];
+                    }
+
                     int steppedLine = currentDbgFunction.LineNumber;
                     if (nextOpcodeIndex >= 0)
+                    {
                         steppedLine = currentDbgFunction.InstructionLines[nextOpcodeIndex];
+                    }
 
                     if (startingLine != steppedLine)
                     {
@@ -141,26 +127,30 @@ namespace Nebula.Debugger.Bridge
 
                 }
 
-                if (_interpreter.State == InterpreterState.Exited)
+                if (_interpreter.VMState == VirtualMachine.State.Exited)
+                {
                     ExecutionEnd?.Invoke(this, EventArgs.Empty);
+                }
 
                 return true;
             }
 
             // Step is meant to skip one source line but native step means one opcode, we need to figure out how many opcodes to skip
-            CallStackW stack = _interpreter.GetStackFrameOf(threadId);
+            Callstack stack = _interpreter.GetCallstackOfThread(threadId);
             if (stack != null)
             {
                 int stackCount = stack.FrameCount;
-                StackFrameW frame = stack.LastFrame;
+                Interop.Structures.Frame frame = stack.LastFrame;
                 DebugFile currentDbgInfo = DebugFiles[frame.Namespace];
                 DebugFunction currentDbgFunction = currentDbgInfo.Functions[frame.FunctionName];
                 int nextOpcodeIndex = frame.NextInstructionIndex;
-         
+
                 int numberOfSteps = 0;
                 int lineNumber = -1;
                 if (nextOpcodeIndex >= 0)
+                {
                     lineNumber = currentDbgFunction.InstructionLines[nextOpcodeIndex];
+                }
 
                 if (nextOpcodeIndex < currentDbgFunction.InstructionLines.Count)
                 {
@@ -196,8 +186,8 @@ namespace Nebula.Debugger.Bridge
                         targetOpcode == frame.InstructionCount - 1;
 
                     _interpreter.Step();
-                    CallStackW latestStack = _interpreter.GetStackFrameOf(threadId);
-                    StackFrameW? lastFrame = latestStack?.LastFrame;
+                    Callstack latestStack = _interpreter.GetCallstackOfThread(threadId);
+                    Interop.Structures.Frame? lastFrame = latestStack?.LastFrame;
                     if (latestStack is null || lastFrame is null ||
                         latestStack.LastFrame.Namespace != currentDbgInfo.Namespace || latestStack.LastFrame.FunctionName != currentDbgFunction.Name)
                     {
@@ -213,7 +203,9 @@ namespace Nebula.Debugger.Bridge
                     {
                         int currentLineNumber = -1;
                         if (frame.NextInstructionIndex >= 0)
+                        {
                             currentLineNumber = currentDbgFunction.InstructionLines[frame.NextInstructionIndex];
+                        }
 
                         // This is to prevent breaking on the same line because of a breakpoint
                         // If we started from this line then we likely broke here
@@ -230,11 +222,13 @@ namespace Nebula.Debugger.Bridge
                     }
 
                     // Ensures we exit only if we actually stepped our thread id
-                    exitLoop = exitLoop && (int)_interpreter.GetCurrentThreadId() == threadId;
+                    exitLoop = exitLoop && (int)_interpreter.CurrentThreadId == threadId;
                 }
 
-                if (_interpreter.State == InterpreterState.Exited)
+                if (_interpreter.VMState == VirtualMachine.State.Exited)
+                {
                     ExecutionEnd?.Invoke(this, EventArgs.Empty);
+                }
             }
 
             // TODO :: If we have the following
@@ -268,7 +262,7 @@ namespace Nebula.Debugger.Bridge
             {
                 foreach (NebulaBreakpoint bp in breakpointSet)
                 {
-                    int threadId = _interpreter.AnyFrameAt(bp.Namespace, bp.FuncName, bp.Line);
+                    int threadId = _interpreter.AnyFrameAboutToBeAt(bp.Namespace, bp.FuncName, bp.Line);
                     if (threadId >= 0)
                     {
                         stoppedThread = threadId;
@@ -290,7 +284,7 @@ namespace Nebula.Debugger.Bridge
             targetFuncionName = string.Empty;
             instructionIndex = -1;
             lineNumber--; // Debug files are offset by one
-            if (DebugFiles.TryGetValue(@namespace, out var dbgFile))
+            if (DebugFiles.TryGetValue(@namespace, out DebugFile? dbgFile))
             {
                 DebugFunction? targetFunc = dbgFile.Functions.Values.FirstOrDefault(f =>
                 {
@@ -301,7 +295,9 @@ namespace Nebula.Debugger.Bridge
                 });
 
                 if (targetFunc is null)
+                {
                     return false;
+                }
 
                 targetFuncionName = targetFunc.Name;
                 instructionIndex = targetFunc.InstructionLines.IndexOf(lineNumber);
@@ -317,7 +313,7 @@ namespace Nebula.Debugger.Bridge
 
         public bool InitDebugger(ICollection<string> scripts, string nativeDllBindings)
         {
-            if (!_interpreter.AddScripts(scripts))
+            if (!_interpreter.AddScripts(scripts, OnScriptParseError))
             {
                 _logger.LogError("Could not add scripts to debug");
                 return false;
@@ -352,13 +348,13 @@ namespace Nebula.Debugger.Bridge
                 });
             }
 
-            var uniqueNativeFunctions = _dbgFiles.SelectMany(f => f.Value.NativeFunctions)
+            List<string> uniqueNativeFunctions = _dbgFiles.SelectMany(f => f.Value.NativeFunctions)
                 .Distinct()
                 .ToList();
 
-            if(string.IsNullOrEmpty(nativeDllBindings))
+            if (string.IsNullOrEmpty(nativeDllBindings))
             {
-                if(uniqueNativeFunctions.Count > 0)
+                if (uniqueNativeFunctions.Count > 0)
                 {
                     // TODO Report error!
                     return false;
@@ -387,13 +383,15 @@ namespace Nebula.Debugger.Bridge
             _latestStateInformation = new(this);
             for (int i = 0; i < threadCount; i++)
             {
-                var stackFrame = _interpreter.GetStackFrameOf(i);
-                if (stackFrame == null)
+                Callstack callstack = _interpreter.GetCallstackOfThread(i);
+                if (callstack == null)
+                {
                     continue;
+                }
 
-                List<StackFrameW> stackTrace = stackFrame.ToList();
+                List<Frame> stackTrace = callstack.Frames.ToList();
                 List<NebulaStackFrame> actualFrames = [];
-                foreach (StackFrameW? st in stackTrace)
+                foreach (Frame? st in stackTrace)
                 {
                     NebulaStackFrame newFrame = new(_latestStateInformation, st);
                     actualFrames.Add(newFrame);

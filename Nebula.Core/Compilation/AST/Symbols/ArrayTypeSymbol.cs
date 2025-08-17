@@ -1,4 +1,4 @@
-﻿namespace Nebula.Core.Binding.Symbols
+﻿namespace Nebula.Core.Compilation.AST.Symbols
 {
     public sealed class ArrayTypeSymbol
         : TypeSymbol
@@ -7,7 +7,7 @@
         public int Rank { get; }
 
         public ArrayTypeSymbol(TypeSymbol valueType, int rank)
-            : base(TypeSymbol.BaseArray.Name)
+            : base(BaseArray.Name)
         {
             ValueType = valueType;
             Rank = rank;

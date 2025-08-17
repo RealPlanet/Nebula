@@ -1,7 +1,7 @@
-﻿using Nebula.Core.Binding.Symbols;
+﻿using Nebula.Core.Compilation.AST.Symbols;
 using System.Collections.Generic;
 
-namespace Nebula.Core.Parsing
+namespace Nebula.Core.Compilation.AST.Binding.Bundles
 {
     public sealed class AbstractBundleDefinition
     {

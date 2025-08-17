@@ -1,4 +1,4 @@
-﻿namespace Nebula.Core.Binding
+﻿namespace Nebula.Core.Compilation.AST.Tree
 {
     public sealed class AbstractLabel
     {

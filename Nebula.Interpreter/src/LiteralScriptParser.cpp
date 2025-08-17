@@ -11,7 +11,7 @@
 using namespace nebula;
 using namespace nebula::parsing;
 
-std::shared_ptr<Script> ParserDebug::ParseScript(const std::string_view& data)
+Script* ParserDebug::ParseScript(const std::string_view& data)
 {
     constexpr const char* namespaceKeyword = ReadableScriptSection(ScriptSection::Namespace);
     constexpr const char* bundleKeyword = ReadableScriptSection(ScriptSection::Bundle);
@@ -90,7 +90,7 @@ std::shared_ptr<Script> ParserDebug::ParseScript(const std::string_view& data)
     Script* script = m_ScriptBuilder->Finalize();
     delete m_ScriptBuilder;
 
-    return std::unique_ptr<Script>(script);
+    return script;
 }
 
 bool ParserDebug::ParseNamespace()

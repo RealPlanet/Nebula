@@ -15,7 +15,7 @@ namespace nebula
 	{
 	public:
 		virtual ~IScriptParser() = default;
-		virtual std::shared_ptr<Script> ParseScript(const std::string_view& data) = 0;
+		virtual Script* ParseScript(const std::string_view& data) = 0;
 		virtual shared::DiagnosticReport& GetLastParsingReport() = 0;
 
 	protected:

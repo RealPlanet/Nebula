@@ -1,16 +1,29 @@
 ﻿using Nebula.Commons.Reporting;
 using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
-using Nebula.Core.Binding.Symbols;
-using Nebula.Core.Compilation;
-using Nebula.Core.Compilation.AST;
+using Nebula.Core.Compilation.AST.Bundle;
+using Nebula.Core.Compilation.AST.Symbols;
+using Nebula.Core.Compilation.AST.Symbols.Base;
+using Nebula.Core.Compilation.AST.Tree;
+using Nebula.Core.Compilation.AST.Tree.Base;
+using Nebula.Core.Compilation.AST.Tree.Expression;
+using Nebula.Core.Compilation.AST.Tree.Expression.Bundles;
+using Nebula.Core.Compilation.AST.Tree.Operators;
+using Nebula.Core.Compilation.AST.Tree.Statements;
+using Nebula.Core.Compilation.AST.Tree.Statements.ControlFlow;
+using Nebula.Core.Compilation.AST.Tree.Statements.Loop;
+using Nebula.Core.Compilation.CST.Tree;
+using Nebula.Core.Compilation.CST.Tree.Base;
+using Nebula.Core.Compilation.CST.Tree.Declaration;
+using Nebula.Core.Compilation.CST.Tree.Declaration.Bundle;
+using Nebula.Core.Compilation.CST.Tree.Declaration.Function;
+using Nebula.Core.Compilation.CST.Tree.Expressions;
+using Nebula.Core.Compilation.CST.Tree.Statements;
+using Nebula.Core.Compilation.CST.Tree.Types;
+using Nebula.Core.Compilation.Lowering;
 using Nebula.Core.Graph;
-using Nebula.Core.Lowering;
-using Nebula.Core.Parsing;
-using Nebula.Core.Parsing.Expressions;
-using Nebula.Core.Parsing.Statements;
 using Nebula.Core.Reporting;
-using Nebula.Interop;
+using Nebula.Interop.SafeHandles;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -18,23 +31,23 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
-namespace Nebula.Core.Binding
+namespace Nebula.Core.Compilation.AST.Binding
 {
     public sealed class Binder
     {
-        private Binder(ICollection<CompilationUnit> units, ICollection<CompiledScript> references)
+        private Binder(ICollection<CompilationUnit> units, ICollection<Script> references)
         {
             _allUnitsToBind = units.ToList();
             _allScriptToReference = references.ToList();
         }
 
-        private Binder(CompilationUnit unit, ICollection<CompiledScript> references)
+        private Binder(CompilationUnit unit, ICollection<Script> references)
             : this([unit], references)
         {
         }
 
         private readonly List<CompilationUnit> _allUnitsToBind;
-        private readonly List<CompiledScript> _allScriptToReference;
+        private readonly List<Script> _allScriptToReference;
         private readonly Dictionary<CompilationUnit, Scope> _allParentScopes = new();
 
         private readonly Report _binderReport = new();
@@ -49,7 +62,7 @@ namespace Nebula.Core.Binding
         private readonly Stack<(AbstractLabel BreakLabel, AbstractLabel ContinueLabel)> _loopStack = new();
         private int _labelCounter = 0;
 
-        public static ICollection<AbstractProgram> Bind(ICollection<CompilationUnit> units, ICollection<CompiledScript> references, out Report bindingReport)
+        public static ICollection<AbstractProgram> Bind(ICollection<CompilationUnit> units, ICollection<Script> references, out Report bindingReport)
         {
             Binder binder = new(units, references);
             ICollection<AbstractProgram> abstractPrograms = binder.Bind(out bindingReport);
@@ -102,7 +115,7 @@ namespace Nebula.Core.Binding
                         continue;
                     }
 
-                    CompiledScript? scriptReference = _allScriptToReference.FirstOrDefault(s => s.Namespace == import.Namespace);
+                    Script? scriptReference = _allScriptToReference.FirstOrDefault(s => s.Namespace == import.Namespace);
                     if (scriptReference != null)
                     {
                         _currentProgram.References.AddScriptReference(scriptReference);
@@ -173,7 +186,9 @@ namespace Nebula.Core.Binding
             if (!conversion.Exists)
             {
                 if (expression.ResultType != TypeSymbol.Error && type != TypeSymbol.Error)
+                {
                     _binderReport.ReportCannotConvertType(reportLocation, expression.ResultType, type);
+                }
 
                 return new AbstractErrorExpression(expression.OriginalNode);
             }
@@ -185,7 +200,9 @@ namespace Nebula.Core.Binding
             }
 
             if (conversion.IsIdentity)
+            {
                 return expression;
+            }
 
             return new AbstractConversionExpression(expression.OriginalNode, type, expression);
         }
@@ -234,7 +251,9 @@ namespace Nebula.Core.Binding
             VariableSymbol variable = new LocalVariableSymbol(name, isReadOnly, type, constant);
             // Should never happen as shadowing is allowed and we created a new scope
             if (!identifier.IsMissing && !_currentScope.TryDeclareVariable(variable))
+            {
                 _binderReport.ReportVariableAlreadyDeclared(identifier);
+            }
 
             return variable;
         }
@@ -661,7 +680,9 @@ namespace Nebula.Core.Binding
             }
 
             if (variable.IsReadOnly)
+            {
                 _binderReport.ReportCannotAssign(expr.Operator.Location, name);
+            }
 
             AbstractExpression convertedExpression;
             if (expr.Operator.Type != NodeType.EqualsToken)
@@ -693,7 +714,9 @@ namespace Nebula.Core.Binding
         {
             AbstractExpression boundOperand = BindExpression(syntax.Operand);
             if (boundOperand.ResultType == TypeSymbol.Error)
+            {
                 return new AbstractErrorExpression(syntax);
+            }
 
             AbstractUnaryOperator? boundOperator = AbstractUnaryOperator.Bind(syntax.Operator.Type, boundOperand.ResultType);
 
@@ -712,7 +735,9 @@ namespace Nebula.Core.Binding
             AbstractExpression boundRight = BindExpression(syntax.Right);
 
             if (boundLeft.ResultType == TypeSymbol.Error || boundRight.ResultType == TypeSymbol.Error)
+            {
                 return new AbstractErrorExpression(syntax);
+            }
 
             AbstractBinaryOperator? BoundOperatorType = AbstractBinaryOperator.Bind(syntax.Operator.Type, boundLeft.ResultType, boundRight.ResultType);
             if (BoundOperatorType is null)
@@ -734,7 +759,9 @@ namespace Nebula.Core.Binding
 
             VariableSymbol? variable = BindVariableReference(syntax.Identifier);
             if (variable == null)
+            {
                 return new AbstractErrorExpression(syntax);
+            }
 
             return new AbstractVariableExpression(syntax, variable);
         }
@@ -743,7 +770,9 @@ namespace Nebula.Core.Binding
         {
             // This is for casting of type to type, as it's treated as a function call
             if (expr.Arguments.Count == 1 && LookupType(expr.Identifier.Text) is TypeSymbol type)
+            {
                 return BindConversion(expr.Arguments[0], type, allowExplicit: true);
+            }
 
             // We lookup into references too, if nothinng is found we assume it doesn't exist even if we could technically compile just fine
             FunctionSymbol? function = TryLookupFunctionSymbol(expr);
@@ -818,9 +847,13 @@ namespace Nebula.Core.Binding
                 {
                     Node firstExceedingNode;
                     if (function.Parameters.Length > 0)
+                    {
                         firstExceedingNode = expression.Arguments.GetSeparator(function.Parameters.Length - 1);
+                    }
                     else
+                    {
                         firstExceedingNode = expression.Arguments[0];
+                    }
 
                     Expression? lastExceedingArgument = expression.Arguments[^1];
                     span = TextSpan.FromBounds(firstExceedingNode.Span.Start, lastExceedingArgument.Span.End);
@@ -920,15 +953,21 @@ namespace Nebula.Core.Binding
             if (currentFunction!.ReturnType == TypeSymbol.Void)
             {
                 if (expression is not null)
+                {
                     _binderReport.ReportInvalidReturnExpression(syntax.Expression!.Location, currentFunction.Name);
+                }
             }
             else
             {
                 // A return statement always needs an expression if return type is not void
                 if (expression is null)
+                {
                     _binderReport.ReportMissingReturnExpression(syntax.ReturnKeyword.Location, currentFunction.Name, currentFunction.ReturnType);
+                }
                 else
+                {
                     expression = BindConversion(syntax.Expression!.Location, expression, currentFunction.ReturnType);
+                }
             }
 
             return new AbstractReturnStatement(syntax, expression);
@@ -1016,9 +1055,13 @@ namespace Nebula.Core.Binding
             if (condition.ConstantValue != null)
             {
                 if ((bool)condition.ConstantValue.Value == false)
+                {
                     _binderReport.ReportUnreachableCode(syntax.ThenStatement);
+                }
                 else if (syntax.ElseClause != null)
+                {
                     _binderReport.ReportUnreachableCode(syntax.ElseClause.ElseStatement);
+                }
             }
 
             AbstractStatement thenStatement = BindStatement(syntax.ThenStatement);
@@ -1032,7 +1075,9 @@ namespace Nebula.Core.Binding
         private TypeSymbol? BindTypeClause(TypeClause? typeClause)
         {
             if (typeClause is null)
+            {
                 return null;
+            }
 
             TypeSymbol? type = null;
             string typeName = typeClause.Identifier.Text;
@@ -1061,9 +1106,9 @@ namespace Nebula.Core.Binding
                 return TypeSymbol.Error;
             }
 
-            if(type is not null && typeClause.RankSpecifier != null && typeClause.RankSpecifier.Rank > 0)
+            if (type is not null && typeClause.RankSpecifier != null && typeClause.RankSpecifier.Rank > 0)
             {
-                if(typeClause.RankSpecifier.Rank != 1)
+                if (typeClause.RankSpecifier.Rank != 1)
                 {
                     throw new NotImplementedException("Multi dimensional array are not supported");
                 }

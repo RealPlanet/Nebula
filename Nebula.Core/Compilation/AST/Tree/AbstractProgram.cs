@@ -1,9 +1,12 @@
 ﻿using Nebula.Commons.Text;
-using Nebula.Core.Binding.Symbols;
+using Nebula.Core.Compilation.AST.Binding.Referencing;
+using Nebula.Core.Compilation.AST.Bundle;
+using Nebula.Core.Compilation.AST.Symbols;
+using Nebula.Core.Compilation.AST.Tree.Statements;
 using System.Collections.Generic;
 
 
-namespace Nebula.Core.Binding
+namespace Nebula.Core.Compilation.AST.Tree
 {
     public sealed class AbstractProgram
     {

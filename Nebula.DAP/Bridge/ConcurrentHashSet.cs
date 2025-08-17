@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Nebula.Debugger.Bridge
 {
@@ -24,7 +23,7 @@ namespace Nebula.Debugger.Bridge
 
         public void Clear()
         {
-            lock(_syncLock)
+            lock (_syncLock)
             {
                 _set.Clear();
             }
@@ -40,7 +39,7 @@ namespace Nebula.Debugger.Bridge
 
         public void CopyTo(T[] array, int arrayIndex)
         {
-            lock(_syncLock)
+            lock (_syncLock)
             {
                 _set.CopyTo(array, arrayIndex);
             }
@@ -50,8 +49,10 @@ namespace Nebula.Debugger.Bridge
         {
             lock (_syncLock)
             {
-                foreach (var i in _set)
+                foreach (T? i in _set)
+                {
                     yield return i;
+                }
             }
         }
 
@@ -97,7 +98,7 @@ namespace Nebula.Debugger.Bridge
 
         public bool Remove(T item)
         {
-            lock(_syncLock)
+            lock (_syncLock)
             {
                 return _set.Remove(item);
             }
@@ -120,8 +121,10 @@ namespace Nebula.Debugger.Bridge
         {
             lock (_syncLock)
             {
-                foreach (var i in _set)
+                foreach (T? i in _set)
+                {
                     yield return i;
+                }
             }
         }
     }

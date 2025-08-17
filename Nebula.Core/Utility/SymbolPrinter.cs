@@ -1,6 +1,7 @@
 ﻿using Nebula.Commons.Syntax;
-using Nebula.Commons.Text;
-using Nebula.Core.Binding.Symbols;
+using Nebula.Commons.Text.Printers;
+using Nebula.Core.Compilation.AST.Symbols;
+using Nebula.Core.Compilation.AST.Symbols.Base;
 using System;
 using System.IO;
 
@@ -71,7 +72,9 @@ namespace Nebula.Core.Utility
         private static void WriteLocalVariableTo(LocalVariableSymbol symbol, TextWriter writer)
         {
             if (symbol.IsReadOnly)
+            {
                 writer.WriteKeyword(NodeType.ConstKeyword);
+            }
 
             writer.WriteSpace();
             symbol.Type?.WriteTo(writer);

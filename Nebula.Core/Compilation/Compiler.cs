@@ -1,9 +1,10 @@
 ﻿using Nebula.Commons.Reporting;
 using Nebula.Commons.Text;
-using Nebula.Core.Binding;
-using Nebula.Core.Emitting;
-using Nebula.Core.Parsing;
-using Nebula.Interop;
+using Nebula.Core.Compilation.AST.Binding;
+using Nebula.Core.Compilation.AST.Tree;
+using Nebula.Core.Compilation.CST.Parsing;
+using Nebula.Core.Compilation.Emitting;
+using Nebula.Interop.SafeHandles;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -20,7 +21,7 @@ namespace Nebula.Core.Compilation
             public string OutputFolder { get; set; } = string.Empty;
             public bool ReadableBytecode { get; set; } = true;
             public List<SourceCode> Sources { get; } = [];
-            public List<CompiledScript> References { get; } = [];
+            public List<Script> References { get; } = [];
         }
 
         /// <summary>Result data of a compilation</summary>

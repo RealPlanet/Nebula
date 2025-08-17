@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace Nebula.Compilation
+namespace Nebula.Compiler
 {
     /// <summary>
     /// 

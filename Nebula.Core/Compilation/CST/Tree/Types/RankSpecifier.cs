@@ -2,7 +2,7 @@
 using Nebula.Commons.Text;
 using System.Collections.Generic;
 
-namespace Nebula.Core.Parsing
+namespace Nebula.Core.Compilation.CST.Tree.Types
 {
     public sealed class RankSpecifier
         : Node
@@ -13,7 +13,7 @@ namespace Nebula.Core.Parsing
         public TokenSeparatedList<Token> Commas { get; }
         public Token ClosedSquareBracket { get; }
 
-        public int Rank => (Commas.GetWithSeparators().Count - Commas.Count) + 1;
+        public int Rank => Commas.GetWithSeparators().Count - Commas.Count + 1;
 
         public RankSpecifier(SourceCode sourceCode, Token openSquareBracket, TokenSeparatedList<Token> commas, Token closedSquareBracket)
             : base(sourceCode)
@@ -26,7 +26,7 @@ namespace Nebula.Core.Parsing
         public override IEnumerable<Node> GetChildren()
         {
             yield return OpenSquareBracket;
-            foreach (var c in Commas.GetWithSeparators())
+            foreach (Node c in Commas.GetWithSeparators())
             {
                 yield return c;
             }

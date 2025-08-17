@@ -1,6 +1,6 @@
 ﻿using Nebula.Commons.Syntax;
 
-namespace Nebula.Tests.Utility
+namespace Nebula.Compiler.Tests.Utility
 {
 
     internal sealed class AssertingEnum : IDisposable

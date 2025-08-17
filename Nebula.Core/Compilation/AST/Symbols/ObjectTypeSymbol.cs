@@ -1,9 +1,9 @@
-﻿namespace Nebula.Core.Binding.Symbols
+﻿namespace Nebula.Core.Compilation.AST.Symbols
 {
     public sealed class ObjectTypeSymbol
         : TypeSymbol
     {
-        public ObjectTypeSymbol(string @namespace, string name) 
+        public ObjectTypeSymbol(string @namespace, string name)
             : base(name)
         {
             Namespace = @namespace;

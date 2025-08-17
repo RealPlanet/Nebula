@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Nebula.Commons.Text
+namespace Nebula.Commons.Debugger
 {
     [DataContract]
     public sealed class DebugFile

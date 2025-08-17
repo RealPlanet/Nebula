@@ -1,8 +1,9 @@
 ﻿using Nebula.Commons.Syntax;
-using Nebula.Core.Binding.Symbols;
+using Nebula.Core.Compilation.AST.Symbols;
+using Nebula.Core.Compilation.AST.Tree.Base;
 using System.Collections.Immutable;
 
-namespace Nebula.Core.Binding
+namespace Nebula.Core.Compilation.AST.Tree.Expression
 {
 
     public sealed class AbstractCallExpression

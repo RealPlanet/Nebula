@@ -1,8 +1,9 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
+using Nebula.Core.Compilation.CST.Tree.Base;
 using System.Collections.Generic;
 
-namespace Nebula.Core.Parsing
+namespace Nebula.Core.Compilation.CST.Tree.Expressions
 {
 
     public class CallExpression
@@ -35,19 +36,27 @@ namespace Nebula.Core.Parsing
         public override IEnumerable<Node> GetChildren()
         {
             if (AsyncCall != null)
+            {
                 yield return AsyncCall;
+            }
 
             if (DoubleColon != null)
+            {
                 yield return DoubleColon;
+            }
 
             if (Namespace != null)
+            {
                 yield return Namespace;
+            }
 
             yield return Identifier;
             yield return OpenParenthesis;
 
             foreach (Node argument in Arguments.GetWithSeparators())
+            {
                 yield return argument;
+            }
 
             yield return CloseParenthesis;
         }

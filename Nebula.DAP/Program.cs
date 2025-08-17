@@ -9,7 +9,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.Serialization;
 using System.Threading;
 
 namespace Nebula.Debugger
@@ -50,7 +49,9 @@ namespace Nebula.Debugger
             }
 
             if (arguments.DebugDAP)
+            {
                 System.Diagnostics.Debugger.Launch();
+            }
 
             DebuggerConfiguration configuration = new(Console.OpenStandardInput(), Console.OpenStandardOutput())
             {
@@ -106,9 +107,9 @@ namespace Nebula.Debugger
             Console.WriteLine(FormattableString.Invariant($"Waiting for connections on port {args.ServerPort}..."));
             NebulaDebuggerAdapter adapter = null;
 
-            Thread listenThread = new Thread(() =>
+            Thread listenThread = new(() =>
             {
-                TcpListener listener = new TcpListener(IPAddress.Parse("127.0.0.1"), args.ServerPort);
+                TcpListener listener = new(IPAddress.Parse("127.0.0.1"), args.ServerPort);
                 listener.Start();
 
                 while (true)
@@ -120,12 +121,15 @@ namespace Nebula.Debugger
 
                         using (Stream stream = new NetworkStream(clientSocket))
                         {
+                            configuration.InStream = stream;
+                            configuration.Outstream = stream;
                             adapter = new NebulaDebuggerAdapter(configuration, AppLogger);
                             adapter.Protocol.LogMessage += (sender, e) => Console.WriteLine(e.Message);
                             adapter.Protocol.DispatcherError += (sender, e) =>
                             {
                                 Console.Error.WriteLine(e.Exception.Message);
                             };
+
                             adapter.Run();
                             adapter.Protocol.WaitForReader();
 

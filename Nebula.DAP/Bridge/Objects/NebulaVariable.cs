@@ -1,4 +1,4 @@
-﻿using Nebula.Interop;
+﻿using Nebula.Interop.Structures;
 
 namespace Nebula.Debugger.Bridge.Objects
 {
@@ -6,17 +6,17 @@ namespace Nebula.Debugger.Bridge.Objects
         : BaseNebulaDebuggerObejct
     {
         public NebulaScope ParentScope { get; }
-        public VariableW NativeVariable { get; }
+        public Variable NativeVariable { get; }
         public int ScopeId => ParentScope.ScopeId;
         public string Name { get; } = "<UNKNOWN>";
         public string Value { get; }
         public string Type { get; }
 
-        public NebulaVariable(StateInformation parent, NebulaScope parentScope, string varName, VariableW variableW)
+        public NebulaVariable(StateInformation parent, NebulaScope parentScope, string varName, Variable variable)
             : base(parent)
         {
             ParentScope = parentScope;
-            NativeVariable = variableW;
+            NativeVariable = variable;
 
             Name = varName;
             Type = NativeVariable.Type.ToString();

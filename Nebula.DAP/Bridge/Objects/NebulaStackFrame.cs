@@ -1,4 +1,5 @@
-﻿using Nebula.Interop;
+﻿using Nebula.Commons.Debugger;
+using Nebula.Interop.Structures;
 using System.Collections.Generic;
 
 namespace Nebula.Debugger.Bridge.Objects
@@ -8,10 +9,10 @@ namespace Nebula.Debugger.Bridge.Objects
     {
         /// <summary> Unique ID across all threads </summary>
         public int FrameId { get; }
-        public StackFrameW NativeFrame { get; }
+        public Frame NativeFrame { get; }
         public IList<NebulaScope> Scopes { get; }
 
-        public NebulaStackFrame(StateInformation parent, StackFrameW nativeFrame)
+        public NebulaStackFrame(StateInformation parent, Frame nativeFrame)
             : base(parent)
         {
             FrameId = parent.FrameIdCounter++;
@@ -25,7 +26,7 @@ namespace Nebula.Debugger.Bridge.Objects
 
             NebulaDebugger dbg = Parent.Parent;
 
-            Commons.Text.DebugFunction? currentFrameData = dbg.GetDebugInfo(this);
+            DebugFunction? currentFrameData = dbg.GetDebugInfo(this);
 
             NebulaScope localsScope = new(Parent, "Local variables", this);
             for (int i = 0; i < NativeFrame.LocalCount; i++)

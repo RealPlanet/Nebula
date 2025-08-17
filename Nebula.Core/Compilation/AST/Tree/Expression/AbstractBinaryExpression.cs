@@ -1,7 +1,10 @@
 ﻿using Nebula.Commons.Syntax;
-using Nebula.Core.Binding.Symbols;
+using Nebula.Core.Compilation.AST.Binding;
+using Nebula.Core.Compilation.AST.Symbols;
+using Nebula.Core.Compilation.AST.Tree.Base;
+using Nebula.Core.Compilation.AST.Tree.Operators;
 
-namespace Nebula.Core.Binding
+namespace Nebula.Core.Compilation.AST.Tree.Expression
 {
     /// <summary>
     /// An expression which takes two generic BoundExpression nodes and an operator node and produces a result.<br/>

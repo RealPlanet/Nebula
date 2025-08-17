@@ -1,8 +1,9 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
+using Nebula.Core.Compilation.CST.Tree.Base;
 using System.Collections.Generic;
 
-namespace Nebula.Core.Parsing.Expressions
+namespace Nebula.Core.Compilation.CST.Tree.Statements
 {
     public sealed partial class IfStatement
         : Statement
@@ -35,7 +36,9 @@ namespace Nebula.Core.Parsing.Expressions
             yield return ThenStatement;
 
             if (ElseClause != null)
+            {
                 yield return ThenStatement;
+            }
         }
     }
 }

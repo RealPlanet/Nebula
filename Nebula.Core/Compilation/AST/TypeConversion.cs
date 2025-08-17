@@ -1,4 +1,4 @@
-﻿using Nebula.Core.Binding.Symbols;
+﻿using Nebula.Core.Compilation.AST.Symbols;
 
 namespace Nebula.Core.Compilation.AST
 {
@@ -22,7 +22,9 @@ namespace Nebula.Core.Compilation.AST
         public static TypeConversion Classify(TypeSymbol from, TypeSymbol to)
         {
             if (from == to)
+            {
                 return Identity;
+            }
 
             //if (from != TypeSymbol.Void && to == TypeSymbol.Any)
             //    return Implict;
@@ -37,10 +39,12 @@ namespace Nebula.Core.Compilation.AST
             if (from == TypeSymbol.Int || from == TypeSymbol.Bool || from == TypeSymbol.Float)
             {
                 if (to == TypeSymbol.String)
-                    return Explicit;                
+                {
+                    return Explicit;
+                }
             }
 
-            if(from == TypeSymbol.Int && to == TypeSymbol.Float)
+            if (from == TypeSymbol.Int && to == TypeSymbol.Float)
             {
                 return Implict;
             }
@@ -53,15 +57,21 @@ namespace Nebula.Core.Compilation.AST
             if (from == TypeSymbol.String)
             {
                 if (to == TypeSymbol.Int || to == TypeSymbol.Bool)
+                {
                     return Explicit;
+                }
             }
 
             // BaseObject is default initialization
             if (from == TypeSymbol.BaseObject && to is ObjectTypeSymbol)
+            {
                 return Implict;
+            }
 
             if (from == TypeSymbol.BaseObject && to is ArrayTypeSymbol)
+            {
                 return Implict;
+            }
 
             return None;
         }

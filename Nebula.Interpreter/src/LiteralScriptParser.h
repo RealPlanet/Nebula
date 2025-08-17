@@ -22,7 +22,7 @@ namespace nebula::parsing
         : public IScriptParser
     {
     public:
-        virtual std::shared_ptr<Script> ParseScript(const std::string_view& data) override;
+        virtual Script* ParseScript(const std::string_view& data) override;
         virtual shared::DiagnosticReport& GetLastParsingReport() override { return m_Report; }
 
     private:

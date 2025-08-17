@@ -1,6 +1,4 @@
-﻿using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Messages;
-using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -17,7 +15,7 @@ namespace Nebula.Debugger.Bridge
         {
             get
             {
-                lock(_syncLock)
+                lock (_syncLock)
                 {
                     return _breakpoints.Values.ToList();
                 }
@@ -43,7 +41,7 @@ namespace Nebula.Debugger.Bridge
 
         public void AddBreakpoint(NebulaBreakpoint bp)
         {
-            if (_breakpoints.TryGetValue(bp.Namespace, out var set))
+            if (_breakpoints.TryGetValue(bp.Namespace, out ConcurrentHashSet<NebulaBreakpoint>? set))
             {
                 set.Add(bp);
                 return;

@@ -1,8 +1,10 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
+using Nebula.Core.Compilation.CST.Tree.Base;
+using Nebula.Core.Compilation.CST.Tree.Types;
 using System.Collections.Generic;
 
-namespace Nebula.Core.Parsing
+namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
 {
     public abstract class BaseFunctionDeclaration
         : Statement
@@ -39,7 +41,9 @@ namespace Nebula.Core.Parsing
             yield return Name;
             yield return OpenParenthesis;
             foreach (Node child in Parameters.GetWithSeparators())
+            {
                 yield return child;
+            }
 
             yield return ClosedParenthesis;
         }

@@ -1,4 +1,4 @@
-﻿using Nebula.Interop;
+﻿using Nebula.Interop.Structures;
 using System.Collections.Generic;
 
 namespace Nebula.Debugger.Bridge.Objects
@@ -19,9 +19,9 @@ namespace Nebula.Debugger.Bridge.Objects
             ParentFrame = parentFrame;
         }
 
-        internal void AddVariable(string varName, VariableW variableW)
+        internal void AddVariable(string varName, Variable variable)
         {
-            Variables.Add(new NebulaVariable(Parent, this, varName, variableW));
+            Variables.Add(new NebulaVariable(Parent, this, varName, variable));
         }
     }
 }

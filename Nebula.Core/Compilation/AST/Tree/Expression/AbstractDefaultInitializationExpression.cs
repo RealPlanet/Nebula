@@ -1,7 +1,8 @@
 ﻿using Nebula.Commons.Syntax;
-using Nebula.Core.Binding.Symbols;
+using Nebula.Core.Compilation.AST.Symbols;
+using Nebula.Core.Compilation.AST.Tree.Base;
 
-namespace Nebula.Core.Binding
+namespace Nebula.Core.Compilation.AST.Tree.Expression
 {
     public sealed class AbstractDefaultInitializationExpression
         : AbstractExpression

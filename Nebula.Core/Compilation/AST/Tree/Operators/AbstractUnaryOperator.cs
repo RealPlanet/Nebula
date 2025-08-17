@@ -1,7 +1,7 @@
 ﻿using Nebula.Commons.Syntax;
-using Nebula.Core.Binding.Symbols;
+using Nebula.Core.Compilation.AST.Symbols;
 
-namespace Nebula.Core.Binding
+namespace Nebula.Core.Compilation.AST.Tree.Operators
 {
     /// <summary>
     /// Defines the type of unary operations by definiing the node type, the operation type and result typee

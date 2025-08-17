@@ -1,11 +1,19 @@
-﻿using Nebula.CodeEmitter;
-using Nebula.CodeEmitter.Types;
+﻿using Nebula.CodeGeneration;
+using Nebula.CodeGeneration.Definitions;
 using Nebula.Commons.Reporting;
 using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
-using Nebula.Core.Binding;
-using Nebula.Core.Binding.Symbols;
-using Nebula.Core.Parsing;
+using Nebula.Core.Compilation.AST.Bundle;
+using Nebula.Core.Compilation.AST.Symbols;
+using Nebula.Core.Compilation.AST.Tree;
+using Nebula.Core.Compilation.AST.Tree.Base;
+using Nebula.Core.Compilation.AST.Tree.Expression;
+using Nebula.Core.Compilation.AST.Tree.Expression.Bundles;
+using Nebula.Core.Compilation.AST.Tree.Operators;
+using Nebula.Core.Compilation.AST.Tree.Statements;
+using Nebula.Core.Compilation.AST.Tree.Statements.ControlFlow;
+using Nebula.Core.Compilation.CST.Tree.Statements;
+using Nebula.Interop.Enumerators;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -15,12 +23,12 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Nebula.Core.Emitting
+namespace Nebula.Core.Compilation.Emitting
 {
     public sealed class Emitter
     {
         /// <summary>Context used by the emitter to keep track of all the code being emitted</summary>
-        private sealed class Context(string moduleName, string @namespace, CodeEmitter.Version moduleVersion, SourceCode sourceCode)
+        private sealed class Context(string moduleName, string @namespace, CodeGeneration.Version moduleVersion, SourceCode sourceCode)
         {
             public Assembly Assembly { get; } = new(moduleName, @namespace, moduleVersion, sourceCode);
             public Report Report { get; } = new();
@@ -46,7 +54,7 @@ namespace Nebula.Core.Emitting
             NamespaceStatement nsToken = (NamespaceStatement)program.Namespace.OriginalNode;
             _currentContext = new(ModuleName, program.Namespace.Text, new(1, 0, 0), program.SourceCode);
 
-            foreach (var nativeFunc in program.NativeFunctions)
+            foreach (FunctionSymbol nativeFunc in program.NativeFunctions)
             {
                 EmitNativeFunctionDeclaration(nativeFunc);
             }
@@ -120,7 +128,7 @@ namespace Nebula.Core.Emitting
             _currentContext.Labels.Clear();
 
             TypeReference returnType = _knownTypes[declaration.ReturnType];
-            NativeAttribute attributes = GenerateAttributeMask(declaration.Attributes);
+            AttributeType attributes = GenerateAttributeMask(declaration.Attributes);
             MethodDefinition method = new(declaration.Name, attributes, returnType, declaration.Declaration?.Span ?? TextSpan.Empty);
             _currentContext.Assembly.TypeDefinition.Methods.Add(method);
 
@@ -156,7 +164,9 @@ namespace Nebula.Core.Emitting
             NILProcessor processor = method.Body.NILProcessor;
 
             foreach (AbstractStatement statement in body.Statements)
+            {
                 EmitStatement(processor, statement);
+            }
 
             foreach ((int InstructionIndex, AbstractLabel Target) in _currentContext.LabelReferences)
             {
@@ -234,7 +244,10 @@ namespace Nebula.Core.Emitting
         private void EmitReturnStatement(NILProcessor processor, AbstractReturnStatement node)
         {
             if (node.Expression != null)
+            {
                 EmitExpression(processor, node.Expression);
+            }
+
             processor.Emit(InstructionOpcode.Ret, node.OriginalNode.Span);
         }
 
@@ -256,7 +269,7 @@ namespace Nebula.Core.Emitting
         {
             EmitExpression(processor, node.Condition);
 
-            InstructionOpcode opCode = node.JumpIfTrue ? InstructionOpcode.Brtrue : InstructionOpcode.Brfalse;
+            InstructionOpcode opCode = node.JumpIfTrue ? InstructionOpcode.BrTrue : InstructionOpcode.BrFalse;
             _currentContext.LabelReferences.Add((processor.Body.Instructions.Count, node.Label));
 
             TextSpan location = node.OriginalNode.Span;
@@ -363,17 +376,23 @@ namespace Nebula.Core.Emitting
             typeNamespace = string.Empty;
             typedName = string.Empty;
             if (!string.IsNullOrEmpty(objTypeSymbol.Namespace))
+            {
                 typeNamespace = objTypeSymbol.Namespace;
+            }
 
             if (!string.IsNullOrEmpty(objTypeSymbol.Name))
+            {
                 typedName = objTypeSymbol.Name;
+            }
         }
 
         private void EmitExpressionStatement(NILProcessor processor, AbstractExpressionStatement node)
         {
             EmitExpression(processor, node.Expression);
             if (node.Expression.ResultType != TypeSymbol.Void)
+            {
                 processor.Emit(InstructionOpcode.Pop, node.OriginalNode.Span);
+            }
         }
 
         private static void EmitNopStatement(NILProcessor processor, AbstractNopStatement node)
@@ -438,7 +457,9 @@ namespace Nebula.Core.Emitting
         {
             // Emit all the arguments
             foreach (AbstractExpression argument in node.Arguments)
+            {
                 EmitExpression(processor, argument);
+            }
 
             InstructionOpcode callInstruction = node.IsAsync ? InstructionOpcode.Call_t : InstructionOpcode.Call;
 
@@ -479,7 +500,7 @@ namespace Nebula.Core.Emitting
 
         private void EmitArrayAssignmentExpression(NILProcessor processor, AbstractArrayAssignmentExpression node)
         {
-            if(node.ArrayVariable is ParameterSymbol parameter)
+            if (node.ArrayVariable is ParameterSymbol parameter)
             {
                 ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
                 processor.Emit(InstructionOpcode.Ldarg, parameterDefinition.Index, node.OriginalNode.Span);
@@ -505,7 +526,7 @@ namespace Nebula.Core.Emitting
                     throw new NotImplementedException();
                 }
 
-                if(parameter.Type == TypeSymbol.BaseArray)
+                if (parameter.Type == TypeSymbol.BaseArray)
                 {
                     EmitArrayParameterReassignment(processor, parameterDefinition, node);
                     return;
@@ -727,15 +748,21 @@ namespace Nebula.Core.Emitting
                     binaryExpression.Right.ResultType == TypeSymbol.String)
                 {
                     foreach (AbstractExpression result in Flatten(binaryExpression.Left))
+                    {
                         yield return result;
+                    }
 
                     foreach (AbstractExpression result in Flatten(binaryExpression.Right))
+                    {
                         yield return result;
+                    }
                 }
                 else
                 {
                     if (node.ResultType != TypeSymbol.String)
+                    {
                         throw new Exception($"Unexpected node type in string concatenation: {node.Type}");
+                    }
 
                     yield return node;
                 }
@@ -753,7 +780,9 @@ namespace Nebula.Core.Emitting
                         string? stringValue = (string)node.ConstantValue.Value;
 
                         if (string.IsNullOrEmpty(stringValue))
+                        {
                             continue;
+                        }
 
                         sb ??= new StringBuilder();
                         sb.Append(stringValue);
@@ -771,7 +800,9 @@ namespace Nebula.Core.Emitting
                 }
 
                 if (sb?.Length > 0)
+                {
                     yield return new AbstractLiteralExpression(syntax, sb.ToString());
+                }
             }
 
         }
@@ -841,15 +872,17 @@ namespace Nebula.Core.Emitting
 
         #endregion
 
-        private static NativeAttribute GenerateAttributeMask(ImmutableArray<AttributeSymbol> attributes)
+        private static AttributeType GenerateAttributeMask(ImmutableArray<AttributeSymbol> attributes)
         {
-            NativeAttribute mask = NativeAttribute.Uknown;
+            AttributeType mask = AttributeType.Unknown;
             foreach (AttributeSymbol attr in attributes)
             {
                 if (!attr.IsMethodAttribute || attr.Attribute is null)
+                {
                     throw new InvalidDataException(nameof(attr.Attribute));
+                }
 
-                mask |= (NativeAttribute)attr.Attribute;
+                mask |= (AttributeType)attr.Attribute;
             }
 
             return mask;
@@ -870,14 +903,14 @@ namespace Nebula.Core.Emitting
 
         private void EmitArrayParameterReassignment(NILProcessor processor, ParameterDefinition parameter, AbstractAssignmentExpression node)
         {
-            var arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
+            ArrayTypeSymbol arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
             TypeReference typeReference = _knownTypes[arraySymbol.ValueType];
             StoreNewArrIntoParameter(processor, parameter, arraySymbol, typeReference, node.OriginalNode.Span);
         }
 
         private void EmitArrayLocalReassignment(NILProcessor processor, VariableDefinition variableDefinition, AbstractAssignmentExpression node)
         {
-            var arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
+            ArrayTypeSymbol arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
             TypeReference typeReference = _knownTypes[arraySymbol.ValueType];
             StoreNewArrIntoLocal(processor, variableDefinition, arraySymbol, typeReference, node.OriginalNode.Span);
         }

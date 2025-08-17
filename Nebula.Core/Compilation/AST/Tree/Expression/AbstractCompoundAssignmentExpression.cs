@@ -1,7 +1,9 @@
 ﻿using Nebula.Commons.Syntax;
-using Nebula.Core.Binding.Symbols;
+using Nebula.Core.Compilation.AST.Symbols;
+using Nebula.Core.Compilation.AST.Tree.Base;
+using Nebula.Core.Compilation.AST.Tree.Operators;
 
-namespace Nebula.Core.Binding
+namespace Nebula.Core.Compilation.AST.Tree.Expression
 {
     public sealed class AbstractCompoundAssignmentExpression
         : AbstractExpression

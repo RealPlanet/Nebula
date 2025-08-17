@@ -1,8 +1,10 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
+using Nebula.Core.Compilation.CST.Tree.Base;
+using Nebula.Core.Compilation.CST.Tree.Expressions;
 using System.Collections.Generic;
 
-namespace Nebula.Core.Parsing.Expressions
+namespace Nebula.Core.Compilation.CST.Tree.Statements
 {
     public sealed class NotifyStatement
         : Statement
@@ -14,7 +16,7 @@ namespace Nebula.Core.Parsing.Expressions
         public Expression Expression { get; }
         public Token Semicolon { get; }
 
-        public NotifyStatement(SourceCode code, NameExpression identifier, Token keyword, Expression expression, Token semicolon) 
+        public NotifyStatement(SourceCode code, NameExpression identifier, Token keyword, Expression expression, Token semicolon)
             : base(code)
         {
             Identifier = identifier;

@@ -73,6 +73,7 @@ static int ExecuteVM(std::vector<std::string>& scripts) {
     std::vector<std::shared_ptr<Script>> loadedScripts;
     loadedScripts.reserve(scripts.size());
 
+    bool anyLoadError = false;
     for (auto& file : scripts)
     {
         ScriptLoadResult scriptLoadResult = Script::FromFile(file);
@@ -82,12 +83,19 @@ static int ExecuteVM(std::vector<std::string>& scripts) {
             std::string errMessage = std::format("Errors while loading script {}", file.data());
             writer::ConsoleWrite(errMessage, writer::Code::FG_RED);
             PrintReport(scriptLoadResult.ParsingReport);
-            return -2;
+            anyLoadError = true;
         }
+        else
+        {
+            PrintReport(scriptLoadResult.ParsingReport);
+            writer::ConsoleWrite(std::format("Script with namespace {} has been loaded", scriptLoadResult.Script->Namespace()), writer::Code::FG_GREEN);
+            loadedScripts.push_back(std::shared_ptr<Script>(scriptLoadResult.Script));
+        }
+    }
 
-        PrintReport(scriptLoadResult.ParsingReport);
-        writer::ConsoleWrite(std::format("Script with namespace {} has been loaded", scriptLoadResult.Script->Namespace()), writer::Code::FG_GREEN);
-        loadedScripts.push_back(scriptLoadResult.Script);
+    if (anyLoadError)
+    {
+        return -2;
     }
 
     auto start = std::chrono::high_resolution_clock::now();

@@ -1,13 +1,17 @@
 ﻿using Nebula.Commons.Syntax;
-using Nebula.Commons.Text;
-using Nebula.Core.Binding;
-using Nebula.Core.Binding.Symbols;
+using Nebula.Commons.Text.Printers;
+using Nebula.Core.Compilation.AST.Symbols;
+using Nebula.Core.Compilation.AST.Tree.Base;
+using Nebula.Core.Compilation.AST.Tree.Expression;
+using Nebula.Core.Compilation.AST.Tree.Statements;
+using Nebula.Core.Compilation.AST.Tree.Statements.ControlFlow;
+using Nebula.Core.Compilation.AST.Tree.Statements.Loop;
 using System;
 using System.CodeDom.Compiler;
 using System.Diagnostics;
 using System.IO;
 
-namespace Nebula.Core.Utility
+namespace Nebula.Core.Utility.Concrete
 {
     public static class AbstractTreeWriter
     {
@@ -15,11 +19,11 @@ namespace Nebula.Core.Utility
         {
             if (writer is IndentedTextWriter iw)
             {
-                WriteTo(node, iw);
+                node.WriteTo(iw);
                 return;
             }
 
-            WriteTo(node, new IndentedTextWriter(writer));
+            node.WriteTo(new IndentedTextWriter(writer));
         }
 
         public static void WriteTo(this AbstractNode node, IndentedTextWriter writer)
@@ -113,9 +117,14 @@ namespace Nebula.Core.Utility
             writer.WriteKeyword(NodeType.ReturnKeyword);
             writer.WriteSpace();
             if (node.Expression is not null)
+            {
                 node.Expression.WriteTo(writer);
+            }
             else
+            {
                 writer.WriteIdentifier("<void>");
+            }
+
             writer.WriteLine();
         }
 
@@ -125,7 +134,10 @@ namespace Nebula.Core.Utility
             writer.WriteLine();
             writer.Indent++;
             foreach (AbstractStatement? s in node.Statements)
+            {
                 s.WriteTo(writer);
+            }
+
             writer.Indent--;
             writer.WritePunctuation(NodeType.ClosedBracketToken);
             writer.WriteLine();
@@ -216,12 +228,17 @@ namespace Nebula.Core.Utility
         {
             bool unindent = writer.Indent > 0;
             if (unindent)
+            {
                 writer.Indent--;
+            }
+
             writer.WritePunctuation(node.Label.Name);
             //writer.WritePunctuation(NodeType.ColonToken);
             writer.WriteLine();
             if (unindent)
+            {
                 writer.Indent++;
+            }
         }
 
         private static void WriteErrorExpression(AbstractErrorExpression _, IndentedTextWriter writer) => writer.WriteKeyword("???");
@@ -342,11 +359,17 @@ namespace Nebula.Core.Utility
         private static void WriteNestedExpression(this IndentedTextWriter writer, int parentPrecedence, AbstractExpression node)
         {
             if (node is AbstractUnaryExpression unary)
+            {
                 writer.WriteNestedExpression(parentPrecedence, unary.Operator.NodeType.GetUnaryPrecedence(), unary);
+            }
             else if (node is AbstractBinaryExpression binary)
+            {
                 writer.WriteNestedExpression(parentPrecedence, binary.Operator.NodeType.GetBinaryPrecedence(), binary);
+            }
             else
+            {
                 node.WriteTo(writer);
+            }
         }
 
         private static void WriteNestedExpression(this IndentedTextWriter writer, int parentPrecedence, int currentPrecedence, AbstractExpression node)

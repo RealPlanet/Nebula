@@ -1,0 +1,12 @@
+# >> hello_world - Version 1.0.0 <<
+
+.namespace "hello_world"
+
+.func void main(  ) ;autoexec
+{
+    .locals [  ]
+    0000 ldc_s "Hello, World!"
+    0001 call WriteLine
+    0002 ret 
+}
+

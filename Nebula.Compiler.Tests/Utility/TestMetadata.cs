@@ -1,10 +1,7 @@
-﻿using Nebula.Core.Parsing;
-using System.ComponentModel.DataAnnotations;
-using YamlDotNet.Core;
-using YamlDotNet.Serialization;
+﻿using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace Nebula.Tests.Utility
+namespace Nebula.Compiler.Tests.Utility
 {
     public sealed class TestMetadata
     {
@@ -17,9 +14,11 @@ namespace Nebula.Tests.Utility
         public static TestMetadata? Read(string filePath)
         {
             if (!File.Exists(filePath))
+            {
                 return null;
+            }
 
-            var deserializer = new DeserializerBuilder()
+            IDeserializer deserializer = new DeserializerBuilder()
                 .WithNamingConvention(NullNamingConvention.Instance)
                 .Build();
 
@@ -27,7 +26,9 @@ namespace Nebula.Tests.Utility
 
             tm.Dependencies ??= Array.Empty<string>();
             if (tm.MaxVMExecutionTime <= 1000)
+            {
                 tm.MaxVMExecutionTime = 1000;
+            }
 
             return tm;
         }

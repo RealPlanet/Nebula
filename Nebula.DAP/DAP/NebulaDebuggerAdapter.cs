@@ -2,15 +2,14 @@
 using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol;
 using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Messages;
 using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Utilities;
+using Nebula.Commons.Debugger;
 using Nebula.Debugger.Bridge;
 using Nebula.Debugger.Bridge.Objects;
-using Nebula.Interop;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.Intrinsics.Arm;
 using System.Threading;
 using System.Threading.Tasks;
 using Thread = Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Messages.Thread;
@@ -91,7 +90,9 @@ namespace Nebula.Debugger.DAP
                     if (!_runEvent.Wait(0))
                     {
                         if (_stopEvent == null)
+                        {
                             throw new InvalidOperationException("Stop reason is not set");
+                        }
 
                         _nebulaDebugger.ReloadStateInformation();
                         Protocol.SendEvent(_stopEvent);
@@ -136,12 +137,12 @@ namespace Nebula.Debugger.DAP
 
         private void PostTerminationEvents(ExitReason reason = ExitReason.NormalExit)
         {
-            StringWriter message = new StringWriter();
+            StringWriter message = new();
             OutputEvent.CategoryValue messageType = OutputEvent.CategoryValue.Console;
 
             message.WriteLine(">> Terminating debugger <<");
 
-            switch(reason)
+            switch (reason)
             {
                 case ExitReason.InitError:
                     message.WriteLine(" One or more initialization errors stopped the debugger!");
@@ -201,7 +202,7 @@ namespace Nebula.Debugger.DAP
             }
 
             string[] scriptFiles = GetScriptsToLoad(additionalFolders.ToArray());
-            if(!_nebulaDebugger.InitDebugger(scriptFiles, nativeBindingSource))
+            if (!_nebulaDebugger.InitDebugger(scriptFiles, nativeBindingSource))
             {
                 OnExecutionEnd(this, EventArgs.Empty);
             }
@@ -264,7 +265,7 @@ namespace Nebula.Debugger.DAP
         {
             List<Breakpoint> actualBreakpoints = [];
             _nebulaDebugger.Breakpoints.ClearFunctionBreakpoints();
-            foreach (var funcBreakpoint in arguments.Breakpoints)
+            foreach (FunctionBreakpoint? funcBreakpoint in arguments.Breakpoints)
             {
                 string funcName = funcBreakpoint.Name;
                 Breakpoint bp = new()
@@ -291,7 +292,7 @@ namespace Nebula.Debugger.DAP
                     string ns = tokens[0];
                     funcName = tokens[1];
 
-                    if (!_nebulaDebugger.DebugFiles.TryGetValue(ns, out var dbgFile))
+                    if (!_nebulaDebugger.DebugFiles.TryGetValue(ns, out DebugFile? dbgFile))
                     {
                         _logger.LogWarning($"Namespace for function breakpoint '{ns}' not found in dbg files");
                         bp.Message = "Could not find namespace";
@@ -299,7 +300,7 @@ namespace Nebula.Debugger.DAP
                         continue;
                     }
 
-                    if (!dbgFile.Functions.TryGetValue(funcName, out var dbgFunc))
+                    if (!dbgFile.Functions.TryGetValue(funcName, out DebugFunction? dbgFunc))
                     {
                         _logger.LogWarning($"Function '{funcName}' in namespace '{ns}' not found in dbg files for function breakpoint");
                         bp.Message = "Could not find function in namespace";
@@ -327,9 +328,9 @@ namespace Nebula.Debugger.DAP
             List<Breakpoint> actualBreakpoints = [];
             string @namespace = string.Empty;
             Source? inMemorySource = null;
-            foreach(var kvp in _nebulaDebugger.DAPSources)
+            foreach (KeyValuePair<string, Source> kvp in _nebulaDebugger.DAPSources)
             {
-                if(kvp.Value.Name == arguments.Source.Name)
+                if (kvp.Value.Name == arguments.Source.Name)
                 {
                     @namespace = kvp.Key;
                     inMemorySource = kvp.Value;
@@ -337,7 +338,7 @@ namespace Nebula.Debugger.DAP
             }
 
             _nebulaDebugger.Breakpoints.ClearGenericBreakpoints(@namespace);
-            foreach (var reqBp in arguments.Breakpoints)
+            foreach (SourceBreakpoint? reqBp in arguments.Breakpoints)
             {
                 Breakpoint bp = new()
                 {
@@ -348,7 +349,7 @@ namespace Nebula.Debugger.DAP
                 };
                 actualBreakpoints.Add(bp);
 
-                if(inMemorySource is null)
+                if (inMemorySource is null)
                 {
                     bp.Message = "Source could not be found in debug files";
                     continue;
@@ -424,7 +425,7 @@ namespace Nebula.Debugger.DAP
             _dbgThread = Task.Run(TaskDbgThread, _tokSource.Token);
 
 
-            if(_dbgThread.IsCanceled)
+            if (_dbgThread.IsCanceled)
             {
                 PostTerminationEvents(ExitReason.InitError);
             }
@@ -497,7 +498,9 @@ namespace Nebula.Debugger.DAP
                 .FirstOrDefault(f => f.FrameId == frameId);
 
             if (myFrame is null)
+            {
                 return new();
+            }
 
             ScopesResponse response = new();
             foreach (NebulaScope nScope in myFrame.Scopes)
@@ -519,7 +522,9 @@ namespace Nebula.Debugger.DAP
 
             VariablesResponse response = new();
             if (myScope is null)
+            {
                 return response;
+            }
 
             response.Variables.Capacity = myScope.Variables.Capacity;
             foreach (NebulaVariable v in myScope.Variables)
@@ -543,7 +548,7 @@ namespace Nebula.Debugger.DAP
                 .SelectMany(f => f.Scopes)
                 .FirstOrDefault(s => s.ScopeId == arguments.VariablesReference);
 
-            var myVar = myScope!.Variables.First(v => v.Name == arguments.Name);
+            NebulaVariable myVar = myScope!.Variables.First(v => v.Name == arguments.Name);
             myVar.NativeVariable.Set(arguments.Value);
 
             return new()

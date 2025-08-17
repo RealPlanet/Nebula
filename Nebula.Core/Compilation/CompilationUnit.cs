@@ -1,6 +1,7 @@
 ﻿using Nebula.Commons.Text;
-using Nebula.Core.Parsing;
-using Nebula.Core.Parsing.Statements;
+using Nebula.Core.Compilation.CST.Tree.Declaration.Bundle;
+using Nebula.Core.Compilation.CST.Tree.Declaration.Function;
+using Nebula.Core.Compilation.CST.Tree.Statements;
 using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation

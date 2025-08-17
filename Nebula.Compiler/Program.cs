@@ -1,14 +1,13 @@
 ﻿using Mono.Options;
 using Nebula.Commons.Text;
 using Nebula.Commons.Text.Printers;
-using Nebula.Core.Compilation;
-using Nebula.Interop;
+using Nebula.Interop.SafeHandles;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 
-namespace Nebula.Compilation
+namespace Nebula.Compiler
 {
     internal class Program
     {
@@ -45,7 +44,6 @@ namespace Nebula.Compilation
                 {
                     Writer.WriteLine($"Path '{path}' is not a valid directory", ConsoleColor.Red);
                 }
-
             }
 
             Writer.WriteLine($"Using directory '{path}' for compilation result", ConsoleColor.Green);
@@ -110,7 +108,7 @@ namespace Nebula.Compilation
                 sources.Add(SourceCode.From(sourcePath));
             }
 
-            List<CompiledScript> references = new() { Capacity = CompilerSettings.SourceFiles.Count };
+            List<Script> references = new() { Capacity = CompilerSettings.SourceFiles.Count };
             foreach (string referencePath in CompilerSettings.References)
             {
                 Writer.WriteLine($"Including: {referencePath}", ConsoleColor.DarkGreen);
@@ -120,7 +118,7 @@ namespace Nebula.Compilation
                     continue;
                 }
 
-                if (!CompiledScript.LoadScriptFromFile(referencePath, out CompiledScript loadedScript))
+                if (!Script.FromFile(referencePath, OnReportCallback, out Script loadedScript))
                 {
                     Writer.WriteLine($"Could not load compiled script at '{referencePath}'", ConsoleColor.Red);
                     continue;
@@ -129,13 +127,13 @@ namespace Nebula.Compilation
                 references.Add(loadedScript);
             }
 
-            Compiler.Options options = new();
+            Core.Compilation.Compiler.Options options = new();
             options.Sources.AddRange(sources);
             options.References.AddRange(references);
             options.OutputFolder = CompilerSettings.OutputFolder;
 
             Stopwatch compileTime = Stopwatch.StartNew();
-            bool compileOk = Compiler.Compile(options, out Compiler.Result? result);
+            bool compileOk = Core.Compilation.Compiler.Compile(options, out Core.Compilation.Compiler.Result? result);
             compileTime.Stop();
 
             Commons.Reporting.Report compileReport = result.Report;
@@ -152,6 +150,26 @@ namespace Nebula.Compilation
             }
 
             Writer.WriteLine($"Compilation took '{compileTime.ElapsedMilliseconds}' ms", ConsoleColor.DarkCyan);
+        }
+
+        private static void OnReportCallback(string scriptPath, ReportType type, string message)
+        {
+            ConsoleColor color = ConsoleColor.White;
+            switch (type)
+            {
+                case ReportType.Error:
+                    {
+                        color = ConsoleColor.Red;
+                        break;
+                    }
+                case ReportType.Warning:
+                    {
+                        color = ConsoleColor.Yellow;
+                        break;
+                    }
+            }
+
+            Writer.WriteLine($"[{scriptPath}] - {message}", color);
         }
     }
 }

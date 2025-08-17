@@ -2,7 +2,7 @@
 using Nebula.Commons.Text;
 using System.Collections.Generic;
 
-namespace Nebula.Core.Parsing.Expressions
+namespace Nebula.Core.Compilation.CST.Tree.Expressions
 {
     /// <summary>
     /// Access a field in a bundle to read/write it's value

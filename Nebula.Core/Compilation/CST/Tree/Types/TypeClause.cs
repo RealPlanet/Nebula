@@ -2,7 +2,7 @@
 using Nebula.Commons.Text;
 using System.Collections.Generic;
 
-namespace Nebula.Core.Parsing
+namespace Nebula.Core.Compilation.CST.Tree.Types
 {
 
     public sealed class TypeClause
@@ -34,7 +34,9 @@ namespace Nebula.Core.Parsing
             yield return Identifier;
 
             if (RankSpecifier != null)
+            {
                 yield return RankSpecifier;
+            }
         }
     }
 }

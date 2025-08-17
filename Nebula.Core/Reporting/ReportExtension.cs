@@ -1,11 +1,14 @@
 ﻿using Nebula.Commons.Reporting;
 using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
-using Nebula.Core.Binding;
-using Nebula.Core.Binding.Symbols;
-using Nebula.Core.Parsing;
-using Nebula.Core.Parsing.Expressions;
-using Nebula.Core.Parsing.Statements;
+using Nebula.Core.Compilation.AST.Symbols;
+using Nebula.Core.Compilation.AST.Tree.Base;
+using Nebula.Core.Compilation.CST.Tree;
+using Nebula.Core.Compilation.CST.Tree.Base;
+using Nebula.Core.Compilation.CST.Tree.Declaration;
+using Nebula.Core.Compilation.CST.Tree.Declaration.Function;
+using Nebula.Core.Compilation.CST.Tree.Expressions;
+using Nebula.Core.Compilation.CST.Tree.Statements;
 using System.Linq;
 
 namespace Nebula.Core.Reporting
@@ -301,7 +304,10 @@ namespace Nebula.Core.Reporting
                     Statement? firstStatement = ((BlockStatement)node).Statements.FirstOrDefault();
                     // Report just for non empty blocks.
                     if (firstStatement != null)
+                    {
                         r.ReportUnreachableCode(firstStatement);
+                    }
+
                     return;
                 case NodeType.VariableDeclaration:
                     r.ReportUnreachableCode(((VariableDeclaration)node).Identifier.Location);

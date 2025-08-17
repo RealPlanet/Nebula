@@ -1,7 +1,8 @@
-﻿using Nebula.Core.Parsing;
+﻿using Nebula.Core.Compilation.AST.Symbols.Base;
+using Nebula.Core.Compilation.CST.Tree.Declaration.Function;
 using System.Collections.Immutable;
 
-namespace Nebula.Core.Binding.Symbols
+namespace Nebula.Core.Compilation.AST.Symbols
 {
     public sealed class FunctionSymbol : Symbol
     {
@@ -24,10 +25,14 @@ namespace Nebula.Core.Binding.Symbols
             ReturnType = returnType;
 
             if (declaration is NativeFunctionDeclaration nfd)
+            {
                 NativeDeclaration = nfd;
+            }
 
             if (declaration is FunctionDeclaration fd)
+            {
                 Declaration = fd;
+            }
         }
     }
 }

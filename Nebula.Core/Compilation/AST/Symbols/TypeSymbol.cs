@@ -1,6 +1,7 @@
-﻿using Nebula.CodeEmitter.Types;
+﻿using Nebula.Core.Compilation.AST.Symbols.Base;
+using Nebula.Interop.Enumerators;
 
-namespace Nebula.Core.Binding.Symbols
+namespace Nebula.Core.Compilation.AST.Symbols
 {
     public class TypeSymbol
         : Symbol
@@ -30,11 +31,11 @@ namespace Nebula.Core.Binding.Symbols
             switch (identifier)
             {
                 case TypeIdentifier.Void:
-                    return TypeSymbol.Void;
+                    return Void;
                 case TypeIdentifier.Int32:
-                    return TypeSymbol.Int;
+                    return Int;
                 case TypeIdentifier.String:
-                    return TypeSymbol.String;
+                    return String;
                 default:
                     throw new System.Exception($"Unknown type: {identifier}");
             }
@@ -65,10 +66,14 @@ namespace Nebula.Core.Binding.Symbols
         public static bool operator ==(TypeSymbol a, TypeSymbol b)
         {
             if (a is null && b is null)
+            {
                 return true;
+            }
 
             if (a is null || b is null)
+            {
                 return false;
+            }
 
             return a.Equals(b);
         }

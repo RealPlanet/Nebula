@@ -1,4 +1,5 @@
-﻿using Nebula.Core.Binding;
+﻿using Nebula.Core.Compilation.AST.Tree.Base;
+using Nebula.Core.Compilation.AST.Tree.Statements;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -67,7 +68,9 @@ namespace Nebula.Core.Graph
             {
                 AbstractStatement? lastStatement = branch.From.Statements.LastOrDefault();
                 if (lastStatement == null || lastStatement.Type != AbstractNodeType.ReturnStatement)
+                {
                     return false;
+                }
             }
 
             return true;

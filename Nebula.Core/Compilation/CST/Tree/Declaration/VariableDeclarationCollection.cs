@@ -1,9 +1,10 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
+using Nebula.Core.Compilation.CST.Tree.Base;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Nebula.Core.Parsing
+namespace Nebula.Core.Compilation.CST.Tree.Declaration
 {
     public sealed class VariableDeclarationCollection
         : Statement
@@ -33,7 +34,9 @@ namespace Nebula.Core.Parsing
         public override IEnumerable<Node> GetChildren()
         {
             if (ConstKeyword != null)
+            {
                 yield return ConstKeyword;
+            }
 
             if (Declarations.Count > 0)
             {

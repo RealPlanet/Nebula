@@ -1,7 +1,10 @@
-﻿using Nebula.Core.Binding.Symbols;
+﻿using Nebula.Core.Compilation.AST.Symbols;
+using Nebula.Core.Compilation.AST.Tree;
+using Nebula.Core.Compilation.AST.Tree.Base;
+using Nebula.Core.Compilation.AST.Tree.Operators;
 using System;
 
-namespace Nebula.Core.Binding
+namespace Nebula.Core.Compilation.AST.Binding
 {
     public static class ConstantFolding
     {
@@ -51,7 +54,9 @@ namespace Nebula.Core.Binding
             #endregion
 
             if (leftConstant is null || rightConstant is null)
+            {
                 return null;
+            }
 
             // We know both values are not null
             object? l = left.ConstantValue!.Value;
@@ -82,10 +87,14 @@ namespace Nebula.Core.Binding
         private static object EvaluateAddition(AbstractBinaryOperator op, object lValue, object rValue)
         {
             if (op.LeftType == TypeSymbol.Int && op.RightType == TypeSymbol.Int)
+            {
                 return (int)lValue + (int)rValue;
+            }
 
             if (op.LeftType == TypeSymbol.Float || op.RightType == TypeSymbol.Float)
+            {
                 return (float)lValue + (float)rValue;
+            }
 
             //if (op.Type == TypeSymbol.String)
             return (string)lValue + (string)rValue;
@@ -94,7 +103,9 @@ namespace Nebula.Core.Binding
         private static object EvaluateSubtraction(AbstractBinaryOperator op, object lValue, object rValue)
         {
             if (op.LeftType == TypeSymbol.Int && op.RightType == TypeSymbol.Int)
+            {
                 return (int)lValue - (int)rValue;
+            }
 
             return (float)lValue - (float)rValue;
         }
@@ -103,7 +114,9 @@ namespace Nebula.Core.Binding
         private static object EvaluateDivision(AbstractBinaryOperator op, object lValue, object rValue)
         {
             if (op.LeftType == TypeSymbol.Int && op.RightType == TypeSymbol.Int)
+            {
                 return (int)lValue / (int)rValue;
+            }
 
             return (float)lValue / (float)rValue;
         }
@@ -111,7 +124,9 @@ namespace Nebula.Core.Binding
         private static object EvaluateMultiplication(AbstractBinaryOperator op, object lValue, object rValue)
         {
             if (op.LeftType == TypeSymbol.Int && op.RightType == TypeSymbol.Int)
+            {
                 return (int)lValue * (int)rValue;
+            }
 
             return (float)lValue * (float)rValue;
         }
@@ -119,10 +134,14 @@ namespace Nebula.Core.Binding
         private static object EvaluateBitwiseOr(AbstractBinaryOperator op, object lValue, object rValue)
         {
             if (op.LeftType == TypeSymbol.Int)
+            {
                 return (int)lValue | (int)rValue;
+            }
 
             if (op.LeftType == TypeSymbol.Float || op.RightType == TypeSymbol.Float)
+            {
                 return (float)lValue + (float)rValue;
+            }
 
             return (bool)lValue || (bool)rValue;
         }
@@ -130,7 +149,9 @@ namespace Nebula.Core.Binding
         private static object EvaluateBitwiseXOR(AbstractBinaryOperator op, object lValue, object rValue)
         {
             if (op.LeftType == TypeSymbol.Int)
+            {
                 return (int)lValue ^ (int)rValue;
+            }
 
             return (bool)lValue ^ (bool)rValue;
         }
@@ -138,7 +159,9 @@ namespace Nebula.Core.Binding
         private static object EvaluateBitwiseAnd(AbstractBinaryOperator op, object lValue, object rValue)
         {
             if (op.LeftType == TypeSymbol.Int)
+            {
                 return (int)lValue & (int)rValue;
+            }
 
             return (bool)lValue && (bool)rValue;
         }

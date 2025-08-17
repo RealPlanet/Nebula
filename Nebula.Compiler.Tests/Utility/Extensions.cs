@@ -1,4 +1,4 @@
-﻿namespace Nebula.Tests.Utility
+﻿namespace Nebula.Compiler.Tests.Utility
 {
     public static class Extensions
     {
