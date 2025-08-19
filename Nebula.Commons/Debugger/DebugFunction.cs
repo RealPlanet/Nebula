@@ -19,8 +19,13 @@ namespace Nebula.Commons.Debugger
         [DataMember]
         public List<DebugVariable> LocalVariables { get; private set; } = [];
 
+        /// <summary>
+        /// Contains kvps of each new line. <br/>
+        /// Key is opcode at which line changes <br/>
+        /// Value is line number <br/>
+        /// </summary>
         [DataMember]
-        public List<int> InstructionLines { get; private set; } = [];
+        public Dictionary<int, int> DeltaInstructionLines { get; private set; } = [];
 
         public DebugFunction(string name, int lineNumber)
         {
@@ -29,12 +34,12 @@ namespace Nebula.Commons.Debugger
         }
 
         [JsonConstructor]
-        public DebugFunction(string name, int lineNumber, List<DebugVariable> parameters, List<DebugVariable> localVariables, List<int> instructionLines)
+        public DebugFunction(string name, int lineNumber, List<DebugVariable> parameters, List<DebugVariable> localVariables, Dictionary<int, int> deltaInstructionLines)
             : this(name, lineNumber)
         {
             Parameters = parameters;
             LocalVariables = localVariables;
-            InstructionLines = instructionLines;
+            DeltaInstructionLines = deltaInstructionLines;
         }
     }
 }

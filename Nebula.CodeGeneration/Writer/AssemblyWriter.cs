@@ -62,11 +62,17 @@ namespace Nebula.CodeGeneration.Writer
                     dbgFunc.LocalVariables.Add(new(v.Name));
                 }
 
-                foreach (Instruction inst in func.Body.Instructions)
+                int lastLineNumber = -1;
+                for (int i = 0; i < func.Body.Instructions.Count; i++)
                 {
+                    Instruction inst = func.Body.Instructions[i];
                     TextSpan instSpan = inst.SourceCodeTextSpan.GetValueOrDefault();
                     int lineNumber = assembly.SourceCode.GetLineIndex(instSpan.Start);
-                    dbgFunc.InstructionLines.Add(lineNumber);
+                    if(lineNumber != lastLineNumber)
+                    {
+                        lastLineNumber = lineNumber;
+                        dbgFunc.DeltaInstructionLines.Add(i, lineNumber);
+                    }
                 }
             }
 
