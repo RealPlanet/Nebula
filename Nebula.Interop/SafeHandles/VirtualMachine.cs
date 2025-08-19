@@ -145,7 +145,7 @@ namespace Nebula.Interop.SafeHandles
             return true;
         }
 
-        public bool LoadNativesFromDll(string nativeDllBindings, List<string> uniqueNativeFunctions)
+        public bool LoadNativesFromDll(string nativeDllBindings, ICollection<string> uniqueNativeFunctions)
         {
             if (!File.Exists(nativeDllBindings))
             {

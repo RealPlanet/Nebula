@@ -17,7 +17,7 @@ namespace Nebula.Interop.Enumerators
                 case TokenType.OpenParenthesis:
                     return "(";
                 case TokenType.ClosedParenthesis:
-                    return "(";
+                    return ")";
                 case TokenType.MarkerPrefix:
                     return ".";
                 case TokenType.CompiledComment:
@@ -30,6 +30,13 @@ namespace Nebula.Interop.Enumerators
         public static string GetScriptSectionName(ScriptSection section, bool withPrefix)
         {
             string sectionString = section.ToString().ToLower();
+            switch (section)
+            {
+                case ScriptSection.Function:
+                    sectionString = "func";
+                    break;
+            }
+
             if (withPrefix)
             {
                 sectionString = GetTokenChar(TokenType.MarkerPrefix) + sectionString;

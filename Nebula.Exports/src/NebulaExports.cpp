@@ -109,7 +109,12 @@ bool Interpreter_LoadSpecificBindingsInDLL(nebula::Interpreter* handle, const ch
             const char* funName = functionNames[i];
 
             nebula::NativeFunctionCallbackPtr bindingPtr = funcPtr(funName);
-            handle->BindNativeFunction(funName, *bindingPtr);
+            
+            // If we find it we add it!
+            if (bindingPtr != nullptr)
+            {
+                handle->BindNativeFunction(funName, *bindingPtr);
+            }
         }
 
         result = true;
