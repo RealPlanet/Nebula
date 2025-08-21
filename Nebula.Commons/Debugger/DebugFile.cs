@@ -6,38 +6,27 @@ using System.Text.Json.Serialization;
 
 namespace Nebula.Commons.Debugger
 {
-    [DataContract]
+
+
     public sealed class DebugFile
     {
-        [DataMember]
-        public string Namespace { get; private set; }
-        [DataMember]
-        public string OriginalFileName { get; private set; }
+        [JsonIgnore]
+        public string SourceFilePath { get; set; } = string.Empty;
 
-        [DataMember]
-        public string MD5Hash { get; private set; }
+        [JsonInclude]
+        public string Namespace { get; init; }
 
-        [DataMember]
-        public Dictionary<string, DebugFunction> Functions { get; private set; } = [];
+        [JsonInclude]
+        public string OriginalFileName { get; init; }
 
-        [DataMember]
-        public HashSet<string> NativeFunctions { get; private set; } = [];
+        [JsonInclude]
+        public string MD5Hash { get; init; }
 
+        [JsonInclude]
+        public Dictionary<string, DebugFunction> Functions { get; init; } = [];
 
-        public DebugFile(string @namespace, string originalFileName, string md5Hash)
-        {
-            Namespace = @namespace;
-            MD5Hash = md5Hash;
-            OriginalFileName = originalFileName;
-        }
-
-        [JsonConstructor]
-        public DebugFile(string @namespace, string originalFileName, string mD5Hash, Dictionary<string, DebugFunction> functions, HashSet<string> nativeFunctions)
-            : this(@namespace, originalFileName, mD5Hash)
-        {
-            Functions = functions;
-            NativeFunctions = nativeFunctions;
-        }
+        [JsonInclude]
+        public HashSet<string> NativeFunctions { get; init; } = [];
 
         public static DebugFile LoadFromFile(string filePath)
         {

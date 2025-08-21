@@ -1,5 +1,6 @@
 ﻿using Nebula.CodeGeneration.Definitions;
 using Nebula.Commons.Debugger;
+using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
 using Nebula.Interop.Enumerators;
 using System.CodeDom.Compiler;
@@ -34,7 +35,12 @@ namespace Nebula.CodeGeneration.Writer
         public static void WriterDebuggingInfo(this StreamWriter writer, Assembly assembly, string assemblyChecksum)
         {
             string fileName = Path.GetFileName(assembly.SourceCode.FileName);
-            DebugFile outpuData = new(assembly.Namespace, fileName, assemblyChecksum);
+            DebugFile outpuData = new()
+            {
+                Namespace= assembly.Namespace,
+                OriginalFileName = fileName,
+                MD5Hash = assemblyChecksum,
+            };
 
             foreach (NativeMethodDefinition nativeFunc in assembly.TypeDefinition.NativeMethods)
             {
@@ -44,34 +50,54 @@ namespace Nebula.CodeGeneration.Writer
             foreach (MethodDefinition func in assembly.TypeDefinition.Methods)
             {
                 int funcLineNumber = -1;
-                if (func.SourceCodeTextSpan != null)
+                if (func.OriginalNode != null)
                 {
-                    funcLineNumber = assembly.SourceCode.GetLineIndex(func.SourceCodeTextSpan.Value.Start);
+                    funcLineNumber = assembly.SourceCode.GetLineIndex(func.OriginalNode.Span.Start);
                 }
 
-                DebugFunction dbgFunc = new(func.Name, funcLineNumber);
+                DebugFunction dbgFunc = new()
+                {
+                    Name = func.Name,
+                    LineNumber = funcLineNumber,
+                    InstructionCount = func.Body.Instructions.Count,
+                };
+
                 outpuData.Functions.Add(dbgFunc.Name, dbgFunc);
 
                 foreach (ParameterDefinition p in func.Parameters)
                 {
-                    dbgFunc.Parameters.Add(new(p.Name));
+                    dbgFunc.Parameters.Add(new()
+                    {
+                        Name = p.Name,
+                    });
                 }
 
                 foreach (VariableDefinition v in func.Body.Variables)
                 {
-                    dbgFunc.LocalVariables.Add(new(v.Name));
+                    dbgFunc.LocalVariables.Add(new()
+                    {
+                        Name = v.Name,
+                    });
                 }
 
                 int lastLineNumber = -1;
+                Node? lastStatementNode = null;
                 for (int i = 0; i < func.Body.Instructions.Count; i++)
                 {
                     Instruction inst = func.Body.Instructions[i];
-                    TextSpan instSpan = inst.SourceCodeTextSpan.GetValueOrDefault();
+                    TextSpan instSpan = inst.OriginalNode?.Span ?? default;
                     int lineNumber = assembly.SourceCode.GetLineIndex(instSpan.Start);
-                    if(lineNumber != lastLineNumber)
+                    if (lineNumber != lastLineNumber)
                     {
                         lastLineNumber = lineNumber;
                         dbgFunc.DeltaInstructionLines.Add(i, lineNumber);
+                    }
+
+                    Node? originalNode = inst.OriginalNode;
+                    if(originalNode != lastStatementNode)
+                    {
+                        lastStatementNode = originalNode;
+                        dbgFunc.NewStatementIndex.Add(i);
                     }
                 }
             }

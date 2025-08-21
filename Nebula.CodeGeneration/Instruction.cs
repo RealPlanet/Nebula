@@ -1,4 +1,5 @@
 ﻿using Nebula.CodeGeneration.Definitions;
+using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
 using Nebula.Interop.Enumerators;
 using System;
@@ -8,25 +9,25 @@ namespace Nebula.CodeGeneration
 {
     public interface IEmitterObject
     {
-        /// <summary>The text location of this object, used to reference the source code original position</summary>
-        TextSpan? SourceCodeTextSpan { get; }
+        /// <summary>The original node that is emitting this object, used for debug file generation</summary>
+        Node? OriginalNode { get; }
     }
 
     public sealed class Instruction
         : IEmitterObject
     {
-        public TextSpan? SourceCodeTextSpan { get; }
+        public Node? OriginalNode { get; }
         public InstructionOpcode Opcode { get; set; }
         public object? Operand { get; set; } = null;
 
-        public Instruction(InstructionOpcode opcode, TextSpan? sourceCodeTextSpan)
+        public Instruction(InstructionOpcode opcode, Node? originalNode)
         {
             Opcode = opcode;
-            SourceCodeTextSpan = sourceCodeTextSpan;
+            OriginalNode = originalNode;
         }
 
-        public Instruction(InstructionOpcode opcode, object operand, TextSpan? sourceCodeTextSpan)
-            : this(opcode, sourceCodeTextSpan)
+        public Instruction(InstructionOpcode opcode, object operand, Node? originalNode)
+            : this(opcode, originalNode)
         {
             Operand = operand;
         }

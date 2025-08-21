@@ -1,4 +1,5 @@
 ﻿using Nebula.CodeGeneration.Interfaces;
+using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
 using Nebula.Interop.Enumerators;
 using System.Collections.Generic;
@@ -14,14 +15,14 @@ namespace Nebula.CodeGeneration.Definitions
         public TypeReference ReturnType { get; }
         public IList<ParameterDefinition> Parameters { get; } = [];
         public MethodBody Body { get; } = new();
-        public TextSpan? SourceCodeTextSpan { get; }
+        public Node? OriginalNode { get; }
 
-        public MethodDefinition(string name, AttributeType attributes, TypeReference returnType, TextSpan span)
+        public MethodDefinition(string name, AttributeType attributes, TypeReference returnType, Node? originalNode)
         {
             Name = name;
             Attributes = attributes;
             ReturnType = returnType;
-            SourceCodeTextSpan = span;
+            OriginalNode = originalNode;
         }
     }
 }
