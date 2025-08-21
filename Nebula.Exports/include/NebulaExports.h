@@ -104,8 +104,11 @@ extern "C"
     // Variable
     __declspec(dllexport) int FrameVariable_GetType(nebula::FrameVariable* handle);
     __declspec(dllexport) const char* FrameVariable_GetStringValue(nebula::FrameVariable* handle);
+    __declspec(dllexport) bool FrameVariable_SetStringValue(nebula::FrameVariable* handle, const char* value);
     __declspec(dllexport) int FrameVariable_GetIntValue(nebula::FrameVariable* handle);
+    __declspec(dllexport) bool FrameVariable_SetIntValue(nebula::FrameVariable* handle, int value);
     __declspec(dllexport) float FrameVariable_GetFloatValue(nebula::FrameVariable* handle);
+    __declspec(dllexport) bool FrameVariable_SetFloatValue(nebula::FrameVariable* handle, float value);
     __declspec(dllexport) nebula::Bundle* FrameVariable_GetBundleValue(nebula::FrameVariable* handle);
     __declspec(dllexport) nebula::VariantArray* FrameVariable_GetArrayValue(nebula::FrameVariable* handle);
 }

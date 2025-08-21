@@ -109,7 +109,7 @@ bool Interpreter_LoadSpecificBindingsInDLL(nebula::Interpreter* handle, const ch
             const char* funName = functionNames[i];
 
             nebula::NativeFunctionCallbackPtr bindingPtr = funcPtr(funName);
-            
+
             // If we find it we add it!
             if (bindingPtr != nullptr)
             {
@@ -836,6 +836,17 @@ const char* FrameVariable_GetStringValue(nebula::FrameVariable* handle)
     return string.data();
 }
 
+bool FrameVariable_SetStringValue(nebula::FrameVariable* handle, const char* value)
+{
+    if (handle == nullptr)
+    {
+        return false;
+    }
+
+    nebula::DataStackVariant variant{ std::string(value) };
+    return handle->SetValue(variant);
+}
+
 int FrameVariable_GetIntValue(nebula::FrameVariable* handle)
 {
     if (handle == nullptr || handle->Type() != nebula::DataStackVariantIndex::_TypeInt32)
@@ -848,6 +859,17 @@ int FrameVariable_GetIntValue(nebula::FrameVariable* handle)
     return handle->AsInt32();
 }
 
+bool FrameVariable_SetIntValue(nebula::FrameVariable* handle, int value)
+{
+    if (handle == nullptr)
+    {
+        return false;
+    }
+
+    nebula::DataStackVariant variant{ value };
+    return handle->SetValue(variant);
+}
+
 float FrameVariable_GetFloatValue(nebula::FrameVariable* handle)
 {
     if (handle == nullptr || handle->Type() != nebula::DataStackVariantIndex::_TypeFloat)
@@ -858,6 +880,17 @@ float FrameVariable_GetFloatValue(nebula::FrameVariable* handle)
     CHECK_FRAME_VAR_INIT(0);
 
     return handle->AsFloat();
+}
+
+bool FrameVariable_SetFloatValue(nebula::FrameVariable* handle, float value)
+{
+    if (handle == nullptr)
+    {
+        return false;
+    }
+
+    nebula::DataStackVariant variant{ value };
+    return handle->SetValue(variant);
 }
 
 nebula::Bundle* FrameVariable_GetBundleValue(nebula::FrameVariable* handle)
