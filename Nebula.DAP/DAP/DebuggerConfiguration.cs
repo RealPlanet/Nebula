@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Messages;
 using System.Collections.Generic;
-using System.IO;
 
 namespace Nebula.Debugger.DAP
 {

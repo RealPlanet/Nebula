@@ -5,23 +5,27 @@ namespace Nebula.Debugger.Debugger.Data
 {
     public sealed class ScopeState
     {
-        public FrameState Parent { get; }
+        public VirtualMachineState Parent { get; }
+        public FrameState Frame { get; }
         public int ScopeId { get; }
         public string Name { get; }
-        public IReadOnlyDictionary<string, VariableState> Variables => _variables;
+        public IReadOnlyList<VariableState> Variables => _variables;
 
-        private readonly Dictionary<string, VariableState> _variables = [];
+        private readonly List<VariableState> _variables = [];
 
-        public ScopeState(FrameState parent, string name)
+        public ScopeState(VirtualMachineState parent, FrameState frame, string name)
         {
             Parent = parent;
-            ScopeId = parent.GetNextScopeId();
+            Frame = frame;
+            ScopeId = Parent.GetNextScopeId();
             Name = name;
+
+            Parent.AddScope(this);
         }
 
         internal void Add(string varName, Variable variable)
         {
-            _variables[varName] = new(this, varName, variable);
+            _variables.Add(new(this, varName, variable));
         }
     }
 }

@@ -13,13 +13,13 @@ namespace Nebula.Commons.Debugger
         public string SourceFilePath { get; set; } = string.Empty;
 
         [JsonInclude]
-        public string Namespace { get; init; }
+        public string Namespace { get; init; } = string.Empty;
 
         [JsonInclude]
-        public string OriginalFileName { get; init; }
+        public string OriginalFileName { get; init; } = string.Empty;
 
         [JsonInclude]
-        public string MD5Hash { get; init; }
+        public string MD5Hash { get; init; } = string.Empty;
 
         [JsonInclude]
         public Dictionary<string, DebugFunction> Functions { get; init; } = [];

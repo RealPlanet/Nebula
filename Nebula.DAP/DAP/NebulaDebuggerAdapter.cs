@@ -3,193 +3,561 @@ using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol;
 using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Messages;
 using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Utilities;
 using Nebula.Commons.Debugger;
-using Nebula.Debugger.Bridge;
-using Nebula.Debugger.Bridge.Objects;
+using Nebula.Debugger.Debugger;
+using Nebula.Debugger.Debugger.Data;
+using Nebula.Interop.SafeHandles;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Thread = Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Messages.Thread;
 
 namespace Nebula.Debugger.DAP
 {
     public sealed class NebulaDebuggerAdapter
         : DebugAdapterBase
     {
-        private enum ExitReason
-        {
-            NormalExit,
-            InitError,
-        }
+        public DebuggerConfiguration Configuration { get; } = new();
 
-        private readonly DebuggerConfiguration _configuration;
+
         private readonly ILogger _logger;
-        private readonly NebulaDebugger _nebulaDebugger;
+        private readonly NebulaDebugger _debugger;
+        private readonly Dictionary<string, Source> _dapSources = [];
+        // Hold delegates in memory otherwise native bindings will explode!
+        private readonly StdOutEventHandler _writeDelegate;
+        private readonly StdOutEventHandler _writeLineDelegate;
 
-        private Task? _dbgThread;
-        private readonly CancellationTokenSource _tokSource = new();
-        private readonly ManualResetEventSlim _runEvent = new(true);
-        private readonly object _lockSync = new();
-        private StoppedEvent? _stopEvent;
-        private bool _isStepIn;
-
-        internal NebulaDebuggerAdapter(DebuggerConfiguration debuggerConfiguration, ILogger logger)
+        private readonly System.Threading.Tasks.Task _debuggerDispatchTask;
+        private readonly System.Threading.CancellationTokenSource _tokenSource = new();
+        private readonly BlockingCollection<EventInfo> _debugEvents = [];
+        private readonly System.Threading.ManualResetEvent _queueNotProcessingEvent = new(true);
+        private void DebuggerDispatchTask()
         {
-            _configuration = debuggerConfiguration;
-            _logger = logger;
-            _nebulaDebugger = new NebulaDebugger(debuggerConfiguration, logger);
-            _nebulaDebugger.ExecutionEnd += OnExecutionEnd;
-            _nebulaDebugger.OnStdOut += OnStdOutFromNative;
-            InitializeProtocolClient(debuggerConfiguration.InStream, debuggerConfiguration.Outstream);
+            while (!_tokenSource.IsCancellationRequested)
+            {
+                EventInfo nextEvent = _debugEvents.Take();
+                _queueNotProcessingEvent.Reset();
+                try
+                {
+                    switch (nextEvent.Type)
+                    {
+                        case EventType.Step:
+                            {
+                                _debugger.AbortStepping = false;
+                                if (_debugger.StepLine(nextEvent.ThreadId, out var hitBreakpoint) && hitBreakpoint != null)
+                                {
+                                    SendStoppedEvent(hitBreakpoint.IsFunctionBreakpoint ? StoppedEvent.ReasonValue.FunctionBreakpoint : StoppedEvent.ReasonValue.Breakpoint,
+                                                     hitBreakpoint.ThreadId);
+                                }
+                                break;
+                            }
+                        case EventType.StepIn:
+                            {
+                                _debugger.AbortStepping = false;
+                                if (_debugger.StepIn(nextEvent.ThreadId, out var hitBreakpoint) && hitBreakpoint != null)
+                                {
+                                    SendStoppedEvent(hitBreakpoint.IsFunctionBreakpoint ? StoppedEvent.ReasonValue.FunctionBreakpoint : StoppedEvent.ReasonValue.Breakpoint,
+                                                     hitBreakpoint.ThreadId);
+                                }
+                                break;
+                            }
+                        case EventType.Continue:
+                            {
+                                _debugger.AbortStepping = false;
+                                if (_debugger.Continue(out var hitBreakpoint) && hitBreakpoint != null)
+                                {
+                                    SendStoppedEvent(hitBreakpoint.IsFunctionBreakpoint ? StoppedEvent.ReasonValue.FunctionBreakpoint : StoppedEvent.ReasonValue.Breakpoint,
+                                                     hitBreakpoint.ThreadId);
+                                }
+                                break;
+                            }
+                        case EventType.Unknown:
+                        default:
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Exception while processing debugger event '{nextEvent.Type}': {ex}");
+                }
+
+                _queueNotProcessingEvent.Set();
+            }
         }
 
-        private void OnStdOutFromNative(object? sender, string e)
+        #region To Client Events
+        private void SendInitializedEvent()
         {
-            Protocol.SendEvent(new OutputEvent(e)
+            Protocol.SendEvent(new InitializedEvent());
+        }
+
+        private void SendStoppedEvent(StoppedEvent.ReasonValue reason, int? threadId)
+        {
+            _debugger.ReloadVirtualMachineState();
+            Protocol.SendEvent(new StoppedEvent(reason)
             {
-                Category = OutputEvent.CategoryValue.Stdout
+                ThreadId = threadId,
+                AllThreadsStopped = true,
             });
         }
 
-        private void OnExecutionEnd(object? sender, EventArgs e)
+        private void SendTerminationEvent()
         {
-            _tokSource.Cancel();
-            _runEvent.Reset();
-            _nebulaDebugger.Dispose();
-        }
-
-        #region Private
-
-        private void Continue(bool step, int threadId)
-        {
-            lock (_lockSync)
-            {
-                if (step)
-                {
-                    PostStopReason(StoppedEvent.ReasonValue.Step, threadId);
-                }
-            }
-
-            _runEvent.Set();
-        }
-
-        private async void TaskDbgThread()
-        {
-            // Cheap trick to ensure breakpoints arrive on time before we start running the vm
-            // This is to avoid missing breakpoints on the first lines
-            await Task.Delay(100);
-            _nebulaDebugger.Init();
-            while (!_tokSource.IsCancellationRequested)
-            {
-                lock (_lockSync)
-                {
-                    // If event was cancelled
-                    if (!_runEvent.Wait(0))
-                    {
-                        if (_stopEvent == null)
-                        {
-                            throw new InvalidOperationException("Stop reason is not set");
-                        }
-
-                        _nebulaDebugger.ReloadStateInformation();
-                        Protocol.SendEvent(_stopEvent);
-                        _stopEvent = null;
-                    }
-                }
-
-                _runEvent.Wait();
-
-                while (_runEvent.IsSet)
-                {
-                    bool isSingleStep = _stopEvent != null && _stopEvent.Reason == StoppedEvent.ReasonValue.Step;
-                    bool isStepIn = _isStepIn;
-                    int threadId = -1;
-
-                    if (isSingleStep)
-                    {
-                        _logger.LogInformation($"Stepping thread {_stopEvent!.ThreadId}");
-                        threadId = _stopEvent!.ThreadId.GetValueOrDefault();
-                        _isStepIn = false;
-                        _runEvent.Reset();
-                    }
-
-                    _nebulaDebugger.Step(threadId, isStepIn, out int stoppedThreadId, out StoppedEvent.ReasonValue? stopReason);
-                    if (stopReason != null)
-                    {
-                        StoppedEvent? newStopEvent = _stopEvent;
-                        newStopEvent ??= new();
-
-                        newStopEvent.ThreadId = stoppedThreadId;
-                        // TODO :: Figure out reason
-                        newStopEvent.Reason = (StoppedEvent.ReasonValue)stopReason;
-                        newStopEvent.AllThreadsStopped = true;
-                        PostStopReason(newStopEvent);
-                    }
-
-                }
-            }
-
-            PostTerminationEvents();
-        }
-
-        private void PostTerminationEvents(ExitReason reason = ExitReason.NormalExit)
-        {
-            StringWriter message = new();
-            OutputEvent.CategoryValue messageType = OutputEvent.CategoryValue.Console;
-
-            message.WriteLine(">> Terminating debugger <<");
-
-            switch (reason)
-            {
-                case ExitReason.InitError:
-                    message.WriteLine(" One or more initialization errors stopped the debugger!");
-                    break;
-            }
-
-            OutputEvent outputEvent = new OutputEvent()
-            {
-                Output = message.ToString(),
-                Category = messageType,
-            };
-            Protocol.SendEvent(outputEvent);
-            Protocol.SendEvent(new ExitedEvent(exitCode: (int)reason));
+            _debugger.AbortStepping = true;
+            _tokenSource.Cancel();
+            _debuggerDispatchTask.Wait();
+            _debuggerDispatchTask.Dispose();
             Protocol.SendEvent(new TerminatedEvent());
         }
 
-        private void PostStopReason(StoppedEvent newStopEvent)
+        #endregion
+
+        public NebulaDebuggerAdapter(Stream inStream, Stream outStream, ILogger logger)
         {
-            lock (_lockSync)
-            {
-                _stopEvent = newStopEvent;
-                _runEvent.Reset();
-            }
+            _logger = logger;
+            _writeDelegate = OnStdOutWrite;
+            _writeLineDelegate = OnStdOutWriteLine;
+            _debugger = new(_logger);
+            _debugger.RedirectOutput(_writeDelegate, _writeLineDelegate);
+
+            _debuggerDispatchTask = System.Threading.Tasks.Task.Run(DebuggerDispatchTask, _tokenSource.Token);
+
+            InitializeProtocolClient(inStream, outStream);
         }
 
-        private void PostStopReason(StoppedEvent.ReasonValue reason, int threadId)
+        public void Run()
         {
-            lock (_lockSync)
+            Protocol.Run();
+        }
+
+        #region Initialization
+        protected override SetDebuggerPropertyResponse HandleSetDebuggerPropertyRequest(SetDebuggerPropertyArguments arguments)
+        {
+            return new SetDebuggerPropertyResponse();
+        }
+
+        protected override InitializeResponse HandleInitializeRequest(InitializeArguments arguments)
+        {
+            Configuration.PathType = arguments.PathFormat ?? InitializeArguments.PathFormatValue.Path;
+
+
+            SendInitializedEvent();
+            return new InitializeResponse()
             {
-                _stopEvent = new()
+                SupportsFunctionBreakpoints = true,
+                SupportsDebuggerProperties = true,
+                SupportsSetVariable = true,
+                SupportsConfigurationDoneRequest = true,
+            };
+        }
+
+        protected override SetFunctionBreakpointsResponse HandleSetFunctionBreakpointsRequest(SetFunctionBreakpointsArguments arguments)
+        {
+            _debugger.BreakpointManager.ClearFunctionBreakpoints();
+            List<Breakpoint> actualBreakpoints = [];
+
+            foreach (var breakpoint in arguments.Breakpoints)
+            {
+                string requestedFunctionName = breakpoint.Name;
+                Breakpoint bp = new()
                 {
-                    Reason = reason,
-                    ThreadId = threadId,
-                    AllThreadsStopped = true
+                    Verified = false,
+                    Line = -1,
+                    Source = null,
+                    Reason = Breakpoint.ReasonValue.Failed
                 };
-                _runEvent.Reset();
+
+                actualBreakpoints.Add(bp);
+                string[] tokens = requestedFunctionName.Split("::", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                if (tokens.Length != 2)
+                {
+                    continue;
+                }
+
+                string breakpointNamespace = tokens[0];
+                string breakPointFunctionName = tokens[1];
+
+                if (!_debugger.DebugFiles.TryGetValue(breakpointNamespace, out DebugFile? dbgFile))
+                {
+                    _logger.LogWarning($"Namespace for function breakpoint '{breakpointNamespace}' not found in dbg files");
+                    bp.Message = $"Debug symbols for namespace '{breakpointNamespace}' not found!";
+                    continue;
+                }
+
+                if (!dbgFile.Functions.TryGetValue(breakPointFunctionName, out DebugFunction? dbgFunc))
+                {
+                    _logger.LogWarning($"Debug symbols of function '{breakPointFunctionName}' in namespace '{breakpointNamespace}' not found");
+                    bp.Message = $"Debug symbols for namespace '{breakpointNamespace}' do not contain information about function '{breakPointFunctionName}'";
+                    continue;
+                }
+
+                bp.Verified = true;
+                bp.Line = dbgFunc.LineNumber;
+                bp.Source = _dapSources[breakpointNamespace];
+                bp.Reason = null;
+
+                _debugger.BreakpointManager.AddFunctionBreakpoint(new BreakpointInformation(breakpointNamespace, breakPointFunctionName, -1));
             }
+
+            return new()
+            {
+                Breakpoints = actualBreakpoints,
+            };
         }
 
-        private void LoadDebuggerScripts(LaunchArguments arguments)
+        protected override SetBreakpointsResponse HandleSetBreakpointsRequest(SetBreakpointsArguments arguments)
         {
-            string rootFolder = arguments.ConfigurationProperties.GetValueAsString("workspace");
-            string nativeBindingSource = arguments.ConfigurationProperties.GetValueAsString("native_binding_dll");
+            _debugger.BreakpointManager.ClearBreakpoints();
+            List<Breakpoint> actualBreakpoints = [];
+
+            if (arguments.Source.SourceReference > 0)
+            {
+                _logger.LogError("Received source reference id but it is not supported yet!");
+                SendTerminationEvent();
+                return new();
+            }
+
+            if (!_dapSources.TryFirstOrDefault(s => s.Value.Path.Equals(arguments.Source.Path, StringComparison.InvariantCultureIgnoreCase),
+                                               out KeyValuePair<string, Source> kvp))
+            {
+                _logger.LogInformation($"No source found for '{arguments.Source.Path}', cannot set breackpoints");
+
+                foreach (var reqBp in arguments.Breakpoints)
+                {
+                    actualBreakpoints.Add(new Breakpoint()
+                    {
+                        Verified = false,
+                        Line = reqBp.Line,
+                        Column = reqBp.Column,
+                        Source = null,
+                        Reason = Breakpoint.ReasonValue.Failed,
+                    });
+                }
+
+                return new()
+                {
+                    Breakpoints = actualBreakpoints
+                };
+            }
+
+            string @namespace = kvp.Key;
+            Source source = kvp.Value;
+
+            foreach (var reqBp in arguments.Breakpoints)
+            {
+                var resBp = new Breakpoint()
+                {
+                    Verified = false,
+                    Line = reqBp.Line,
+                    Column = reqBp.Column,
+                    Source = source,
+                    Reason = Breakpoint.ReasonValue.Failed,
+                };
+
+                actualBreakpoints.Add(resBp);
+
+                if (!_debugger.IsLineDebuggable(@namespace, reqBp.Line, out string functionName, out int instructionIndex))
+                {
+                    resBp.Message = $"Line '{reqBp.Line}' is not debuggable";
+                    continue;
+                }
+
+                resBp.Verified = true;
+                _debugger.BreakpointManager.AddBreakpoint(new(@namespace, functionName, instructionIndex));
+            }
+
+            return new()
+            {
+                Breakpoints = actualBreakpoints,
+            };
+        }
+
+        protected override SetExceptionBreakpointsResponse HandleSetExceptionBreakpointsRequest(SetExceptionBreakpointsArguments arguments)
+        {
+            return new SetExceptionBreakpointsResponse()
+            {
+                Breakpoints = [],
+            };
+        }
+
+        protected override ConfigurationDoneResponse HandleConfigurationDoneRequest(ConfigurationDoneArguments arguments)
+        {
+            return new ConfigurationDoneResponse() { };
+        }
+
+        protected override LaunchResponse HandleLaunchRequest(LaunchArguments arguments)
+        {
+            bool stepOnEntry = arguments.ConfigurationProperties.GetValueAsBool(DebuggerConstants.StepOnEntry) ?? false;
+            Configuration.StepOnEntry = stepOnEntry;
+
+            if (!LoadNebulaScripts(arguments, Configuration))
+            {
+                SendTerminationEvent();
+                return new();
+            }
+
+            _debugger.Initialize(Configuration.StepOnEntry);
+            if (Configuration.StepOnEntry)
+            {
+                // Move once to init everything
+                //_debugger.Step();
+                SendStoppedEvent(StoppedEvent.ReasonValue.Entry, 0);
+            }
+
+            return new LaunchResponse()
+            {
+                /* Nothing */
+            };
+        }
+
+        #endregion
+
+        #region Stepping Requests
+
+        protected override PauseResponse HandlePauseRequest(PauseArguments arguments)
+        {
+            _debugger.AbortStepping = true;
+            _queueNotProcessingEvent.WaitOne();
+            SendStoppedEvent(StoppedEvent.ReasonValue.Pause, (int)_debugger.CurrentThreadId);
+            return new();
+        }
+
+        protected override NextResponse HandleNextRequest(NextArguments arguments)
+        {
+            _debugEvents.Add(new()
+            {
+                ThreadId = arguments.ThreadId,
+                Type = EventType.Step,
+            });
+
+            return new();
+        }
+
+        protected override StepInResponse HandleStepInRequest(StepInArguments arguments)
+        {
+            _debugEvents.Add(new()
+            {
+                ThreadId = arguments.ThreadId,
+                Type = EventType.StepIn,
+            });
+
+            return new();
+        }
+
+        protected override ContinueResponse HandleContinueRequest(ContinueArguments arguments)
+        {
+            _debugEvents.Add(new()
+            {
+                ThreadId = arguments.ThreadId,
+                Type = EventType.Continue,
+            });
+            return new();
+        }
+
+        #endregion
+
+        protected override SetVariableResponse HandleSetVariableRequest(SetVariableArguments arguments)
+        {
+            if (_debugger.StateInformation is null)
+            {
+                _logger.LogError("Received scopes request but state was not populated!");
+                SendTerminationEvent();
+                return new();
+            }
+
+            if (!_debugger.StateInformation.Scopes.TryGetValue(arguments.VariablesReference, out ScopeState? scope))
+            {
+                _logger.LogError($"Cannot find scope with reference '{arguments.VariablesReference}'");
+                SendTerminationEvent();
+                return new();
+            }
+
+            VariableState? varToEdit = scope.Variables.FirstOrDefault(v => v.Name.Equals(arguments.Name));
+            if (varToEdit == null)
+            {
+                _logger.LogError($"Cannot find variable with name '{arguments.Name}' in scope '{arguments.VariablesReference}'");
+                SendTerminationEvent();
+                return new();
+            }
+
+            if (!varToEdit.OverrideValue(arguments.Value))
+            {
+                _logger.LogError($"Cannot set variable with name '{arguments.Name}' in scope '{arguments.VariablesReference}' the value of '{arguments.Value}'");
+            }
+
+            return new()
+            {
+                Value = varToEdit.Value?.ToString(),
+                Type = varToEdit.Type.ToString(),
+                VariablesReference = 0,
+            };
+        }
+
+        protected override ThreadsResponse HandleThreadsRequest(ThreadsArguments arguments)
+        {
+            if (_debugger.StateInformation is null)
+            {
+                _logger.LogError("Received threads request but state was not populated!");
+                SendTerminationEvent();
+                return new();
+            }
+
+            List<Thread> dbgThreads = new();
+
+            foreach (KeyValuePair<int, ThreadState> t in _debugger.StateInformation.Threads)
+            {
+                dbgThreads.Add(new Thread
+                {
+                    Id = t.Key,
+                    Name = $"Thread_{t.Key}",
+                });
+            }
+
+            return new ThreadsResponse { Threads = dbgThreads, };
+        }
+
+        protected override StackTraceResponse HandleStackTraceRequest(StackTraceArguments arguments)
+        {
+            if (_debugger.StateInformation is null)
+            {
+                _logger.LogError("Received stack trace request but state was not populated!");
+                SendTerminationEvent();
+                return new();
+            }
+
+            if (!_debugger.StateInformation.Threads.TryGetValue(arguments.ThreadId, out ThreadState? state))
+            {
+                _logger.LogError($"Unkown thread '{arguments.ThreadId}', aborting!");
+                SendTerminationEvent();
+                return new();
+            }
+
+            int i = arguments.StartFrame ?? 0;
+            int endCount = arguments.Levels ?? state.Frames.Count;
+            if (endCount > state.Frames.Count)
+            {
+                endCount = state.Frames.Count;
+            }
+
+            List<StackFrame> frames = [];
+            List<FrameState> dbgFrames = state.CallStack
+                .Reverse()
+                .ToList();
+
+            for (; i < endCount; i++)
+            {
+                FrameState fState = dbgFrames[i];
+
+                _dapSources.TryGetValue(fState.FunctionNamespace, out Source? value);
+
+                StackFrame f = new(fState.FrameId, fState.FunctionName, fState.SourceLine + 1, 0)
+                {
+                    Source = value,
+                };
+
+                frames.Add(f);
+            }
+
+            return new()
+            {
+                StackFrames = frames,
+                TotalFrames = state.Frames.Count,
+            };
+        }
+
+        protected override ScopesResponse HandleScopesRequest(ScopesArguments arguments)
+        {
+            if (_debugger.StateInformation is null)
+            {
+                _logger.LogError("Received scopes request but state was not populated!");
+                SendTerminationEvent();
+                return new();
+            }
+
+            FrameState? state = _debugger.StateInformation.GetFrameById(arguments.FrameId);
+            if (state is null)
+            {
+                _logger.LogError($"Could not find frame with id '{arguments.FrameId}'!");
+                SendTerminationEvent();
+                return new();
+            }
+
+            List<Scope> scopes = new();
+            foreach (KeyValuePair<int, ScopeState> kvp in state.Scopes)
+            {
+                ScopeState dbgScope = kvp.Value;
+                int varReference = dbgScope.Variables.Count > 0 ? dbgScope.ScopeId : 0;
+                scopes.Add(new(dbgScope.Name, varReference, false));
+            }
+
+            return new()
+            {
+                Scopes = scopes,
+            };
+        }
+
+        protected override VariablesResponse HandleVariablesRequest(VariablesArguments arguments)
+        {
+            if (_debugger.StateInformation is null)
+            {
+                _logger.LogError("Received variables request but state was not populated!");
+                SendTerminationEvent();
+                return new();
+            }
+
+            if (!_debugger.StateInformation.Scopes.TryGetValue(arguments.VariablesReference, out ScopeState? scope))
+            {
+                _logger.LogError("Received threads request but state was not populated!");
+                SendTerminationEvent();
+                return new();
+            }
+
+            List<Variable> variables = new();
+
+            int i = arguments.Start ?? 0;
+            int count = arguments.Count ?? scope.Variables.Count;
+            if (count < scope.Variables.Count)
+            {
+                count = scope.Variables.Count;
+            }
+
+            for (; i < count; i++)
+            {
+                // TODO :: Bundles and Array are structured
+                VariableState dbgVar = scope.Variables[i];
+                variables.Add(new(dbgVar.Name, dbgVar.Value?.ToString(), 0)
+                {
+                    Type = dbgVar.Type.ToString(),
+                });
+            }
+
+            return new()
+            {
+                Variables = variables
+            };
+        }
+
+        protected override TerminateResponse HandleTerminateRequest(TerminateArguments arguments)
+        {
+            _debugger.Dispose();
+            return new();
+        }
+
+        protected override DisconnectResponse HandleDisconnectRequest(DisconnectArguments arguments)
+        {
+            _debugger.Dispose();
+            return new();
+        }
+
+        private bool LoadNebulaScripts(LaunchArguments arguments, DebuggerConfiguration configuration)
+        {
+            string rootFolder = arguments.ConfigurationProperties.GetValueAsString(DebuggerConstants.Workspace);
 
             List<string> additionalFolders = [];
             additionalFolders.Add(rootFolder);
-            JArray? jAddFolders = (JArray?)arguments.ConfigurationProperties.GetValueOrDefault("add_deps");
+
+            JArray? jAddFolders = (JArray?)arguments.ConfigurationProperties.GetValueOrDefault(DebuggerConstants.AdditionalScriptFolders);
             if (jAddFolders is not null)
             {
                 foreach (string? f in jAddFolders.Values<string>())
@@ -202,15 +570,51 @@ namespace Nebula.Debugger.DAP
             }
 
             string[] scriptFiles = GetScriptsToLoad(additionalFolders.ToArray());
-            if (!_nebulaDebugger.InitDebugger(scriptFiles, nativeBindingSource))
+            if (!_debugger.AddScripts(scriptFiles))
             {
-                OnExecutionEnd(this, EventArgs.Empty);
+                _logger.LogError($"Could not load one or more script, aborting debugger!");
+                return false;
             }
+
+            foreach (KeyValuePair<string, Commons.Debugger.DebugFile> loadedDbgFile in _debugger.DebugFiles)
+            {
+                _dapSources[loadedDbgFile.Value.Namespace] = new()
+                {
+                    Path = loadedDbgFile.Value.SourceFilePath,
+                    Name = loadedDbgFile.Value.OriginalFileName,
+                };
+            }
+
+            string nativeBindingSource = arguments.ConfigurationProperties.GetValueAsString(DebuggerConstants.BindingLookupPath);
+
+            List<string> bindingFullPaths = [];
+            if (!File.Exists(nativeBindingSource))
+            {
+                if (Directory.Exists(nativeBindingSource))
+                {
+                    bindingFullPaths.AddRange(Directory.GetFiles(nativeBindingSource, "*.dll"));
+                }
+            }
+            else
+            {
+                bindingFullPaths.Add(nativeBindingSource);
+            }
+
+            HashSet<string> nativeFuncToLoad = _debugger.DebugFiles.Values.SelectMany(s => s.NativeFunctions)
+                .ToHashSet();
+
+            if (!_debugger.AddBindings(bindingFullPaths, nativeFuncToLoad))
+            {
+                _logger.LogError($"Could not load one or more binding file, aborting debugger!");
+                return false;
+            }
+
+            return true;
         }
 
-        private string[] GetScriptsToLoad(string[] folders)
+        private static string[] GetScriptsToLoad(IEnumerable<string> folders)
         {
-            HashSet<string> files = new();
+            HashSet<string> files = [];
             foreach (string folder in folders)
             {
                 foreach (string file in Directory.GetFiles(folder, "*.neb"))
@@ -219,348 +623,24 @@ namespace Nebula.Debugger.DAP
                 }
             }
 
-            _logger.LogInformation($"Debugging with {files.Count} unique scripts");
+            //_logger.LogInformation($"Debugging with {files.Count} unique scripts");
             return files.ToArray();
         }
-        #endregion
 
-        #region API
-        /// <summary>
-        /// <inheritdoc cref="DebugProtocolClient.Run"/>
-        /// </summary>
-        internal void Run()
+        private void OnStdOutWriteLine(string message)
         {
-            Protocol.Run();
+            Protocol.SendEvent(new OutputEvent(message + "\n")
+            {
+                Category = OutputEvent.CategoryValue.Stdout,
+            });
         }
 
-        #endregion
-
-        #region DAP Callbacks
-
-        #region Initialization
-        protected override InitializeResponse HandleInitializeRequest(InitializeArguments arguments)
+        private void OnStdOutWrite(string message)
         {
-            Protocol.SendEvent(new InitializedEvent());
-            return new InitializeResponse()
+            Protocol.SendEvent(new OutputEvent(message)
             {
-                SupportsSingleThreadExecutionRequests = false, // All or nothing
-                SupportsConfigurationDoneRequest = true,
-                SupportsSetVariable = true,
-                SupportsFunctionBreakpoints = true,
-                SupportsDebuggerProperties = true,
-                SupportsInstructionBreakpoints = false,
-                SupportsExceptionFilterOptions = false,
-            };
+                Category = OutputEvent.CategoryValue.Stdout,
+            });
         }
-        protected override ConfigurationDoneResponse HandleConfigurationDoneRequest(ConfigurationDoneArguments arguments)
-        {
-            return new();
-        }
-
-        #endregion
-
-        #region Breakpoint Requests
-
-        protected override SetFunctionBreakpointsResponse HandleSetFunctionBreakpointsRequest(SetFunctionBreakpointsArguments arguments)
-        {
-            List<Breakpoint> actualBreakpoints = [];
-            _nebulaDebugger.Breakpoints.ClearFunctionBreakpoints();
-            foreach (FunctionBreakpoint? funcBreakpoint in arguments.Breakpoints)
-            {
-                string funcName = funcBreakpoint.Name;
-                Breakpoint bp = new()
-                {
-                    Verified = false,
-                    Line = -1,
-                    Source = null,
-                    Reason = Breakpoint.ReasonValue.Failed
-                };
-
-                actualBreakpoints.Add(bp);
-
-                if (funcName.Contains("::"))
-                {
-                    // Namespace :: Funcname
-                    string[] tokens = funcName.Split("::", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                    if (tokens.Length != 2)
-                    {
-                        _logger.LogWarning($"Invalid function breakpoint '{funcName}'");
-                        bp.Message = "Could not split into namespace and function name (expected one '::' token as separator)";
-
-                        continue;
-                    }
-                    string ns = tokens[0];
-                    funcName = tokens[1];
-
-                    if (!_nebulaDebugger.DebugFiles.TryGetValue(ns, out DebugFile? dbgFile))
-                    {
-                        _logger.LogWarning($"Namespace for function breakpoint '{ns}' not found in dbg files");
-                        bp.Message = "Could not find namespace";
-
-                        continue;
-                    }
-
-                    if (!dbgFile.Functions.TryGetValue(funcName, out DebugFunction? dbgFunc))
-                    {
-                        _logger.LogWarning($"Function '{funcName}' in namespace '{ns}' not found in dbg files for function breakpoint");
-                        bp.Message = "Could not find function in namespace";
-                        continue;
-                    }
-
-                    bp.Verified = true;
-                    bp.Line = dbgFunc.LineNumber;
-                    bp.Source = _nebulaDebugger.DAPSources[ns];
-                    bp.Reason = null;
-
-                    _nebulaDebugger.Breakpoints.AddFunctionBreakpoint(new(ns, funcName, dbgFunc.LineNumber));
-                }
-                else
-                {
-                    //TODO :: Break on all functions in all namespaces with the same name
-                    throw new ProtocolException("Invalid function breakpoint");
-                }
-            }
-            return new(actualBreakpoints);
-        }
-
-        protected override SetBreakpointsResponse HandleSetBreakpointsRequest(SetBreakpointsArguments arguments)
-        {
-            List<Breakpoint> actualBreakpoints = [];
-            string @namespace = string.Empty;
-            Source? inMemorySource = null;
-            foreach (KeyValuePair<string, Source> kvp in _nebulaDebugger.DAPSources)
-            {
-                if (kvp.Value.Name == arguments.Source.Name)
-                {
-                    @namespace = kvp.Key;
-                    inMemorySource = kvp.Value;
-                }
-            }
-
-            _nebulaDebugger.Breakpoints.ClearGenericBreakpoints(@namespace);
-            foreach (SourceBreakpoint? reqBp in arguments.Breakpoints)
-            {
-                Breakpoint bp = new()
-                {
-                    Verified = false,
-                    Line = -1,
-                    Source = null,
-                    Reason = Breakpoint.ReasonValue.Failed,
-                };
-                actualBreakpoints.Add(bp);
-
-                if (inMemorySource is null)
-                {
-                    bp.Message = "Source could not be found in debug files";
-                    continue;
-                }
-
-
-                int targetLine = reqBp.Line;
-                bool isDbg = _nebulaDebugger.IsLineDebuggable(@namespace, targetLine, out string functionName, out int instructionIndex);
-                if (!isDbg)
-                {
-                    bp.Message = "Line is not debuggable";
-                    continue;
-                }
-
-
-                bp.Line = targetLine;
-                bp.Verified = true;
-
-                _nebulaDebugger.Breakpoints.AddBreakpoint(new NebulaBreakpoint(@namespace, functionName, instructionIndex));
-            }
-
-            //_loadingBreakpointsEvent.Reset();
-            return new(actualBreakpoints);
-        }
-        #endregion
-
-        #region Control Operations
-
-        protected override NextResponse HandleNextRequest(NextArguments arguments)
-        {
-            Continue(true, arguments.ThreadId);
-            return new NextResponse();
-        }
-
-        protected override PauseResponse HandlePauseRequest(PauseArguments arguments)
-        {
-            PostStopReason(StoppedEvent.ReasonValue.Pause, arguments.ThreadId);
-            return new();
-        }
-
-        protected override ContinueResponse HandleContinueRequest(ContinueArguments arguments)
-        {
-            Continue(false, arguments.ThreadId);
-            return new()
-            {
-                AllThreadsContinued = true,
-            };
-        }
-
-        protected override StepInResponse HandleStepInRequest(StepInArguments arguments)
-        {
-            _isStepIn = true;
-            Continue(true, arguments.ThreadId);
-            return new StepInResponse();
-        }
-
-        #endregion
-
-        #region Base operations
-        protected override LaunchResponse HandleLaunchRequest(LaunchArguments arguments)
-        {
-            bool debugInternals = arguments.ConfigurationProperties.GetValueAsBool("debug_dap") ?? false;
-            if (debugInternals)
-            {
-                System.Diagnostics.Debugger.Launch();
-            }
-
-            bool stopOnEntry = arguments.ConfigurationProperties.GetValueAsBool("stopOnEntry") ?? false;
-            _configuration.StepOnEntry = stopOnEntry;
-
-            LoadDebuggerScripts(arguments);
-
-            _dbgThread = Task.Run(TaskDbgThread, _tokSource.Token);
-
-
-            if (_dbgThread.IsCanceled)
-            {
-                PostTerminationEvents(ExitReason.InitError);
-            }
-
-            if (_configuration.StepOnEntry)
-            {
-                PostStopReason(StoppedEvent.ReasonValue.Entry, 0);
-            }
-
-            return new LaunchResponse();
-        }
-
-        protected override DisconnectResponse HandleDisconnectRequest(DisconnectArguments arguments)
-        {
-            _nebulaDebugger.StopAndReset();
-            return new DisconnectResponse();
-        }
-
-        protected override ThreadsResponse HandleThreadsRequest(ThreadsArguments arguments)
-        {
-            List<Thread> vmThreads = [];
-            foreach (NebulaThread nt in _nebulaDebugger.Threads.Values)
-            {
-                vmThreads.Add(new Thread
-                {
-                    Id = nt.ThreadId,
-                    Name = nt.ThreadName
-                });
-            }
-
-            return new ThreadsResponse()
-            {
-                Threads = vmThreads
-            };
-        }
-
-        protected override StackTraceResponse HandleStackTraceRequest(StackTraceArguments arguments)
-        {
-            int threadId = arguments.ThreadId;
-
-            NebulaThread thread = _nebulaDebugger.Threads[threadId];
-            IList<NebulaStackFrame> stack = thread.StackTrace;
-
-            List<StackFrame> msFrames = new();
-            foreach (NebulaStackFrame f in stack)
-            {
-                int currentLineNumber = _nebulaDebugger.GetLineNumber(f);
-                msFrames.Add(new StackFrame
-                {
-                    Id = f.FrameId,
-                    Name = f.NativeFrame.FunctionName,
-                    Line = currentLineNumber + 1,
-                    Source = _nebulaDebugger.DAPSources[f.NativeFrame.Namespace]
-                });
-            }
-
-            return new()
-            {
-                TotalFrames = msFrames.Count,
-                StackFrames = msFrames
-            };
-        }
-
-        protected override ScopesResponse HandleScopesRequest(ScopesArguments arguments)
-        {
-            int frameId = arguments.FrameId;
-            // TODO :: To optimize ?
-            NebulaStackFrame? myFrame = _nebulaDebugger.Threads
-                .SelectMany(t => t.Value.StackTrace)
-                .FirstOrDefault(f => f.FrameId == frameId);
-
-            if (myFrame is null)
-            {
-                return new();
-            }
-
-            ScopesResponse response = new();
-            foreach (NebulaScope nScope in myFrame.Scopes)
-            {
-                int varReference = nScope.Variables.Count > 0 ? nScope.ScopeId : 0;
-                response.Scopes.Add(new(nScope.Name, nScope.ScopeId, false));
-            }
-
-            // Scope s;
-            return response;
-        }
-
-        protected override VariablesResponse HandleVariablesRequest(VariablesArguments arguments)
-        {
-            NebulaScope? myScope = _nebulaDebugger.Threads
-                .SelectMany(t => t.Value.StackTrace)
-                .SelectMany(f => f.Scopes)
-                .FirstOrDefault(s => s.ScopeId == arguments.VariablesReference);
-
-            VariablesResponse response = new();
-            if (myScope is null)
-            {
-                return response;
-            }
-
-            response.Variables.Capacity = myScope.Variables.Capacity;
-            foreach (NebulaVariable v in myScope.Variables)
-            {
-                response.Variables.Add(new Variable(v.Name, v.Value, 0)
-                {
-                    Type = v.Type
-                });
-            }
-
-            return response;
-        }
-        #endregion
-
-        #region Expression Operations
-
-        protected override SetVariableResponse HandleSetVariableRequest(SetVariableArguments arguments)
-        {
-            NebulaScope? myScope = _nebulaDebugger.Threads
-                .SelectMany(t => t.Value.StackTrace)
-                .SelectMany(f => f.Scopes)
-                .FirstOrDefault(s => s.ScopeId == arguments.VariablesReference);
-
-            NebulaVariable myVar = myScope!.Variables.First(v => v.Name == arguments.Name);
-            myVar.NativeVariable.Set(arguments.Value);
-
-            return new()
-            {
-                VariablesReference = arguments.VariablesReference,
-                Type = myVar.Type,
-                Value = myVar.Value
-            };
-        }
-
-        #endregion
-
-        #endregion
     }
 }

@@ -1,13 +1,13 @@
 ﻿using Nebula.Commons.Debugger;
 using Nebula.Interop.Structures;
-using System;
 using System.Collections.Generic;
 
 namespace Nebula.Debugger.Debugger.Data
 {
     public sealed class FrameState
     {
-        public ThreadState Parent { get; }
+        public VirtualMachineState Parent { get; }
+        public ThreadState Thread { get; }
         public int FrameId { get; }
         public string FunctionName { get; }
         public string FunctionNamespace { get; }
@@ -18,19 +18,20 @@ namespace Nebula.Debugger.Debugger.Data
 
         private readonly Dictionary<int, ScopeState> _scopes = [];
 
-        public FrameState(ThreadState parent, int frameId, Frame frame)
+        public FrameState(VirtualMachineState parent, ThreadState thread, int frameId, Frame frame)
         {
             Parent = parent;
+            Thread = thread;
             FrameId = frameId;
             OriginalFrame = frame;
             FunctionName = frame.FunctionName;
             FunctionNamespace = frame.Namespace;
-            SourceLine = parent.GetLineNumber(this);
+            SourceLine = thread.GetLineNumber(this);
 
-            DebugFunction? dbgFunc = parent.GetDebugInfo(this);
+            DebugFunction? dbgFunc = thread.GetDebugInfo(this);
             if (dbgFunc != null)
             {
-                ScopeState localsScope = new(this, "Local variables");
+                ScopeState localsScope = new(parent, this, "Local variables");
                 int locCount = frame.LocalCount;
                 for (int i = 0; i < locCount; i++)
                 {
@@ -40,7 +41,7 @@ namespace Nebula.Debugger.Debugger.Data
 
                 _scopes[localsScope.ScopeId] = localsScope;
 
-                ScopeState parametersScope = new(this, "Parameters");
+                ScopeState parametersScope = new(parent, this, "Parameters");
                 int paramCount = frame.ParameterCount;
                 for (int i = 0; i < paramCount; i++)
                 {

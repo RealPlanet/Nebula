@@ -11,6 +11,9 @@ namespace Nebula.Commons.Debugger
         [JsonInclude]
         public int LineNumber { get; init; }
 
+        [JsonInclude]
+        public int EndLineNumber { get; init; }
+
         /// <summary> Number of instructions this function has </summary>
         [JsonInclude]
         public long InstructionCount { get; init; }
@@ -21,13 +24,8 @@ namespace Nebula.Commons.Debugger
         [JsonInclude]
         public List<DebugVariable> LocalVariables { get; init; } = [];
 
-        /// <summary>
-        /// Contains kvps of each new line. <br/>
-        /// Key is opcode at which line changes <br/>
-        /// Value is line number <br/>
-        /// </summary>
         [JsonInclude]
-        public Dictionary<int, int> DeltaInstructionLines { get; init; } = [];
+        public Dictionary<int, int> LineStartingOpcodeIndex { get; init; } = [];
 
         [JsonInclude]
         public List<int> Statements { get; init; } = [];

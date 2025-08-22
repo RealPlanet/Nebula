@@ -9,11 +9,11 @@ namespace Nebula.Debugger.Debugger.Data
         public static bool TryFirstOrDefault<T>(this IEnumerable<T> source, Predicate<T> predicate, [NotNullWhen(true)] out T? value)
         {
             value = default;
-            using (var iterator = source.GetEnumerator())
+            using (IEnumerator<T> iterator = source.GetEnumerator())
             {
                 if (iterator.MoveNext())
                 {
-                    var t = iterator.Current!;
+                    T t = iterator.Current!;
 
                     if (t != null && predicate(t))
                     {

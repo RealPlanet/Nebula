@@ -13,7 +13,7 @@ namespace Nebula.Debugger.Debugger.Data
 
         public TypeIdentifier Type { get; }
 
-        public object? Value { get; }
+        public object? Value => OriginalVariable.Value ?? "<empty>";
 
         public VariableState(ScopeState parent, string name, Variable variable)
         {
@@ -21,7 +21,44 @@ namespace Nebula.Debugger.Debugger.Data
             Name = name;
             OriginalVariable = variable;
             Type = variable.Type;
-            Value = variable.Value ?? "<empty>";
+        }
+
+        /// <summary>
+        /// Handles type check before setting the value (or not) in the native virtual machine
+        /// </summary>
+        public bool OverrideValue(string value)
+        {
+            switch (Type)
+            {
+                case TypeIdentifier.Int32:
+                    {
+                        if (!int.TryParse(value, out int iValue))
+                        {
+                            return false;
+                        }
+
+                        return OriginalVariable.Set(iValue);
+                    }
+                case TypeIdentifier.Float:
+                    {
+                        if (!float.TryParse(value, out float fValue))
+                        {
+                            return false;
+                        }
+
+                        return OriginalVariable.Set(fValue);
+                    }
+                case TypeIdentifier.String:
+                    {
+                        return OriginalVariable.Set(value);
+                    }
+                case TypeIdentifier.Bundle:
+                case TypeIdentifier.Array:
+                case TypeIdentifier.Void:
+                case TypeIdentifier.Unknown:
+                default:
+                    return true;
+            }
         }
     }
 }

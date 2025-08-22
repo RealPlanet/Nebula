@@ -50,9 +50,11 @@ namespace Nebula.CodeGeneration.Writer
             foreach (MethodDefinition func in assembly.TypeDefinition.Methods)
             {
                 int funcLineNumber = -1;
+                int funcEndLineNumber = -1;
                 if (func.OriginalNode != null)
                 {
                     funcLineNumber = assembly.SourceCode.GetLineIndex(func.OriginalNode.Span.Start);
+                    funcEndLineNumber = assembly.SourceCode.GetLineIndex(func.OriginalNode.Span.End);
                 }
 
                 DebugFunction dbgFunc = new()
@@ -60,6 +62,7 @@ namespace Nebula.CodeGeneration.Writer
                     Name = func.Name,
                     LineNumber = funcLineNumber,
                     InstructionCount = func.Body.Instructions.Count,
+                    EndLineNumber = funcEndLineNumber,
                 };
 
                 outpuData.Functions.Add(dbgFunc.Name, dbgFunc);
@@ -87,10 +90,11 @@ namespace Nebula.CodeGeneration.Writer
                     Instruction inst = func.Body.Instructions[i];
                     TextSpan instSpan = inst.OriginalNode?.Span ?? default;
                     int lineNumber = assembly.SourceCode.GetLineIndex(instSpan.Start);
+
                     if (lineNumber != lastLineNumber)
                     {
+                        dbgFunc.LineStartingOpcodeIndex.TryAdd(lineNumber, i);
                         lastLineNumber = lineNumber;
-                        dbgFunc.DeltaInstructionLines.Add(i, lineNumber);
                     }
 
                     Node? originalNode = inst.OriginalNode;

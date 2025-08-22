@@ -1,5 +1,5 @@
 ﻿using Nebula.Commons.Debugger;
-using System;
+using Nebula.Interop.Structures;
 using System.Collections.Generic;
 
 namespace Nebula.Debugger.Debugger.Data
@@ -8,20 +8,27 @@ namespace Nebula.Debugger.Debugger.Data
     {
         public VirtualMachineState Parent { get; }
         public int ThreadId { get; }
-        public IReadOnlyDictionary<int, FrameState> Callstack => _callstack;
+        public Callstack OriginalCallstack { get; }
 
-        private readonly Dictionary<int, FrameState> _callstack = [];
+        public IReadOnlyDictionary<int, FrameState> Frames => _frameDictionary;
+        public IReadOnlyList<FrameState> CallStack => _callstack;
 
-        public ThreadState(VirtualMachineState parent, int threadId)
+        private readonly Dictionary<int, FrameState> _frameDictionary = [];
+        private readonly List<FrameState> _callstack = [];
+
+        public ThreadState(VirtualMachineState parent, int threadId, Callstack originalCallstack)
         {
             Parent = parent;
             ThreadId = threadId;
+            OriginalCallstack = originalCallstack;
         }
 
         internal void AddFrame(FrameState state)
         {
-            _callstack[state.FrameId] = state;
+            _frameDictionary[state.FrameId] = state;
+            _callstack.Add(state);
         }
+
 
         internal int GetLineNumber(FrameState frameState)
         {
@@ -32,5 +39,6 @@ namespace Nebula.Debugger.Debugger.Data
         {
             return Parent.GetDebugInfo(frameState);
         }
+
     }
 }

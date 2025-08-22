@@ -32,16 +32,16 @@ namespace Nebula.Debugger.App
             }
 
             AppLogger = CreateFileLogger();
-            
-            
+
+
             AppLogger.LogInformation("Debugger start");
-            
+
             if (arguments.ServerPort != 0)
             {
                 RunServer(arguments);
                 return 0;
             }
-            
+
             // Standard mode - run with the adapter connected to the process's stdin and stdout
             NebulaDebuggerAdapter adapter = new(Console.OpenStandardInput(), Console.OpenStandardOutput(), AppLogger);
             adapter.Protocol.LogMessage += (sender, e) => DiagnosticLog(sender, e.Message);
@@ -62,16 +62,16 @@ namespace Nebula.Debugger.App
             const string logDir = "logs";
             string logTempDir = Path.Combine(Path.GetTempPath(), logDir);
             string logFullPath = Path.Combine(logTempDir, "dbg_report.log");
-        
+
             Directory.CreateDirectory(logTempDir);
-        
+
             // Disposed by logger when closing
             StreamWriter logFileWriter = new(logFullPath, append: true);
             using ILoggerFactory factory = LoggerFactory.Create(builder =>
             {
                 builder.AddProvider(new CustomFileLoggerProvider(logFileWriter));
             });
-        
+
             //Create an ILogger
             ILogger<Program> logger = factory.CreateLogger<Program>();
             return logger;
@@ -80,12 +80,12 @@ namespace Nebula.Debugger.App
         private static void RunServer(ProgramArgs args)
         {
             Console.WriteLine(FormattableString.Invariant($"Waiting for connections on port {args.ServerPort}..."));
-        
+
             Thread listenThread = new(() =>
             {
                 TcpListener listener = new(IPAddress.Parse("127.0.0.1"), args.ServerPort);
                 listener.Start();
-        
+
                 while (true)
                 {
                     Socket clientSocket = listener.AcceptSocket();
@@ -96,7 +96,7 @@ namespace Nebula.Debugger.App
                         {
                             using (Stream stream = new NetworkStream(clientSocket))
                             {
-                                NebulaDebuggerAdapter adapter = new NebulaDebuggerAdapter(stream, stream, AppLogger);
+                                NebulaDebuggerAdapter adapter = new(stream, stream, AppLogger);
                                 adapter.Protocol.LogMessage += (sender, e) => Console.WriteLine(e.Message);
                                 adapter.Protocol.DispatcherError += (sender, e) =>
                                 {
@@ -107,11 +107,11 @@ namespace Nebula.Debugger.App
                                 adapter.Protocol.WaitForReader();
                             }
                         }
-                        catch(Exception ex)
+                        catch (Exception ex)
                         {
                             AppLogger.LogError($"Unhandled exception: {ex}");
                         }
-        
+
                         Console.WriteLine("Connection closed");
                     })
                     {
@@ -121,7 +121,7 @@ namespace Nebula.Debugger.App
                     clientThread.Start();
                 }
             });
-        
+
             listenThread.Name = "DebugServer listener thread";
             listenThread.Start();
             listenThread.Join();
