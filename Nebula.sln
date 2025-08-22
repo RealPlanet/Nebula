@@ -42,6 +42,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nebula.Editor", "Nebula.Editor\Nebula.Editor.csproj", "{3D31BB36-606E-489A-9393-3157A143B069}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nebula.Debugger", "Nebula.DAP\Nebula.Debugger.csproj", "{53E62B47-1AEF-4F7A-BEE4-A46B1F0CD1A1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{03E6CAFA-2D0E-4F8E-BF7F-9D1A7BA3B9D4} = {03E6CAFA-2D0E-4F8E-BF7F-9D1A7BA3B9D4}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Nebula.StandardLib", "Nebula.StandardLib\Nebula.StandardLib.vcxproj", "{F0DF6F8C-BC21-4E66-858C-67609C791057}"
 	ProjectSection(ProjectDependencies) = postProject
