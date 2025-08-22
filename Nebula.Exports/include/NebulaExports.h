@@ -7,6 +7,7 @@
 namespace nebula {
     class Interpreter;
     class Script;
+    class BundleField;
     class BundleDefinition;
     class Bundle;
     class VariantArray;
@@ -15,7 +16,9 @@ namespace nebula {
     class Frame;
 
     using CallStack = std::vector<nebula::Frame*>;
-    using BundleFields = std::vector<std::pair<std::string, DataStackVariantIndex>>;
+    using BundleFieldDefinition = std::pair<std::string, DataStackVariantIndex>;
+    using BundleFields = std::vector<BundleFieldDefinition>;
+
     namespace shared {
         enum class ReportType;
     }
@@ -87,10 +90,16 @@ extern "C"
 
     // BundleDefinition
     __declspec(dllexport) const char* BundleDefinition_GetName(nebula::BundleDefinition* handle);
-    __declspec(dllexport) const nebula::BundleFields* BundleDefinition_GetFields(nebula::BundleDefinition* handle, int* arrLen);
+    __declspec(dllexport) const nebula::BundleFieldDefinition** BundleDefinition_GetFields(nebula::BundleDefinition* handle, int* arrLen);
+    // Destroy list, not elements
+    __declspec(dllexport) void BundleDefinition_DestroyFieldDefinitionsList(const nebula::BundleFieldDefinition** handle);
     __declspec(dllexport) void BundleDefinition_Destroy(nebula::BundleDefinition* handle);
 
     // Bundle
+
+    // BundleField
+    __declspec(dllexport) const char* BundleField_GetName(nebula::BundleFieldDefinition* handle);
+    __declspec(dllexport) int BundleField_GetType(nebula::BundleFieldDefinition* handle);
 
     // Function
     __declspec(dllexport) const char* Function_GetName(nebula::Function* handle);

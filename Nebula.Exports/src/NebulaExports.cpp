@@ -135,7 +135,7 @@ bool Interpreter_LoadBindingsInDLL(nebula::Interpreter* handle, const char* dllL
         return false;
     }
 
-    NEB_GET_ALL_BINDINGS_PTR(funcPtr) = (NEB_GET_ALL_BINDINGS_PTR())GetProcAddress(hGetProcIDDLL, NEB_GET_ALL_NATIVE_BINDINGS_NAME);
+    NEB_GET_ALL_BINDINGS_PTR(funcPtr) = (NEB_GET_ALL_BINDINGS_PTR_TYPE)GetProcAddress(hGetProcIDDLL, NEB_GET_ALL_NATIVE_BINDINGS_NAME);
     auto& bindings = *funcPtr();
     for (auto& kvp : bindings)
     {
@@ -675,7 +675,7 @@ const char* BundleDefinition_GetName(nebula::BundleDefinition* handle)
     return handle->Name().data();
 }
 
-const nebula::BundleFields* BundleDefinition_GetFields(nebula::BundleDefinition* handle, int* arrLen)
+const nebula::BundleFieldDefinition** BundleDefinition_GetFields(nebula::BundleDefinition* handle, int* arrLen)
 {
     if (handle == nullptr)
     {
@@ -685,7 +685,18 @@ const nebula::BundleFields* BundleDefinition_GetFields(nebula::BundleDefinition*
 
     auto& fields = handle->Fields();
     *arrLen = (int)fields.size();
-    return &fields;
+    const nebula::BundleFieldDefinition** array = new const nebula::BundleFieldDefinition * [*arrLen];
+    for (int i{ 0 }; i < *arrLen; i++)
+    {
+        array[i] = &fields[i];
+    }
+
+    return array;
+}
+
+void BundleDefinition_DestroyFieldDefinitionsList(const nebula::BundleFieldDefinition** handle)
+{
+    delete[] handle;
 }
 
 void BundleDefinition_Destroy(nebula::BundleDefinition* handle)
@@ -701,9 +712,36 @@ void BundleDefinition_Destroy(nebula::BundleDefinition* handle)
 
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
+//      BUNDLE FIELD
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+
+const char* BundleField_GetName(nebula::BundleFieldDefinition* handle)
+{
+    if (handle == nullptr)
+    {
+        return nullptr;
+    }
+
+    return handle->first.data();
+}
+
+int BundleField_GetType(nebula::BundleFieldDefinition* handle)
+{
+    if (handle == nullptr)
+    {
+        return 0;
+    }
+
+    return handle->second;
+}
+
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
 //      FUNCTION
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
+
 
 const char* Function_GetName(nebula::Function* handle)
 {

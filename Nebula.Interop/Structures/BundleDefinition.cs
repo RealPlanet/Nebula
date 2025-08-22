@@ -21,6 +21,7 @@ namespace Nebula.Interop.Structures
             IntPtr fieldArray = NativeMethods.BundleDefinition_GetFields(handle, out int arrayLen);
             IntPtr[] fields = new IntPtr[arrayLen];
             Marshal.Copy(fieldArray, fields, 0, arrayLen);
+            NativeMethods.BundleDefinition_DestroyFieldDefinitionsList(fieldArray);
 
             for (int i = 0; i < arrayLen; i++)
             {
@@ -35,6 +36,9 @@ namespace Nebula.Interop.Structures
 
             [DllImport(NebulaConstants.DllName, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
             public static extern IntPtr BundleDefinition_GetFields(IntPtr handle, out int arrLen);
+            [DllImport(NebulaConstants.DllName, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+            public static extern void BundleDefinition_DestroyFieldDefinitionsList(IntPtr handle);
+
         }
     }
 }
