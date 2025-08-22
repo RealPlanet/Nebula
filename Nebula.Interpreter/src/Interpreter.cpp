@@ -140,11 +140,6 @@ bool Interpreter::Step()
     if (CheckAndSetExitState())
         return false; // Early exit
 
-    if (ShouldScheduleNewFrame())
-    {
-        SwapExecutingThread();
-    }
-
     Frame* currentFrame = GetCurrentCallstack()->back();
     Frame::Status frameStatus = currentFrame->Tick(this);
     switch (frameStatus)
@@ -165,6 +160,10 @@ bool Interpreter::Step()
     if (GetCurrentCallstack()->empty())
     {
         m_Threads.RemoveCallstack(m_CurrentThreadIndex);
+        SwapExecutingThread();
+    }
+    else if (ShouldScheduleNewFrame())
+    {
         SwapExecutingThread();
     }
 
