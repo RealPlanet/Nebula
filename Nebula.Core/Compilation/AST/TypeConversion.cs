@@ -32,9 +32,9 @@ namespace Nebula.Core.Compilation.AST
             //if (from == TypeSymbol.Any && to != TypeSymbol.Void)
             //    return Explicit;
 
-            // Default initializer, lookup name because bundles create a typesymbol on the spot with an alias
-            //if (from == TypeSymbol.Int && to.Name == TypeSymbol.Bundle.Name)
-            //    return Implict;
+            // Default initializer for objects
+            if (from == TypeSymbol.Int && to.IsObject)
+                return Implict;
 
             if (from == TypeSymbol.Int || from == TypeSymbol.Bool || from == TypeSymbol.Float)
             {

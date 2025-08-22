@@ -44,6 +44,9 @@ namespace Nebula.Core.Compilation.AST.Symbols
         #endregion
 
         public override SymbolType SymbolType => SymbolType.Type;
+
+        public virtual TypeSymbol BaseType => this;
+
         protected TypeSymbol(string name)
             : base(name)
         {

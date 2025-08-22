@@ -149,14 +149,14 @@ namespace Nebula.Core.Compilation.Emitting
             _currentContext.LabelReferences.Clear();
             _currentContext.Labels.Clear();
 
-            TypeReference returnType = _knownTypes[declaration.ReturnType];
+            TypeReference returnType = _knownTypes[declaration.ReturnType.BaseType];
             AttributeType attributes = GenerateAttributeMask(declaration.Attributes);
             MethodDefinition method = new(declaration.Name, attributes, returnType, declaration.Declaration);
             _currentContext.Assembly.TypeDefinition.Methods.Add(method);
 
             foreach (ParameterSymbol? parameter in declaration.Parameters)
             {
-                TypeReference? parameterType = _knownTypes[parameter.Type];
+                TypeReference? parameterType = _knownTypes[parameter.Type.BaseType];
                 ParameterDefinition parameterDefinition = new(parameterType, parameter.Name, method.Parameters.Count);
                 method.Parameters.Add(parameterDefinition);
                 _currentContext.Parameters.Add(parameter, parameterDefinition);
@@ -172,7 +172,7 @@ namespace Nebula.Core.Compilation.Emitting
 
             foreach (AbstractBundleField field in value.Fields)
             {
-                TypeReference? fieldType = _knownTypes[field.FieldType];
+                TypeReference? fieldType = _knownTypes[field.FieldType.BaseType];
                 ParameterDefinition fieldDef = new(fieldType, field.FieldName, bundle.Fields.Count);
                 bundle.Fields.Add(fieldDef);
             }
@@ -308,7 +308,7 @@ namespace Nebula.Core.Compilation.Emitting
 
         private void EmitVariableDeclaration(NILProcessor processor, AbstractVariableDeclaration node, Node originalStatement)
         {
-            TypeReference typeReference = _knownTypes[node.Variable.Type];
+            TypeReference typeReference = _knownTypes[node.Variable.Type.BaseType];
 
             VariableDefinition variableDefinition = new(typeReference, node.Variable.Name, processor.Body.Variables.Count);
             _currentContext.Locals.Add(node.Variable, variableDefinition);
@@ -333,7 +333,7 @@ namespace Nebula.Core.Compilation.Emitting
             if (typeReference == TypeReference.Array)
             {
                 ArrayTypeSymbol arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
-                TypeReference arrayValueType = _knownTypes[arraySymbol.ValueType];
+                TypeReference arrayValueType = _knownTypes[arraySymbol.ValueType.BaseType];
 
                 StoreNewArrIntoLocal(processor, variableDefinition, arraySymbol, arrayValueType, originalStatement);
                 return;
@@ -470,7 +470,7 @@ namespace Nebula.Core.Compilation.Emitting
         private void EmitConversionExpression(NILProcessor processor, AbstractConversionExpression node, Node originalStatement)
         {
             EmitExpression(processor, node.Expression, originalStatement);
-            processor.Emit(InstructionOpcode.ConvType, _knownTypes[node.ResultType], originalStatement);
+            processor.Emit(InstructionOpcode.ConvType, _knownTypes[node.ResultType.BaseType], originalStatement);
         }
 
         private void EmitCallExpression(NILProcessor processor, AbstractCallExpression node, Node originalStatement)
@@ -898,14 +898,14 @@ namespace Nebula.Core.Compilation.Emitting
         private void EmitArrayParameterReassignment(NILProcessor processor, ParameterDefinition parameter, AbstractAssignmentExpression node, Node originalStatement)
         {
             ArrayTypeSymbol arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
-            TypeReference typeReference = _knownTypes[arraySymbol.ValueType];
+            TypeReference typeReference = _knownTypes[arraySymbol.ValueType.BaseType];
             StoreNewArrIntoParameter(processor, parameter, arraySymbol, typeReference, originalStatement);
         }
 
         private void EmitArrayLocalReassignment(NILProcessor processor, VariableDefinition variableDefinition, AbstractAssignmentExpression node)
         {
             ArrayTypeSymbol arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
-            TypeReference typeReference = _knownTypes[arraySymbol.ValueType];
+            TypeReference typeReference = _knownTypes[arraySymbol.ValueType.BaseType];
             StoreNewArrIntoLocal(processor, variableDefinition, arraySymbol, typeReference, node.OriginalNode);
         }
     }

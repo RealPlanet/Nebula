@@ -311,7 +311,7 @@ namespace Nebula.Core.Compilation.AST.Binding
             return new AbstractDoWhileStatement(syntax, body, condition, breakLabel, continueLabel);
         }
 
-        private AbstractStatement BindForStatement(ForStatement syntax)
+        private AbstractForStatement BindForStatement(ForStatement syntax)
         {
             // Nuovo scope, cosi le variabili dell'init statement possono essere riutilizzate per piu for
             _currentScope = new(_currentScope);
