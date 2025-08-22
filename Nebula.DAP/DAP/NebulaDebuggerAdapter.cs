@@ -45,30 +45,50 @@ namespace Nebula.Debugger.DAP
                         case EventType.Step:
                             {
                                 _debugger.AbortStepping = false;
-                                if (_debugger.StepLine(nextEvent.ThreadId, out var hitBreakpoint) && hitBreakpoint != null)
+                                if (_debugger.StepLine(nextEvent.ThreadId, out var hitBreakpoint))
                                 {
-                                    SendStoppedEvent(hitBreakpoint.IsFunctionBreakpoint ? StoppedEvent.ReasonValue.FunctionBreakpoint : StoppedEvent.ReasonValue.Breakpoint,
-                                                     hitBreakpoint.ThreadId);
+                                    if (hitBreakpoint != null)
+                                    {
+                                        SendStoppedEvent(hitBreakpoint.IsFunctionBreakpoint ? StoppedEvent.ReasonValue.FunctionBreakpoint : StoppedEvent.ReasonValue.Breakpoint,
+                                                         hitBreakpoint.ThreadId);
+                                    }
+                                    else
+                                    {
+                                        SendStoppedEvent(StoppedEvent.ReasonValue.Step, nextEvent.ThreadId);
+                                    }
                                 }
                                 break;
                             }
                         case EventType.StepIn:
                             {
                                 _debugger.AbortStepping = false;
-                                if (_debugger.StepIn(nextEvent.ThreadId, out var hitBreakpoint) && hitBreakpoint != null)
+                                if (_debugger.StepIn(nextEvent.ThreadId, out var hitBreakpoint))
                                 {
-                                    SendStoppedEvent(hitBreakpoint.IsFunctionBreakpoint ? StoppedEvent.ReasonValue.FunctionBreakpoint : StoppedEvent.ReasonValue.Breakpoint,
-                                                     hitBreakpoint.ThreadId);
+                                    if (hitBreakpoint != null)
+                                    {
+                                        SendStoppedEvent(hitBreakpoint.IsFunctionBreakpoint ? StoppedEvent.ReasonValue.FunctionBreakpoint : StoppedEvent.ReasonValue.Breakpoint,
+                                                         hitBreakpoint.ThreadId);
+                                    }
+                                    else
+                                    {
+                                        SendStoppedEvent(StoppedEvent.ReasonValue.Step, nextEvent.ThreadId);
+                                    }
                                 }
+
                                 break;
                             }
                         case EventType.Continue:
                             {
                                 _debugger.AbortStepping = false;
-                                if (_debugger.Continue(out var hitBreakpoint) && hitBreakpoint != null)
+                                if (_debugger.Continue(out var hitBreakpoint))
                                 {
-                                    SendStoppedEvent(hitBreakpoint.IsFunctionBreakpoint ? StoppedEvent.ReasonValue.FunctionBreakpoint : StoppedEvent.ReasonValue.Breakpoint,
+                                    if (hitBreakpoint != null)
+                                    {
+                                        SendStoppedEvent(hitBreakpoint.IsFunctionBreakpoint ? StoppedEvent.ReasonValue.FunctionBreakpoint : StoppedEvent.ReasonValue.Breakpoint,
                                                      hitBreakpoint.ThreadId);
+                                    }
+
+                                    // Is there any other case?
                                 }
                                 break;
                             }
@@ -273,14 +293,6 @@ namespace Nebula.Debugger.DAP
             };
         }
 
-        protected override SetExceptionBreakpointsResponse HandleSetExceptionBreakpointsRequest(SetExceptionBreakpointsArguments arguments)
-        {
-            return new SetExceptionBreakpointsResponse()
-            {
-                Breakpoints = [],
-            };
-        }
-
         protected override ConfigurationDoneResponse HandleConfigurationDoneRequest(ConfigurationDoneArguments arguments)
         {
             return new ConfigurationDoneResponse() { };
@@ -288,10 +300,24 @@ namespace Nebula.Debugger.DAP
 
         protected override LaunchResponse HandleLaunchRequest(LaunchArguments arguments)
         {
-            bool stepOnEntry = arguments.ConfigurationProperties.GetValueAsBool(DebuggerConstants.StepOnEntry) ?? false;
-            Configuration.StepOnEntry = stepOnEntry;
+            Configuration.StepOnEntry = arguments.ConfigurationProperties.GetValueAsBool(DebuggerConstants.StepOnEntry) ?? false;
+            Configuration.RecompileOnLaunch = arguments.ConfigurationProperties.GetValueAsBool(DebuggerConstants.RecompileOnLaunch) ?? false;
+            Configuration.CompilerPath = arguments.ConfigurationProperties.GetValueAsString(DebuggerConstants.CompilerPath) ?? string.Empty;
 
-            if (!LoadNebulaScripts(arguments, Configuration))
+
+            var scriptDirectories = FetchAllSourceDirectories(arguments);
+
+            if (Configuration.RecompileOnLaunch &&
+                File.Exists(Configuration.CompilerPath))
+            {
+                if (!RecompileScripts(scriptDirectories, Configuration.CompilerPath))
+                {
+                    SendTerminationEvent();
+                    return new();
+                }
+            }
+
+            if (!LoadNebulaScripts(scriptDirectories, arguments, Configuration))
             {
                 SendTerminationEvent();
                 return new();
@@ -300,8 +326,6 @@ namespace Nebula.Debugger.DAP
             _debugger.Initialize(Configuration.StepOnEntry);
             if (Configuration.StepOnEntry)
             {
-                // Move once to init everything
-                //_debugger.Step();
                 SendStoppedEvent(StoppedEvent.ReasonValue.Entry, 0);
             }
 
@@ -309,6 +333,33 @@ namespace Nebula.Debugger.DAP
             {
                 /* Nothing */
             };
+        }
+
+        private bool RecompileScripts(IEnumerable<string> scriptFolders, string compilerPath)
+        {
+            var startInfo = new System.Diagnostics.ProcessStartInfo(compilerPath);
+            startInfo.FileName = compilerPath;
+            startInfo.ArgumentList.Add("--next_to_source");
+            foreach (var folder in scriptFolders)
+            {
+                startInfo.ArgumentList.Add($"-f {folder}");
+                startInfo.ArgumentList.Add($"-r {folder}");
+            }
+
+            startInfo.RedirectStandardOutput = true;
+            var process = System.Diagnostics.Process.Start(startInfo);
+
+            if (process != null)
+            {
+                process.EnableRaisingEvents = true;
+                var output = process.StandardOutput.ReadToEnd();
+                OnStdOutWrite(output);
+                process.WaitForExit();
+                int exitCode = process.ExitCode;
+                return exitCode == 0;
+            }
+
+            return false;
         }
 
         #endregion
@@ -550,26 +601,10 @@ namespace Nebula.Debugger.DAP
             return new();
         }
 
-        private bool LoadNebulaScripts(LaunchArguments arguments, DebuggerConfiguration configuration)
+        private bool LoadNebulaScripts(IEnumerable<string> sourceFiles, LaunchArguments arguments, DebuggerConfiguration configuration)
         {
-            string rootFolder = arguments.ConfigurationProperties.GetValueAsString(DebuggerConstants.Workspace);
+            string[] scriptFiles = GetScriptsToLoad(sourceFiles.ToArray());
 
-            List<string> additionalFolders = [];
-            additionalFolders.Add(rootFolder);
-
-            JArray? jAddFolders = (JArray?)arguments.ConfigurationProperties.GetValueOrDefault(DebuggerConstants.AdditionalScriptFolders);
-            if (jAddFolders is not null)
-            {
-                foreach (string? f in jAddFolders.Values<string>())
-                {
-                    if (!string.IsNullOrEmpty(f))
-                    {
-                        additionalFolders.Add(f);
-                    }
-                }
-            }
-
-            string[] scriptFiles = GetScriptsToLoad(additionalFolders.ToArray());
             if (!_debugger.AddScripts(scriptFiles))
             {
                 _logger.LogError($"Could not load one or more script, aborting debugger!");
@@ -610,6 +645,28 @@ namespace Nebula.Debugger.DAP
             }
 
             return true;
+        }
+
+        private static IEnumerable<string> FetchAllSourceDirectories(LaunchArguments arguments)
+        {
+            string rootFolder = arguments.ConfigurationProperties.GetValueAsString(DebuggerConstants.Workspace);
+
+            List<string> additionalFolders = [];
+            additionalFolders.Add(rootFolder);
+
+            JArray? jAddFolders = (JArray?)arguments.ConfigurationProperties.GetValueOrDefault(DebuggerConstants.AdditionalScriptFolders);
+            if (jAddFolders is not null)
+            {
+                foreach (string? f in jAddFolders.Values<string>())
+                {
+                    if (!string.IsNullOrEmpty(f))
+                    {
+                        additionalFolders.Add(f);
+                    }
+                }
+            }
+
+            return additionalFolders;
         }
 
         private static string[] GetScriptsToLoad(IEnumerable<string> folders)

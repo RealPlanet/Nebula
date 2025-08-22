@@ -8,6 +8,8 @@
         public const string EnableStepFiltering = nameof(EnableStepFiltering);
 
         // Debugger configurations
+        public const string RecompileOnLaunch = nameof(RecompileOnLaunch);
+        public const string CompilerPath = nameof(CompilerPath);
         public const string Workspace = nameof(Workspace);
         public const string BindingLookupPath = nameof(BindingLookupPath);
         public const string AdditionalScriptFolders = nameof(AdditionalScriptFolders);
