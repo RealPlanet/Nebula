@@ -1,4 +1,5 @@
-﻿using Nebula.Compiler.Tests.Utility;
+﻿using Nebula.Commons.Text;
+using Nebula.Compiler.Tests.Utility;
 using System.Diagnostics;
 
 namespace Nebula.Compiler.Tests

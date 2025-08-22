@@ -1,4 +1,7 @@
-﻿using Nebula.Compiler.Tests.Utility;
+﻿using Nebula.Commons.Reporting;
+using Nebula.Commons.Syntax;
+using Nebula.Commons.Text;
+using Nebula.Compiler.Tests.Utility;
 using Nebula.Core.Compilation.CST.Lexing;
 using System.Text;
 

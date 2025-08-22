@@ -1,4 +1,6 @@
-﻿using Nebula.Compiler.Tests.Utility;
+﻿using Nebula.Commons.Syntax;
+using Nebula.Commons.Text;
+using Nebula.Compiler.Tests.Utility;
 using Nebula.Core.Compilation;
 using Nebula.Core.Compilation.CST.Parsing;
 using Nebula.Core.Compilation.CST.Tree.Base;
