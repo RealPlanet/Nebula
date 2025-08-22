@@ -37,7 +37,7 @@ namespace Nebula.CodeGeneration.Writer
             string fileName = Path.GetFileName(assembly.SourceCode.FileName);
             DebugFile outpuData = new()
             {
-                Namespace= assembly.Namespace,
+                Namespace = assembly.Namespace,
                 OriginalFileName = fileName,
                 MD5Hash = assemblyChecksum,
             };
@@ -94,10 +94,10 @@ namespace Nebula.CodeGeneration.Writer
                     }
 
                     Node? originalNode = inst.OriginalNode;
-                    if(originalNode != lastStatementNode)
+                    if (originalNode != lastStatementNode)
                     {
                         lastStatementNode = originalNode;
-                        dbgFunc.NewStatementIndex.Add(i);
+                        dbgFunc.Statements.Add(i);
                     }
                 }
             }

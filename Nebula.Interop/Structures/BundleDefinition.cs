@@ -22,7 +22,7 @@ namespace Nebula.Interop.Structures
             IntPtr[] fields = new IntPtr[arrayLen];
             Marshal.Copy(fieldArray, fields, 0, arrayLen);
 
-            for(int i = 0; i < arrayLen; i++)
+            for (int i = 0; i < arrayLen; i++)
             {
                 _fields.Add(new BundleField(fields[i]));
             }

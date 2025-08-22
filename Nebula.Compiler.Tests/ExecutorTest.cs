@@ -1,5 +1,4 @@
-﻿using Nebula.Commons.Text;
-using Nebula.Compiler.Tests.Utility;
+﻿using Nebula.Compiler.Tests.Utility;
 using System.Diagnostics;
 
 namespace Nebula.Compiler.Tests
@@ -41,7 +40,7 @@ namespace Nebula.Compiler.Tests
 
             options.Sources.AddRange(references);
             options.Sources.Add(SourceCode.From(path));
-            bool compileOk = Core.Compilation.Compiler.Compile(options, out Core.Compilation.Compiler.Result ? result);
+            bool compileOk = Core.Compilation.Compiler.Compile(options, out Core.Compilation.Compiler.Result? result);
 
             WriteReport(result.Report);
 

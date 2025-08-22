@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
 namespace Nebula.Commons.Debugger
@@ -31,6 +30,6 @@ namespace Nebula.Commons.Debugger
         public Dictionary<int, int> DeltaInstructionLines { get; init; } = [];
 
         [JsonInclude]
-        public List<int> NewStatementIndex { get; init; } = [];
+        public List<int> Statements { get; init; } = [];
     }
 }

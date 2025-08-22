@@ -19,7 +19,7 @@ namespace Nebula.Interop.Tests.Tests
         [TestMethod]
         public void VirtualMachineInteropTest()
         {
-            VirtualMachine vm = new VirtualMachine();
+            VirtualMachine vm = new();
             bool wroteHellWorld = false;
             void onVmWriteLine(string message)
             {

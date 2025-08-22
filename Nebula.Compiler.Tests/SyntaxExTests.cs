@@ -1,7 +1,4 @@
-﻿using Nebula.Commons.Reporting;
-using Nebula.Commons.Syntax;
-using Nebula.Commons.Text;
-using Nebula.Core.Compilation.CST.Lexing;
+﻿using Nebula.Core.Compilation.CST.Lexing;
 
 namespace Nebula.Compiler.Tests
 {

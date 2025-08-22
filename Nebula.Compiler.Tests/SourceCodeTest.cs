@@ -1,5 +1,3 @@
-using Nebula.Commons.Text;
-
 namespace Nebula.Compiler.Tests
 {
     [TestClass]

@@ -1,5 +1,4 @@
-﻿using Nebula.Commons.Text;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Text;
 
 namespace Nebula.Compiler.Tests.Utility

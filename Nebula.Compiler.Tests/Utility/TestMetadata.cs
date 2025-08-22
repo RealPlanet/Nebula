@@ -1,7 +1,4 @@
-﻿using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
-
-namespace Nebula.Compiler.Tests.Utility
+﻿namespace Nebula.Compiler.Tests.Utility
 {
     public sealed class TestMetadata
     {
