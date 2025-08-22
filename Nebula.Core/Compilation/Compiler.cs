@@ -48,7 +48,7 @@ namespace Nebula.Core.Compilation
                 return false;
             }
 
-            if (string.IsNullOrEmpty(options.OutputFolder) && options.EmitProgram)
+            if (!options.OutputToSourceLocation && string.IsNullOrEmpty(options.OutputFolder) && options.EmitProgram)
             {
                 result.Report.PushError("No output folder provided", default);
                 return false;
