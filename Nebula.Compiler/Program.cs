@@ -17,6 +17,7 @@ namespace Nebula.Compiler
         #region Arguments
         static void AddCompilationPathToCompiler(string path)
         {
+            path = path.Trim();
             if (!CompilerSettings.AddCompilationPath(path))
             {
                 Writer.WriteLine($"Path '{path}' is not a valid source file or root directory", ConsoleColor.Red);
@@ -25,6 +26,7 @@ namespace Nebula.Compiler
 
         static void AddReferencePathToCompiler(string path)
         {
+            path = path.Trim();
             if (!CompilerSettings.AddReferenceFile(path))
             {
                 Writer.WriteLine($"Path '{path}' is not a valid source file or root directory", ConsoleColor.Red);
@@ -61,6 +63,7 @@ namespace Nebula.Compiler
                 { "f=", "A source file or directory path, if a directory is provided all sub directories will also be scanned for source files" , AddCompilationPathToCompiler },
                 { "r=", "A compiled file or directory path, if a directory is provided all sub directories will also be scanned for compiled files" , AddReferencePathToCompiler },
                 { "o=|output_folder" , AddOutputFolderToCompiler },
+                { "next_to_source", v => CompilerSettings.OutputToSourceLocation = true }
             };
 
             options.Parse(args);
@@ -73,7 +76,8 @@ namespace Nebula.Compiler
                 return false;
             }
 
-            if (string.IsNullOrEmpty(CompilerSettings.OutputFolder) || CompilerSettings.SourceFiles.Count == 0)
+            bool noOutputFolder = string.IsNullOrEmpty(CompilerSettings.OutputFolder) && !CompilerSettings.OutputToSourceLocation;
+            if (noOutputFolder || CompilerSettings.SourceFiles.Count == 0)
             {
                 CompilerSettings.Clear();
                 return false;
@@ -131,6 +135,7 @@ namespace Nebula.Compiler
             options.Sources.AddRange(sources);
             options.References.AddRange(references);
             options.OutputFolder = CompilerSettings.OutputFolder;
+            options.OutputToSourceLocation = CompilerSettings.OutputToSourceLocation;
 
             Stopwatch compileTime = Stopwatch.StartNew();
             bool compileOk = Core.Compilation.Compiler.Compile(options, out Core.Compilation.Compiler.Result? result);
@@ -139,7 +144,6 @@ namespace Nebula.Compiler
             Commons.Reporting.Report compileReport = result.Report;
             if (!compileOk)
             {
-
                 Writer.WriteLine($"Compilation failed for {options.Sources.Count} source codes", ConsoleColor.Red);
                 Writer.WriteLine($"First failed compilation is: {result.FailedSourcePath}", ConsoleColor.Red);
                 Console.Out.WriteReport(compileReport);

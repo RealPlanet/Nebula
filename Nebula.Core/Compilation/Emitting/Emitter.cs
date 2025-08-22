@@ -27,6 +27,14 @@ namespace Nebula.Core.Compilation.Emitting
 {
     public sealed class Emitter
     {
+        public class Options
+        {
+            public string OutputFolder { get; set; } = "";
+
+            public bool OutputToSourceLocation { get; set; } = false;
+            public bool ReadableBytecode { get; set; } = true;
+        }
+
         /// <summary>Context used by the emitter to keep track of all the code being emitted</summary>
         private sealed class Context(string moduleName, string @namespace, CodeGeneration.Version moduleVersion, SourceCode sourceCode)
         {
@@ -39,17 +47,17 @@ namespace Nebula.Core.Compilation.Emitting
         }
 
         public string ModuleName { get; }
-        public string OutputFolder { get; }
 
+        private readonly Options _options;
         private Context _currentContext = null!;
 
-        public Emitter(string moduleName, string outputFolder)
+        public Emitter(string moduleName, Options options)
         {
             ModuleName = moduleName;
-            OutputFolder = outputFolder;
+            _options = options;
         }
 
-        public void Emit(AbstractProgram program, bool readableBytecode, out Report emitReport)
+        public void Emit(AbstractProgram program, out Report emitReport)
         {
             NamespaceStatement nsToken = (NamespaceStatement)program.Namespace.OriginalNode;
             _currentContext = new(ModuleName, program.Namespace.Text, new(1, 0, 0), program.SourceCode);
@@ -71,12 +79,26 @@ namespace Nebula.Core.Compilation.Emitting
 
             string moduleName = Path.ChangeExtension(ModuleName, ".neb");
             string moduleDbgName = Path.ChangeExtension(ModuleName, ".ndbg");
-            string outputFilePath = Path.Combine(OutputFolder, moduleName);
-            string outputDbgFilePath = Path.Combine(OutputFolder, moduleDbgName);
+
+            string outputFilePath = Path.Combine(_options.OutputFolder, moduleName);
+            string outputDbgFilePath = Path.Combine(_options.OutputFolder, moduleDbgName);
+            if (!_options.OutputToSourceLocation)
+            {
+                outputFilePath = Path.Combine(_options.OutputFolder, moduleName);
+                outputDbgFilePath = Path.Combine(_options.OutputFolder, moduleDbgName);
+            }
+            else
+            {
+                string sourceLoc = Path.GetDirectoryName(program.SourceCode.FileName)
+                    ?? throw new Exception("Could not get source path!");
+
+                outputFilePath = Path.Combine(sourceLoc, moduleName);
+                outputDbgFilePath = Path.Combine(sourceLoc, moduleDbgName);
+            }
 
             Directory.CreateDirectory(Path.GetDirectoryName(outputFilePath) ?? throw new Exception("Path does not exist"));
 
-            if (readableBytecode)
+            if (_options.ReadableBytecode)
             {
                 using (FileStream output = File.Create(outputFilePath))
                 using (FileStream outputDbg = File.Create(outputDbgFilePath))

@@ -20,6 +20,7 @@ namespace Nebula.Core.Compilation
             public bool EmitProgram { get; set; } = true;
             public string OutputFolder { get; set; } = string.Empty;
             public bool ReadableBytecode { get; set; } = true;
+            public bool OutputToSourceLocation { get; set; } = false;
             public List<SourceCode> Sources { get; } = [];
             public List<Script> References { get; } = [];
         }
@@ -109,8 +110,14 @@ namespace Nebula.Core.Compilation
             }
 
             // Emit
-            Emitter emitter = new(moduleName, options.OutputFolder);
-            emitter.Emit(program, options.ReadableBytecode, out emitReport);
+            Emitter emitter = new(moduleName, new()
+            {
+                OutputToSourceLocation = options.OutputToSourceLocation,
+                OutputFolder = options.OutputFolder,
+                ReadableBytecode = options.ReadableBytecode,
+            });
+
+            emitter.Emit(program, out emitReport);
             return !emitReport.HasErrors;
         }
     }
