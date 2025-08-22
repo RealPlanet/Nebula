@@ -91,11 +91,22 @@ extern "C"
     // BundleDefinition
     __declspec(dllexport) const char* BundleDefinition_GetName(nebula::BundleDefinition* handle);
     __declspec(dllexport) const nebula::BundleFieldDefinition** BundleDefinition_GetFields(nebula::BundleDefinition* handle, int* arrLen);
+
     // Destroy list, not elements
     __declspec(dllexport) void BundleDefinition_DestroyFieldDefinitionsList(const nebula::BundleFieldDefinition** handle);
     __declspec(dllexport) void BundleDefinition_Destroy(nebula::BundleDefinition* handle);
 
     // Bundle
+    __declspec(dllexport) int Bundle_GetFieldCount(nebula::Bundle* handle);
+    __declspec(dllexport) nebula::DataStackVariant* Bundle_GetField(nebula::Bundle* handle, int index);
+
+    // DataStackVariant
+    __declspec(dllexport) int DataStackVariant_GetType(nebula::DataStackVariant* handle);
+    __declspec(dllexport) const char* DataStackVariant_GetStringValue(nebula::DataStackVariant* handle);
+    __declspec(dllexport) int DataStackVariant_GetIntValue(nebula::DataStackVariant* handle);
+    __declspec(dllexport) float DataStackVariant_GetFloatValue(nebula::DataStackVariant* handle);
+    __declspec(dllexport) nebula::TBundle* DataStackVariant_GetBundleValue(nebula::DataStackVariant* handle);
+    __declspec(dllexport) nebula::TArray* DataStackVariant_GetArrayValue(nebula::DataStackVariant* handle);
 
     // BundleField
     __declspec(dllexport) const char* BundleField_GetName(nebula::BundleFieldDefinition* handle);

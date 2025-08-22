@@ -54,13 +54,13 @@ namespace Nebula.Interop.Structures
         public Variable GetLocalVariableAt(int i)
         {
             IntPtr ptr = NativeMethods.Frame_GetLocalVariableAt(_borrowedHandle, i);
-            return new Variable(ptr);
+            return new FrameVariableState(ptr);
         }
 
         public Variable GetParameterVariableAt(int i)
         {
             IntPtr ptr = NativeMethods.Frame_GetParameterVariableAt(_borrowedHandle, i);
-            return new Variable(ptr);
+            return new FrameVariableState(ptr);
         }
 
         private static class NativeMethods

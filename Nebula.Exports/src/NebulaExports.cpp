@@ -704,11 +704,94 @@ void BundleDefinition_Destroy(nebula::BundleDefinition* handle)
     delete (nebula::BundleDefinition*)handle;
 }
 
+
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 //      BUNDLE
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
+
+
+int Bundle_GetFieldCount(nebula::Bundle* handle)
+{
+    if (handle == nullptr)
+    {
+        return 0;
+    }
+
+    return handle->FieldCount();
+}
+
+nebula::DataStackVariant* Bundle_GetField(nebula::Bundle* handle, int index)
+{
+    return nullptr;
+}
+
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+//      DATA STACK VARIANT
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+
+
+int DataStackVariant_GetType(nebula::DataStackVariant* handle)
+{
+    if (handle == nullptr)
+    {
+        return 0;
+    }
+
+    return handle->index();
+}
+
+const char* DataStackVariant_GetStringValue(nebula::DataStackVariant* handle)
+{
+    if (handle == nullptr)
+    {
+        return 0;
+    }
+    return std::get<nebula::DataStackVariantIndex::_TypeString>(*handle).data();
+}
+
+int DataStackVariant_GetIntValue(nebula::DataStackVariant* handle)
+{
+    if (handle == nullptr)
+    {
+        return 0;
+    }
+
+    return std::get<nebula::DataStackVariantIndex::_TypeInt32>(*handle);
+}
+
+float DataStackVariant_GetFloatValue(nebula::DataStackVariant* handle)
+{
+    if (handle == nullptr)
+    {
+        return 0;
+    }
+
+    return std::get<nebula::DataStackVariantIndex::_TypeFloat>(*handle);
+}
+
+nebula::TBundle* DataStackVariant_GetBundleValue(nebula::DataStackVariant* handle)
+{
+    if (handle == nullptr)
+    {
+        return nullptr;
+    }
+
+    return std::get_if<nebula::TBundle>(handle);
+}
+
+nebula::TArray* DataStackVariant_GetArrayValue(nebula::DataStackVariant* handle)
+{
+    if (handle == nullptr)
+    {
+        return nullptr;
+    }
+
+    return std::get_if<nebula::TArray>(handle);
+}
 
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
