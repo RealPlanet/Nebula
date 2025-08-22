@@ -88,14 +88,14 @@ namespace Nebula.Compiler
 
         #endregion
 
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
             Writer.WriteLine("Compiler initializing.", ConsoleColor.DarkGreen);
             if (!ParseArguments(args))
             {
                 Writer.WriteLine("Compiler exiting.", ConsoleColor.DarkGreen);
                 /* We quit if we show help screen or something is not valid */
-                return;
+                return -1;
             }
 
             List<SourceCode> sources = new() { Capacity = CompilerSettings.SourceFiles.Count };
@@ -154,6 +154,7 @@ namespace Nebula.Compiler
             }
 
             Writer.WriteLine($"Compilation took '{compileTime.ElapsedMilliseconds}' ms", ConsoleColor.DarkCyan);
+            return compileOk ? 0 : -1;
         }
 
         private static void OnReportCallback(string scriptPath, ReportType type, string message)
