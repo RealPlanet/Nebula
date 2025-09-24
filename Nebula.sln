@@ -77,6 +77,27 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nebula.CodeGeneration", "Ne
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nebula.Compiler.Tests", "Nebula.Compiler.Tests\Nebula.Compiler.Tests.csproj", "{00E5DB3C-6E5B-3B7A-1FA4-8BE599E3EF16}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{E4B42679-11F4-48F0-819B-49926ABA1CD2}"
+	ProjectSection(SolutionItems) = preProject
+		Samples\BreakContinue.nebula = Samples\BreakContinue.nebula
+		Samples\CallstackErrorPrintTest.nebula = Samples\CallstackErrorPrintTest.nebula
+		Samples\CommonBundles.nebula = Samples\CommonBundles.nebula
+		Samples\CyclicReferenceTest.nebula = Samples\CyclicReferenceTest.nebula
+		Samples\Fibonacci.nebula = Samples\Fibonacci.nebula
+		Samples\FibonacciConLoop.nebula = Samples\FibonacciConLoop.nebula
+		Samples\FizzBuzz.nebula = Samples\FizzBuzz.nebula
+		Samples\FloatMath.nebula = Samples\FloatMath.nebula
+		Samples\ForLoop.nebula = Samples\ForLoop.nebula
+		Samples\HelloWorld.nebula = Samples\HelloWorld.nebula
+		Samples\ImportBundleTest.nebula = Samples\ImportBundleTest.nebula
+		Samples\InvertedHelloWorld.nebula = Samples\InvertedHelloWorld.nebula
+		Samples\MultipleVariables.nebula = Samples\MultipleVariables.nebula
+		Samples\NotificationTestSample.nebula = Samples\NotificationTestSample.nebula
+		Samples\RandomTests.nebula = Samples\RandomTests.nebula
+		Samples\StronglyTypedBundle.nebula = Samples\StronglyTypedBundle.nebula
+		Samples\TypedArray.nebula = Samples\TypedArray.nebula
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -220,6 +241,7 @@ Global
 		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {488BA553-D186-447D-BF80-6E7D88D4565D}
 		{5BB505BD-AA90-2657-DCD1-CA12BEFC826A} = {5C8167F5-6448-48D8-AB71-A7F37BE4ED3B}
 		{00E5DB3C-6E5B-3B7A-1FA4-8BE599E3EF16} = {8F9FDD24-62B8-4627-8F0C-A974C110F743}
+		{E4B42679-11F4-48F0-819B-49926ABA1CD2} = {C6590024-1615-468B-B9F2-2CBBF37B94EE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {46FBA00E-F93B-44E9-BEC2-4FCF1E299043}

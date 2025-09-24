@@ -375,11 +375,11 @@ namespace Nebula.Core.Compilation.Emitting
                 ExtractBundleNamespaceAndName((ObjectTypeSymbol)arraySymbol.ValueType, out string typeNamespace, out string typedName);
                 if (_currentContext.Assembly.Namespace != typeNamespace)
                 {
-                    arguments = new object[] { baseValueType, typeNamespace, typedName };
+                    arguments = new string[] { baseValueType.Name, typeNamespace, typedName };
                 }
                 else
                 {
-                    arguments = new object[] { baseValueType, typedName };
+                    arguments = new string[] { baseValueType.Name, typedName };
                 }
             }
 

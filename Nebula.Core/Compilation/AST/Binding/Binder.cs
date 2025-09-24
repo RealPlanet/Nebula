@@ -790,9 +790,9 @@ namespace Nebula.Core.Compilation.AST.Binding
             return new AbstractCallExpression(expr, expr.IsAsyncCall, expr.Namespace?.Text, function, boundArguments);
         }
 
-        private AbstractExpression BindDefaultInitializationExpression(DefaultInitializationExpression expr)
+        private AbstractDefaultInitializationExpression BindDefaultInitializationExpression(DefaultInitializationExpression expr)
         {
-            return new AbstractDefaultInitializationExpression(expr, null);
+            return new AbstractDefaultInitializationExpression(expr, null!);
         }
 
         private FunctionSymbol? TryLookupFunctionSymbol(CallExpression callExpression)
@@ -1099,7 +1099,18 @@ namespace Nebula.Core.Compilation.AST.Binding
                 // Check if this is a user defined bundle
                 if (_currentUnit.Bundles.Any(b => b.Name.Text == typeName))
                 {
-                    return new ObjectTypeSymbol(_currentProgram.Namespace.Text, typeName);
+                    var objSymbol = new ObjectTypeSymbol(_currentProgram.Namespace.Text, typeName);
+                    if (typeClause.RankSpecifier != null && typeClause.RankSpecifier.Rank > 0)
+                    {
+                        if (typeClause.RankSpecifier.Rank != 1)
+                        {
+                            throw new NotImplementedException("Multi dimensional array are not supported");
+                        }
+
+                        return new ArrayTypeSymbol(objSymbol, typeClause.RankSpecifier.Rank);
+                    }
+
+                    return objSymbol;
                 }
 
                 _binderReport.ReportUndefinedType(typeClause.Identifier);

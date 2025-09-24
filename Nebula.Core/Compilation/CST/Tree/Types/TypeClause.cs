@@ -38,5 +38,7 @@ namespace Nebula.Core.Compilation.CST.Tree.Types
                 yield return RankSpecifier;
             }
         }
+
+        public override string ToString() => Identifier.Text;
     }
 }

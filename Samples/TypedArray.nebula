@@ -2,6 +2,12 @@ namespace "TypedArray";
 
 native void WriteLine(string s);
 
+bundle Data
+{
+    int id;
+    string name;
+}
+
 func void main() autoexec
 {
     int myIndex = 2;
@@ -11,9 +17,24 @@ func void main() autoexec
     array[2] = "Found me!";
 
     WriteLine(array[myIndex]);
+    TestArrayRef(array);
+
+    for(int i = 0; i < 3; i += 1)
+    {
+        WriteLine(array[i]);
+    }
+
+    TestArrayBundles();
 }
 
-func void passArray(string[] arr)
+func void TestArrayBundles()
+{
+    Data test = 0;
+    Data[] datas = [];
+    datas[0] = test;
+}
+
+func void TestArrayRef(string[] arr)
 {
     arr[1] = "Change!";
     arr = [];
