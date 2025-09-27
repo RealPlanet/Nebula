@@ -564,7 +564,7 @@ namespace Nebula.Debugger.DAP
             }
 
             List<Scope> scopes = new();
-            foreach (KeyValuePair<int, ScopeState> kvp in state.Scopes)
+            foreach (KeyValuePair<int, ScopeState> kvp in state.Scopes.Where(s => s.Value.IsRootScope))
             {
                 ScopeState dbgScope = kvp.Value;
                 int varReference = dbgScope.Children.Count > 0 ? dbgScope.VarReference : 0;
@@ -604,18 +604,10 @@ namespace Nebula.Debugger.DAP
 
             for (; i < count; i++)
             {
-                // TODO :: Bundles and Array are structured
                 var dbgVar = scope.Children[i];
-                //if(dbgVar.Type == Interop.Enumerators.TypeIdentifier.Bundle)
-                //{
-                //    Bundle? bundle = (Bundle?)dbgVar.Value;
-                //    if(bundle != null)
-                //    {
-                //
-                //    }
-                //}
+                int structuredId = dbgVar.Children.Count > 0 ? dbgVar.VarReference : 0;
 
-                variables.Add(new(dbgVar.Name, dbgVar.Value?.ToString(), 0)
+                variables.Add(new(dbgVar.Name, dbgVar.Value?.ToString() ?? string.Empty, structuredId)
                 {
                     Type = dbgVar.ValueType.ToString(),
                 });
