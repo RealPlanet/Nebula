@@ -159,6 +159,12 @@ namespace Nebula.Core.Compilation.Emitting
             {
                 TypeReference? parameterType = _knownTypes[parameter.Type.BaseType];
                 ParameterDefinition parameterDefinition = new(parameterType, parameter.Name, method.Parameters.Count);
+                if (parameter.Type is ObjectTypeSymbol objSymbol)
+                {
+                    parameterDefinition.SourceNamespace = objSymbol.Namespace;
+                    parameterDefinition.SourceTypeName = objSymbol.Name;
+                }
+
                 method.Parameters.Add(parameterDefinition);
                 _currentContext.Parameters.Add(parameter, parameterDefinition);
             }
@@ -175,6 +181,12 @@ namespace Nebula.Core.Compilation.Emitting
             {
                 TypeReference? fieldType = _knownTypes[field.FieldType.BaseType];
                 ParameterDefinition fieldDef = new(fieldType, field.FieldName, bundle.Fields.Count);
+                if (field.FieldType is ObjectTypeSymbol objSymbol)
+                {
+                    fieldDef.SourceNamespace = objSymbol.Namespace;
+                    fieldDef.SourceTypeName = objSymbol.Name;
+                }
+
                 bundle.Fields.Add(fieldDef);
             }
 
