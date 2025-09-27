@@ -424,7 +424,7 @@ namespace Nebula.Debugger.DAP
                 return new();
             }
 
-            VariableState? varToEdit = scope.Variables.FirstOrDefault(v => v.Name.Equals(arguments.Name));
+            IScopeNode? varToEdit = scope.Children.FirstOrDefault(v => v.Name.Equals(arguments.Name));
             if (varToEdit == null)
             {
                 _logger.LogError($"Cannot find variable with name '{arguments.Name}' in scope '{arguments.VariablesReference}'");
@@ -432,15 +432,18 @@ namespace Nebula.Debugger.DAP
                 return new();
             }
 
-            if (!varToEdit.OverrideValue(arguments.Value))
+            if(varToEdit.CanOverrideValue)
             {
-                _logger.LogError($"Cannot set variable with name '{arguments.Name}' in scope '{arguments.VariablesReference}' the value of '{arguments.Value}'");
-            }
+                if (!varToEdit.OverrideValue(arguments.Value))
+                {
+                    _logger.LogError($"Cannot set variable with name '{arguments.Name}' in scope '{arguments.VariablesReference}' the value of '{arguments.Value}'");
+                }
+            }  
 
             return new()
             {
                 Value = varToEdit.Value?.ToString(),
-                Type = varToEdit.Type.ToString(),
+                Type = varToEdit.ValueType.ToString(),
                 VariablesReference = 0,
             };
         }
@@ -538,7 +541,7 @@ namespace Nebula.Debugger.DAP
             foreach (KeyValuePair<int, ScopeState> kvp in state.Scopes)
             {
                 ScopeState dbgScope = kvp.Value;
-                int varReference = dbgScope.Variables.Count > 0 ? dbgScope.ScopeId : 0;
+                int varReference = dbgScope.Children.Count > 0 ? dbgScope.VarReference : 0;
                 scopes.Add(new(dbgScope.Name, varReference, false));
             }
 
@@ -564,22 +567,31 @@ namespace Nebula.Debugger.DAP
                 return new();
             }
 
-            List<Variable> variables = new();
+            List<Variable> variables = [];
 
             int i = arguments.Start ?? 0;
-            int count = arguments.Count ?? scope.Variables.Count;
-            if (count < scope.Variables.Count)
+            int count = arguments.Count ?? scope.Children.Count;
+            if (count < scope.Children.Count)
             {
-                count = scope.Variables.Count;
+                count = scope.Children.Count;
             }
 
             for (; i < count; i++)
             {
                 // TODO :: Bundles and Array are structured
-                VariableState dbgVar = scope.Variables[i];
+                var dbgVar = scope.Children[i];
+                //if(dbgVar.Type == Interop.Enumerators.TypeIdentifier.Bundle)
+                //{
+                //    Bundle? bundle = (Bundle?)dbgVar.Value;
+                //    if(bundle != null)
+                //    {
+                //
+                //    }
+                //}
+
                 variables.Add(new(dbgVar.Name, dbgVar.Value?.ToString(), 0)
                 {
-                    Type = dbgVar.Type.ToString(),
+                    Type = dbgVar.ValueType.ToString(),
                 });
             }
 

@@ -31,7 +31,7 @@ namespace Nebula.Debugger.Debugger.Data
             DebugFunction? dbgFunc = thread.GetDebugInfo(this);
             if (dbgFunc != null)
             {
-                ScopeState localsScope = new(parent, this, "Local variables");
+                ScopeState localsScope = new(parent, "Local variables");
                 int locCount = frame.LocalCount;
                 for (int i = 0; i < locCount; i++)
                 {
@@ -39,9 +39,9 @@ namespace Nebula.Debugger.Debugger.Data
                     localsScope.Add(varName, frame.GetLocalVariableAt(i));
                 }
 
-                _scopes[localsScope.ScopeId] = localsScope;
+                _scopes[localsScope.VarReference] = localsScope;
 
-                ScopeState parametersScope = new(parent, this, "Parameters");
+                ScopeState parametersScope = new(parent, "Parameters");
                 int paramCount = frame.ParameterCount;
                 for (int i = 0; i < paramCount; i++)
                 {
@@ -49,7 +49,7 @@ namespace Nebula.Debugger.Debugger.Data
                     parametersScope.Add(varName, frame.GetParameterVariableAt(i));
                 }
 
-                _scopes[parametersScope.ScopeId] = parametersScope;
+                _scopes[parametersScope.VarReference] = parametersScope;
             }
         }
     }

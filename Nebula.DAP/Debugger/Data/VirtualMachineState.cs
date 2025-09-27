@@ -39,7 +39,7 @@ namespace Nebula.Debugger.Debugger.Data
 
         internal void AddScope(ScopeState s)
         {
-            _scopes[s.ScopeId] = s;
+            _scopes[s.VarReference] = s;
         }
 
         internal int GetLineNumber(FrameState frameState)

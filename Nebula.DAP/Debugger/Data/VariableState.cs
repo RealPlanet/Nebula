@@ -1,26 +1,34 @@
 ﻿using Nebula.Interop.Enumerators;
 using Nebula.Interop.Structures;
+using System.Collections.Generic;
 
 namespace Nebula.Debugger.Debugger.Data
 {
     public sealed class VariableState
+        : IScopeNode
     {
+
         public ScopeState Parent { get; }
 
         public string Name { get; }
 
         public Variable OriginalVariable { get; }
 
-        public TypeIdentifier Type { get; }
+        public TypeIdentifier ValueType { get; }
 
         public object? Value => OriginalVariable.Value ?? "<empty>";
+
+        public IReadOnlyList<IScopeNode> Children { get; } = [];
+        public int VarReference => 0;
+
+        public bool CanOverrideValue => ValueType != TypeIdentifier.Bundle && ValueType != TypeIdentifier.Array;
 
         public VariableState(ScopeState parent, string name, Variable variable)
         {
             Parent = parent;
             Name = name;
             OriginalVariable = variable;
-            Type = variable.Type;
+            ValueType = variable.Type;
         }
 
         /// <summary>
@@ -28,7 +36,7 @@ namespace Nebula.Debugger.Debugger.Data
         /// </summary>
         public bool OverrideValue(string value)
         {
-            switch (Type)
+            switch (ValueType)
             {
                 case TypeIdentifier.Int32:
                     {
