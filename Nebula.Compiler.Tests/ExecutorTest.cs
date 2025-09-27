@@ -105,7 +105,7 @@ namespace Nebula.Compiler.Tests
                 p.Kill();
             }
 
-            Assert.IsTrue(exitedOk, "VM Timeout");
+            Assert.IsTrue(exitedOk, "VM has reached max execution time");
             return p.ExitCode;
         }
 
@@ -119,7 +119,7 @@ namespace Nebula.Compiler.Tests
             get
             {
                 Assert.IsTrue(Directory.Exists(SamplesFolder));
-                const string mdFileEx = "meta";
+                const string mdFileEx = "test_meta";
 
                 string metadataFiles = Path.Combine(SamplesFolder, "metadata");
                 string[] allMetdata = Directory.GetFiles(metadataFiles, $"*.{mdFileEx}");

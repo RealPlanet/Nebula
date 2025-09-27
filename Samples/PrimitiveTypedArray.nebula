@@ -1,0 +1,18 @@
+namespace "PrimitiveTypedArray";
+
+native void WriteLine(string s);
+native void Write(string s);
+
+func void main() autoexec
+{
+    string[] messages = [];
+    messages.Append("Hello, ");
+    messages.Append("World!");
+
+    WriteLine("There are " + string(messages.Count()) + " elements in the array");
+
+    for(int i = 0; i < messages.Count(); i+= 1)
+    {
+        Write(messages[i]);
+    }
+}
