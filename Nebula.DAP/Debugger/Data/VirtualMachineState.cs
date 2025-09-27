@@ -99,10 +99,24 @@ namespace Nebula.Debugger.Debugger.Data
             return null;
         }
 
-        internal DebugFunction? GetDebugInfo(FrameState frameState)
+        public DebugFunction? GetDebugInfo(FrameState frameState)
         {
             return _parent.GetDebugInfo(frameState.FunctionNamespace, frameState.FunctionName);
         }
 
+        public DebugBundleDefinition? GetObjectDebugInfo(string @namespace, string type)
+        {
+            if (!_parent.DebugFiles.TryGetValue(@namespace, out var dbgFile))
+            {
+                return null;
+            }
+
+            if (!dbgFile.Bundles.TryGetValue(type, out var bundleDef))
+            {
+                return null;
+            }
+
+            return bundleDef;
+        }
     }
 }
