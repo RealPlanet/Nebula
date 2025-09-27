@@ -22,6 +22,9 @@ namespace Nebula.Commons.Debugger
         public string MD5Hash { get; init; } = string.Empty;
 
         [JsonInclude]
+        public Dictionary<string, DebugBundleDefinition> Bundles { get; init; } = [];
+
+        [JsonInclude]
         public Dictionary<string, DebugFunction> Functions { get; init; } = [];
 
         [JsonInclude]

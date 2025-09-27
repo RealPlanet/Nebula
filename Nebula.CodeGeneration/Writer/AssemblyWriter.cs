@@ -42,6 +42,26 @@ namespace Nebula.CodeGeneration.Writer
                 MD5Hash = assemblyChecksum,
             };
 
+            foreach(var bundle in assembly.TypeDefinition.Bundles)
+            {
+                var dbgBundleDef = new DebugBundleDefinition
+                {
+                    Name = bundle.Name,
+                };
+
+                outpuData.Bundles.Add(dbgBundleDef.Name, dbgBundleDef);
+
+                foreach(var field in bundle.Fields)
+                {
+                    dbgBundleDef.Fields.Add(new()
+                    {
+                        Name = field.Name,
+                        SourceNamespace = field.SourceNamespace,
+                        SourceType = field.SourceTypeName,
+                    });
+                }
+            }
+
             foreach (NativeMethodDefinition nativeFunc in assembly.TypeDefinition.NativeMethods)
             {
                 outpuData.NativeFunctions.Add(nativeFunc.Name);
@@ -72,6 +92,8 @@ namespace Nebula.CodeGeneration.Writer
                     dbgFunc.Parameters.Add(new()
                     {
                         Name = p.Name,
+                        SourceNamespace = p.SourceNamespace,
+                        SourceType = p.SourceTypeName,
                     });
                 }
 
@@ -209,7 +231,7 @@ namespace Nebula.CodeGeneration.Writer
 
         public static void WriteParameter(this IndentedTextWriter writer, ParameterDefinition param)
         {
-            writer.Write(param.ParameterType.Name.ToLower());
+            writer.Write(param.VariableType.Name.ToLower());
             writer.WriteSpace();
             writer.Write(param.Name);
         }
