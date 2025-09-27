@@ -5,17 +5,14 @@
 #include <string>
 #include <vector>
 
-#include "interfaces/IGCObject.h"
-
 namespace nebula
 {
     template<typename TType>
     using RefCounted = std::shared_ptr<TType>;
 
-
-
     class Bundle;
     class VariantArray;
+    class IGCObject;
 
     // Datastack types
     //using TByte = uint8_t;
@@ -24,10 +21,9 @@ namespace nebula
     using TString = std::string;
     using TBundle = RefCounted<Bundle>;
     using TArray = RefCounted<VariantArray>;
+    using TGCObject = RefCounted<IGCObject>;
 
-    /// <summary>
-    /// Enum for variant lookup and emit
-    /// </summary>
+    /// <summary> Enum for variant lookup and emit </summary>
     enum DataStackVariantIndex
         : uint8_t {
         _TypeInt32 = 0,
@@ -71,26 +67,4 @@ namespace nebula
         __debugbreak();
         return "";
     }
-
-    class VariantArray {
-    public:
-        void append(const DataStackVariant& v)
-        {
-            if (m_eVariantType != _UnknownType &&
-                m_eVariantType != v.index())
-            {
-                throw std::exception("Variant type differs");
-            }
-
-            m_Vector.emplace_back(v);
-        }
-
-        void clear() { m_Vector.clear(); }
-        size_t size() { return m_Vector.size(); }
-        DataStackVariant& operator[](int i) { return m_Vector[i]; }
-
-    private:
-        DataStackVariantIndex m_eVariantType{ DataStackVariantIndex::_UnknownType };
-        std::vector<DataStackVariant> m_Vector;
-    };
 }

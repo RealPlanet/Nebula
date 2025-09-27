@@ -48,19 +48,7 @@ void IGCObject::Notify(const std::string& notification)
     }
 }
 
-//void IGCObject::Notify(const size_t& notification)
-//{
-//    for (auto it = m_Listeners.begin(); it != m_Listeners.end();)
-//    {
-//        bool removeListener = (*it)->OnNotification(this, notification);
-//        if (removeListener)
-//        {
-//            Unsubscribe(it);
-//        }
-//
-//        if (it == m_Listeners.end())
-//        {
-//            break;
-//        }
-//    }
-//}
+InstructionErrorCode nebula::IGCObject::CallVirtual(const std::string_view&, nebula::Interpreter*, Frame*)
+{
+    return InstructionErrorCode::Fatal;
+}
