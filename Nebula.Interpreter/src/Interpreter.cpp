@@ -129,6 +129,12 @@ bool Interpreter::SetStandardOutput(IStreamWrapper* stream)
     return true;
 }
 
+bool nebula::Interpreter::SetExitCallback(InterpreterExitCallbackPtr callbackPtr)
+{
+    m_fExitCallback = callbackPtr;
+    return true;
+}
+
 bool Interpreter::ClearStandardOutput() {
     delete m_pStandardOutput;
     m_pStandardOutput = nullptr;
@@ -176,6 +182,11 @@ bool Interpreter::CheckAndSetExitState()
     if (!m_Threads.HasCallStacks())
     {
         SetState(State::Exited);
+        if (m_fExitCallback != nullptr)
+        {
+            m_fExitCallback();
+        }
+
         return true;
     }
 

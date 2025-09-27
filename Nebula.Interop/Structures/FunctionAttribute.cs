@@ -12,7 +12,7 @@ namespace Nebula.Interop.Structures
         public FunctionAttribute(string name)
         {
             RawName = name;
-            if (!Enum.TryParse<AttributeType>(RawName, out var attr))
+            if (!Enum.TryParse<AttributeType>(RawName, out AttributeType attr))
             {
                 Type = AttributeType.Unknown;
             }

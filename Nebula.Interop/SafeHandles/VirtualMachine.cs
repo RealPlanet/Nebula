@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 namespace Nebula.Interop.SafeHandles
 {
     public delegate void StdOutEventHandler(string message);
+    public delegate void ExitEventHandler();
 
     public sealed class VirtualMachine
         : SafeHandleZeroOrMinusOneIsInvalid
@@ -77,6 +78,12 @@ namespace Nebula.Interop.SafeHandles
             return NativeMethods.Interpreter_RedirectOutput(handle, writePtr, writeLinePtr);
         }
 
+        public bool SetExitCallback(ExitEventHandler callback)
+        {
+            IntPtr ptr = Marshal.GetFunctionPointerForDelegate(callback);
+            return NativeMethods.Interpreter_RedirectExitCallback(handle, ptr);
+        }
+
         public bool ClearRedirectStdOutput()
             => NativeMethods.Interpreter_ClearRedirectOutput(handle);
 
@@ -112,7 +119,7 @@ namespace Nebula.Interop.SafeHandles
 
         public bool AddScripts(ICollection<string> scripts, ScriptParseReportCallback onReportMessage)
         {
-            var arr = scripts.ToArray();
+            string[] arr = scripts.ToArray();
             IntPtr callbackPtr = Marshal.GetFunctionPointerForDelegate(onReportMessage);
             return NativeMethods.Interpreter_AddScripts(handle, callbackPtr, arr, arr.Length);
         }
@@ -184,6 +191,8 @@ namespace Nebula.Interop.SafeHandles
             public static extern IntPtr Interpreter_Create();
             [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]
             public static extern bool Interpreter_RedirectOutput(IntPtr handle, IntPtr writeCb, IntPtr writeLineCb);
+            [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern bool Interpreter_RedirectExitCallback(IntPtr handle, IntPtr callback);
             [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]
             public static extern bool Interpreter_ClearRedirectOutput(IntPtr handle);
             [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]

@@ -20,13 +20,13 @@ namespace Nebula.Debugger.DAP
     {
         public DebuggerConfiguration Configuration { get; } = new();
 
-
         private readonly ILogger _logger;
         private readonly NebulaDebugger _debugger;
         private readonly Dictionary<string, Source> _dapSources = [];
         // Hold delegates in memory otherwise native bindings will explode!
         private readonly StdOutEventHandler _writeDelegate;
         private readonly StdOutEventHandler _writeLineDelegate;
+        private readonly ExitEventHandler _exitDelegate;
 
         private readonly System.Threading.Tasks.Task _debuggerDispatchTask;
         private readonly System.Threading.CancellationTokenSource _tokenSource = new();
@@ -36,8 +36,19 @@ namespace Nebula.Debugger.DAP
         {
             while (!_tokenSource.IsCancellationRequested)
             {
-                EventInfo nextEvent = _debugEvents.Take();
+                EventInfo nextEvent = _debugEvents.Take(_tokenSource.Token);
+                if (_tokenSource.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                if(_debugger.VirtualMachineFinishedExecution)
+                {
+                    return;
+                }
+
                 _queueNotProcessingEvent.Reset();
+
                 try
                 {
                     switch (nextEvent.Type)
@@ -125,11 +136,19 @@ namespace Nebula.Debugger.DAP
         private void SendTerminationEvent()
         {
             _debugger.AbortStepping = true;
-            _tokenSource.Cancel();
-            _debuggerDispatchTask.Wait();
-            _debuggerDispatchTask.Dispose();
             Protocol.SendEvent(new TerminatedEvent());
         }
+
+        private void TerminateTask(bool waitForTask = true)
+        {
+            _debuggerDispatchTask.ContinueWith((t) => _debuggerDispatchTask.Dispose());
+            _tokenSource.Cancel();
+            if (waitForTask)
+            {
+                _debuggerDispatchTask.Wait();
+            }
+        }
+
 
         #endregion
 
@@ -138,12 +157,19 @@ namespace Nebula.Debugger.DAP
             _logger = logger;
             _writeDelegate = OnStdOutWrite;
             _writeLineDelegate = OnStdOutWriteLine;
+            _exitDelegate = OnVirtualMachineExit;
+
             _debugger = new(_logger);
             _debugger.RedirectOutput(_writeDelegate, _writeLineDelegate);
-
+            _debugger.SetExitCallback(_exitDelegate);
             _debuggerDispatchTask = System.Threading.Tasks.Task.Run(DebuggerDispatchTask, _tokenSource.Token);
 
             InitializeProtocolClient(inStream, outStream);
+        }
+
+        private void OnVirtualMachineExit()
+        {
+            SendTerminationEvent();
         }
 
         public void Run()
@@ -432,13 +458,13 @@ namespace Nebula.Debugger.DAP
                 return new();
             }
 
-            if(varToEdit.CanOverrideValue)
+            if (varToEdit.CanOverrideValue)
             {
                 if (!varToEdit.OverrideValue(arguments.Value))
                 {
                     _logger.LogError($"Cannot set variable with name '{arguments.Name}' in scope '{arguments.VariablesReference}' the value of '{arguments.Value}'");
                 }
-            }  
+            }
 
             return new()
             {
@@ -604,6 +630,7 @@ namespace Nebula.Debugger.DAP
         protected override TerminateResponse HandleTerminateRequest(TerminateArguments arguments)
         {
             _debugger.Dispose();
+            TerminateTask();
             return new();
         }
 

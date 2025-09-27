@@ -13,12 +13,21 @@ namespace Nebula.Interop.Structures
 
         public Bundle(IntPtr instance)
         {
-            //int fieldCount = 
+            int fieldCount = NativeMethods.Bundle_GetFieldCount(instance);
+            for (int i = 0; i < fieldCount; i++)
+            {
+                IntPtr bundleVariable = NativeMethods.Bundle_GetField(instance, i);
+                BundleVariable variable = new BundleVariable(bundleVariable);
+                _fields.Add(variable);
+            }
         }
 
         private static class NativeMethods
         {
-
+            [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern int Bundle_GetFieldCount(IntPtr handle);
+            [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern IntPtr Bundle_GetField(IntPtr handle, int index);
         }
     }
 }

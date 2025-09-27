@@ -160,6 +160,16 @@ bool Interpreter_RedirectOutput(nebula::Interpreter* handle, nebula::interop::St
     return handle->SetStandardOutput(ptr);
 }
 
+bool Interpreter_RedirectExitCallback(nebula::Interpreter* handle, nebula::interop::ExitFuncPtr callback)
+{
+    if (handle == nullptr)
+    {
+        return false;
+    }
+
+    return handle->SetExitCallback(callback);
+}
+
 bool Interpreter_ClearRedirectOutput(nebula::Interpreter* handle)
 {
     if (handle == nullptr)

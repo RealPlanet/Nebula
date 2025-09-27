@@ -53,7 +53,7 @@ namespace Nebula.Interop.Structures
 
             _attributes.Clear();
             _attributes.Capacity = count;
-            foreach (var attr in enumValues.Cast<AttributeType>())
+            foreach (AttributeType attr in enumValues.Cast<AttributeType>())
             {
                 _attributes.Add(new FunctionAttribute(attr));
             }
@@ -68,7 +68,7 @@ namespace Nebula.Interop.Structures
 
             _parameters.Clear();
             _parameters.Capacity = count;
-            foreach (var enumVal in enumValues.Cast<TypeIdentifier>())
+            foreach (TypeIdentifier enumVal in enumValues.Cast<TypeIdentifier>())
             {
                 _parameters.Add(new FunctionParameter(enumVal));
             }
@@ -83,7 +83,7 @@ namespace Nebula.Interop.Structures
 
             _instructions.Clear();
             _instructions.Capacity = count;
-            foreach (var enumVal in enumValues.Cast<InstructionOpcode>())
+            foreach (InstructionOpcode enumVal in enumValues.Cast<InstructionOpcode>())
             {
                 _instructions.Add(new Instruction(enumVal));
             }

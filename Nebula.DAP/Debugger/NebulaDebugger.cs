@@ -22,6 +22,8 @@ namespace Nebula.Debugger.Debugger
         public long CurrentThreadId => _nativeVm.CurrentThreadId;
         public VirtualMachineState? StateInformation { get; private set; }
         public bool AbortStepping { get; set; } = false;
+        public bool VirtualMachineFinishedExecution => _nativeVm.VMState != VirtualMachine.State.Running &&
+            _nativeVm.VMState != VirtualMachine.State.Paused;
 
         private readonly VirtualMachine _nativeVm = new();
         private readonly ILogger _logger;
@@ -38,6 +40,11 @@ namespace Nebula.Debugger.Debugger
         public void RedirectOutput(StdOutEventHandler writeCb, StdOutEventHandler writeLineCn)
         {
             _nativeVm.RedirectStdOutput(writeCb, writeLineCn);
+        }
+
+        public void SetExitCallback(ExitEventHandler callback)
+        {
+            _nativeVm.SetExitCallback(callback);
         }
 
         public void StepInstruction()

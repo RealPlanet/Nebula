@@ -28,6 +28,7 @@ namespace nebula {
     namespace interop {
 
         using StringFuncPtr = void(*)(const char*);
+        using ExitFuncPtr = void(*)();
         using ReportCallbackPtr = void(*)(const char* /*scriptName*/, nebula::shared::ReportType, const char*);
     }
 }
@@ -47,6 +48,7 @@ extern "C"
     __declspec(dllexport) bool Interpreter_LoadSpecificBindingsInDLL(nebula::Interpreter* handle, const char* dllLibrary, const char** functionNames, int arrLen);
     __declspec(dllexport) bool Interpreter_LoadBindingsInDLL(nebula::Interpreter* handle, const char* dllLibrary);
     __declspec(dllexport) bool Interpreter_RedirectOutput(nebula::Interpreter* handle, nebula::interop::StringFuncPtr writeCb, nebula::interop::StringFuncPtr writeLineCb);
+    __declspec(dllexport) bool Interpreter_RedirectExitCallback(nebula::Interpreter* handle, nebula::interop::ExitFuncPtr callback);
     __declspec(dllexport) bool Interpreter_ClearRedirectOutput(nebula::Interpreter* handle);
     __declspec(dllexport) bool Interpreter_AddScripts(nebula::Interpreter* handle, nebula::interop::ReportCallbackPtr callbackPtr, const char** scriptPaths, int arrLen);
     __declspec(dllexport) int* Interpreter_GetNextOpcodeForAllThreads(nebula::Interpreter* handle, int* arrLen);
