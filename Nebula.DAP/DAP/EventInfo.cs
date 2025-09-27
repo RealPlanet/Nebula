@@ -1,6 +1,4 @@
-﻿using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Messages;
-
-namespace Nebula.Debugger.DAP
+﻿namespace Nebula.Debugger.DAP
 {
     public struct EventInfo
     {

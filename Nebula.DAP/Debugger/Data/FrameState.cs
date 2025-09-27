@@ -51,11 +51,11 @@ namespace Nebula.Debugger.Debugger.Data
                 _scopes[parametersScope.VarReference] = parametersScope;
             }
 
-            foreach(var scope in _scopes.Values.ToList())
+            foreach (ScopeState? scope in _scopes.Values.ToList())
             {
-                foreach(var variable in scope.Children)
+                foreach (IScopeNode variable in scope.Children)
                 {
-                    if(variable.ValueType == Interop.Enumerators.TypeIdentifier.Bundle)
+                    if (variable.ValueType == Interop.Enumerators.TypeIdentifier.Bundle)
                     {
                         BundleScopeState bState = (BundleScopeState)variable;
                         _scopes.Add(bState.VarReference, bState);

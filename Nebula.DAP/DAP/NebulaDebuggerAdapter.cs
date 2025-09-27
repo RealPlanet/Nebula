@@ -42,7 +42,7 @@ namespace Nebula.Debugger.DAP
                     return;
                 }
 
-                if(_debugger.VirtualMachineFinishedExecution)
+                if (_debugger.VirtualMachineFinishedExecution)
                 {
                     return;
                 }
@@ -56,7 +56,7 @@ namespace Nebula.Debugger.DAP
                         case EventType.Step:
                             {
                                 _debugger.AbortStepping = false;
-                                if (_debugger.StepLine(nextEvent.ThreadId, out var hitBreakpoint))
+                                if (_debugger.StepLine(nextEvent.ThreadId, out HitBreakpointInformation? hitBreakpoint))
                                 {
                                     if (hitBreakpoint != null)
                                     {
@@ -73,7 +73,7 @@ namespace Nebula.Debugger.DAP
                         case EventType.StepIn:
                             {
                                 _debugger.AbortStepping = false;
-                                if (_debugger.StepIn(nextEvent.ThreadId, out var hitBreakpoint))
+                                if (_debugger.StepIn(nextEvent.ThreadId, out HitBreakpointInformation? hitBreakpoint))
                                 {
                                     if (hitBreakpoint != null)
                                     {
@@ -91,7 +91,7 @@ namespace Nebula.Debugger.DAP
                         case EventType.Continue:
                             {
                                 _debugger.AbortStepping = false;
-                                if (_debugger.Continue(out var hitBreakpoint))
+                                if (_debugger.Continue(out HitBreakpointInformation? hitBreakpoint))
                                 {
                                     if (hitBreakpoint != null)
                                     {
@@ -203,7 +203,7 @@ namespace Nebula.Debugger.DAP
             _debugger.BreakpointManager.ClearFunctionBreakpoints();
             List<Breakpoint> actualBreakpoints = [];
 
-            foreach (var breakpoint in arguments.Breakpoints)
+            foreach (FunctionBreakpoint? breakpoint in arguments.Breakpoints)
             {
                 string requestedFunctionName = breakpoint.Name;
                 Breakpoint bp = new()
@@ -269,7 +269,7 @@ namespace Nebula.Debugger.DAP
             {
                 _logger.LogInformation($"No source found for '{arguments.Source.Path}', cannot set breackpoints");
 
-                foreach (var reqBp in arguments.Breakpoints)
+                foreach (SourceBreakpoint? reqBp in arguments.Breakpoints)
                 {
                     actualBreakpoints.Add(new Breakpoint()
                     {
@@ -290,9 +290,9 @@ namespace Nebula.Debugger.DAP
             string @namespace = kvp.Key;
             Source source = kvp.Value;
 
-            foreach (var reqBp in arguments.Breakpoints)
+            foreach (SourceBreakpoint? reqBp in arguments.Breakpoints)
             {
-                var resBp = new Breakpoint()
+                Breakpoint resBp = new()
                 {
                     Verified = false,
                     Line = reqBp.Line,
@@ -331,7 +331,7 @@ namespace Nebula.Debugger.DAP
             Configuration.CompilerPath = arguments.ConfigurationProperties.GetValueAsString(DebuggerConstants.CompilerPath) ?? string.Empty;
 
 
-            var scriptDirectories = FetchAllSourceDirectories(arguments);
+            IEnumerable<string> scriptDirectories = FetchAllSourceDirectories(arguments);
 
             if (Configuration.RecompileOnLaunch &&
                 File.Exists(Configuration.CompilerPath))
@@ -363,22 +363,22 @@ namespace Nebula.Debugger.DAP
 
         private bool RecompileScripts(IEnumerable<string> scriptFolders, string compilerPath)
         {
-            var startInfo = new System.Diagnostics.ProcessStartInfo(compilerPath);
+            System.Diagnostics.ProcessStartInfo startInfo = new(compilerPath);
             startInfo.FileName = compilerPath;
             startInfo.ArgumentList.Add("--next_to_source");
-            foreach (var folder in scriptFolders)
+            foreach (string folder in scriptFolders)
             {
                 startInfo.ArgumentList.Add($"-f {folder}");
                 startInfo.ArgumentList.Add($"-r {folder}");
             }
 
             startInfo.RedirectStandardOutput = true;
-            var process = System.Diagnostics.Process.Start(startInfo);
+            System.Diagnostics.Process? process = System.Diagnostics.Process.Start(startInfo);
 
             if (process != null)
             {
                 process.EnableRaisingEvents = true;
-                var output = process.StandardOutput.ReadToEnd();
+                string output = process.StandardOutput.ReadToEnd();
                 OnStdOutWrite(output);
                 process.WaitForExit();
                 int exitCode = process.ExitCode;
@@ -604,7 +604,7 @@ namespace Nebula.Debugger.DAP
 
             for (; i < count; i++)
             {
-                var dbgVar = scope.Children[i];
+                IScopeNode dbgVar = scope.Children[i];
                 int structuredId = dbgVar.Children.Count > 0 ? dbgVar.VarReference : 0;
 
                 variables.Add(new(dbgVar.Name, dbgVar.Value?.ToString() ?? string.Empty, structuredId)

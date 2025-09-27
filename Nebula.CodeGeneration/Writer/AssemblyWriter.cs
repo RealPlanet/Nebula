@@ -42,16 +42,16 @@ namespace Nebula.CodeGeneration.Writer
                 MD5Hash = assemblyChecksum,
             };
 
-            foreach(var bundle in assembly.TypeDefinition.Bundles)
+            foreach (BundleDefinition bundle in assembly.TypeDefinition.Bundles)
             {
-                var dbgBundleDef = new DebugBundleDefinition
+                DebugBundleDefinition dbgBundleDef = new()
                 {
                     Name = bundle.Name,
                 };
 
                 outpuData.Bundles.Add(dbgBundleDef.Name, dbgBundleDef);
 
-                foreach(var field in bundle.Fields)
+                foreach (ParameterDefinition field in bundle.Fields)
                 {
                     dbgBundleDef.Fields.Add(new()
                     {

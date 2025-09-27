@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Messages;
 using Nebula.Commons.Debugger;
 using Nebula.Commons.Text;
 using Nebula.Debugger.Debugger.Data;
@@ -130,7 +129,7 @@ namespace Nebula.Debugger.Debugger
 
             ThreadState thread = StateInformation.Threads[threadId];
             Interop.Structures.Frame lastFrame = thread.OriginalCallstack.LastFrame;
-            var currentOpcode = lastFrame.NextInstructionIndex;
+            int currentOpcode = lastFrame.NextInstructionIndex;
             if (!_debugFiles.TryGetValue(lastFrame.Namespace, out DebugFile? dbgFile) ||
                 !dbgFile.Functions.TryGetValue(lastFrame.FunctionName, out DebugFunction? dbgFunc))
             {
@@ -293,7 +292,7 @@ namespace Nebula.Debugger.Debugger
                 }
 
                 ThreadState tState = new(StateInformation, i, callstack);
-                foreach (var frame in callstack.Frames)
+                foreach (Interop.Structures.Frame? frame in callstack.Frames)
                 {
                     int frameId = StateInformation.GetNextFrameId();
                     FrameState fState = new(StateInformation, tState, frameId, frame);
@@ -389,12 +388,12 @@ namespace Nebula.Debugger.Debugger
                 }
             }
 
-            foreach (var kvp in _breakpointManager.Breakpoints)
+            foreach (KeyValuePair<string, Bridge.ConcurrentHashSet<BreakpointInformation>> kvp in _breakpointManager.Breakpoints)
             {
-                var breakPoints = kvp.Value;
+                Bridge.ConcurrentHashSet<BreakpointInformation> breakPoints = kvp.Value;
                 string @namespace = kvp.Key;
 
-                foreach (var breakpoint in breakPoints)
+                foreach (BreakpointInformation breakpoint in breakPoints)
                 {
                     int threadId = _nativeVm.AnyFrameAboutToBeAt(@namespace,
                                                                 breakpoint.FunctionName,

@@ -22,7 +22,6 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Xml.Linq;
 
 namespace Nebula.Core.Compilation.Emitting
 {
@@ -325,7 +324,7 @@ namespace Nebula.Core.Compilation.Emitting
 
             VariableDefinition variableDefinition = new(typeReference, node.Variable.Name, processor.Body.Variables.Count);
 
-            if(node.Variable.Type is ObjectTypeSymbol objSymbol)
+            if (node.Variable.Type is ObjectTypeSymbol objSymbol)
             {
                 variableDefinition.SourceNamespace = objSymbol.Namespace;
                 variableDefinition.SourceTypeName = objSymbol.Name;

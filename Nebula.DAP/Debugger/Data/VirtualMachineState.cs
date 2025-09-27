@@ -106,12 +106,12 @@ namespace Nebula.Debugger.Debugger.Data
 
         public DebugBundleDefinition? GetObjectDebugInfo(string @namespace, string type)
         {
-            if (!_parent.DebugFiles.TryGetValue(@namespace, out var dbgFile))
+            if (!_parent.DebugFiles.TryGetValue(@namespace, out DebugFile? dbgFile))
             {
                 return null;
             }
 
-            if (!dbgFile.Bundles.TryGetValue(type, out var bundleDef))
+            if (!dbgFile.Bundles.TryGetValue(type, out DebugBundleDefinition? bundleDef))
             {
                 return null;
             }

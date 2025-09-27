@@ -17,7 +17,7 @@ namespace Nebula.CodeGeneration
         public TypeIdentifier Identifier { get; }
 
         public string Name => Identifier.ToString().ToLower();
-        
+
         internal TypeReference(TypeIdentifier identifier)
         {
             Identifier = identifier;
