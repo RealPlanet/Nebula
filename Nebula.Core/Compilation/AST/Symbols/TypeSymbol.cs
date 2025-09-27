@@ -1,5 +1,6 @@
 ﻿using Nebula.Core.Compilation.AST.Symbols.Base;
 using Nebula.Interop.Enumerators;
+using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.AST.Symbols
 {
@@ -43,6 +44,10 @@ namespace Nebula.Core.Compilation.AST.Symbols
 
         #endregion
 
+        protected readonly HashSet<FunctionSymbol> _registeredFunctions = [];
+
+        public IReadOnlySet<FunctionSymbol> RegisteredFunctions => _registeredFunctions;
+
         public override SymbolType SymbolType => SymbolType.Type;
 
         public virtual TypeSymbol BaseType => this;
@@ -66,7 +71,7 @@ namespace Nebula.Core.Compilation.AST.Symbols
             return false;
         }
 
-        public static bool operator ==(TypeSymbol a, TypeSymbol b)
+        public static bool operator ==(TypeSymbol? a, TypeSymbol? b)
         {
             if (a is null && b is null)
             {
@@ -81,7 +86,7 @@ namespace Nebula.Core.Compilation.AST.Symbols
             return a.Equals(b);
         }
 
-        public static bool operator !=(TypeSymbol a, TypeSymbol b)
+        public static bool operator !=(TypeSymbol? a, TypeSymbol? b)
         {
             return !(a == b);
         }

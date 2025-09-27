@@ -11,6 +11,14 @@
         {
             ValueType = valueType;
             Rank = rank;
+
+            _registeredFunctions.Add(new FunctionSymbol("Count", [], [], Int, null));
+            _registeredFunctions.Add(new FunctionSymbol("Append", [new ParameterSymbol("item", ValueType, 0)], [], Void, null));
+        }
+
+        public override string ToString()
+        {
+            return $"{Name}[]";
         }
     }
 }
