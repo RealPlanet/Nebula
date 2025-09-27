@@ -7,8 +7,9 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression.Bundles
     public sealed class AbstractArrayAccessExpression
         : AbstractVariableExpression
     {
+        public override AbstractNodeType Type => AbstractNodeType.ArrayAccessExpression;
         public AbstractExpression IndexExpression { get; }
-        public override TypeSymbol ResultType => ((ArrayTypeSymbol)Variable.Type).ValueType;
+        public override TypeSymbol ResultType => ((ArrayTypeSymbol)ArrayVariable.Type).ValueType;
         public AbstractArrayAccessExpression(Node syntax, VariableSymbol arrayVariable, AbstractExpression indexToAccess)
             : base(syntax, arrayVariable)
         {

@@ -214,7 +214,7 @@ namespace Nebula.Commons.Reporting.Strings {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to too many decimal points in number.
+        ///   Looks up a localized string similar to Too many decimal points in number.
         /// </summary>
         internal static string FloatTooManyMarkers {
             get {
@@ -318,6 +318,15 @@ namespace Nebula.Commons.Reporting.Strings {
         internal static string NotAllPathsReturn {
             get {
                 return ResourceManager.GetString("NotAllPathsReturn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Function &apos;{0}&apos; does not exist in type &apos;{1}&apos;.
+        /// </summary>
+        internal static string ObjectFunctionDoesNotExists {
+            get {
+                return ResourceManager.GetString("ObjectFunctionDoesNotExists", resourceCulture);
             }
         }
         

@@ -22,6 +22,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Xml.Linq;
 
 namespace Nebula.Core.Compilation.Emitting
 {
@@ -454,8 +455,8 @@ namespace Nebula.Core.Compilation.Emitting
                 case AbstractNodeType.VariableExpression:
                     EmitVariableExpression(processor, (AbstractVariableExpression)node, originalStatement);
                     break;
-                case AbstractNodeType.BundleFieldAssignmentExpression:
-                    EmitBundleFieldAssignmentExpression(processor, (AbstractBundleFieldAssignmentExpression)node, originalStatement);
+                case AbstractNodeType.ObjectFieldAssignmentExpression:
+                    EmitBundleFieldAssignmentExpression(processor, (AbstractObjectFieldAssignmentExpression)node, originalStatement);
                     break;
                 case AbstractNodeType.ArrayAssignmentExpression:
                     EmitArrayAssignmentExpression(processor, (AbstractArrayAssignmentExpression)node, originalStatement);
@@ -469,6 +470,12 @@ namespace Nebula.Core.Compilation.Emitting
                 case AbstractNodeType.ConversionExpression:
                     EmitConversionExpression(processor, (AbstractConversionExpression)node, originalStatement);
                     break;
+                case AbstractNodeType.ObjectCallExpression:
+                    EmitObjectCallExpression(processor, (AbstractObjectCallExpression)node, originalStatement);
+                    break;
+                case AbstractNodeType.ArrayAccessExpression:
+                    EmitArrayAccessExpression(processor, (AbstractArrayAccessExpression)node, originalStatement);
+                    break;
                 default:
                     throw new Exception($"Unexpected node type {node.Type}");
             }
@@ -478,6 +485,34 @@ namespace Nebula.Core.Compilation.Emitting
         {
             EmitExpression(processor, node.Expression, originalStatement);
             processor.Emit(InstructionOpcode.ConvType, _knownTypes[node.ResultType.BaseType], originalStatement);
+        }
+
+        private void EmitObjectCallExpression(NILProcessor processor, AbstractObjectCallExpression node, Node originalStatement)
+        {
+            foreach (AbstractExpression argument in node.Arguments)
+            {
+                EmitExpression(processor, argument, originalStatement);
+            }
+
+            VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
+            processor.Emit(InstructionOpcode.CallVirt, new string[] { variableDefinition.Index.ToString(), node.Function.Name }, originalStatement);
+        }
+
+        private void EmitArrayAccessExpression(NILProcessor processor, AbstractArrayAccessExpression node, Node originalStatement)
+        {
+            if (node.ArrayVariable is ParameterSymbol parameter)
+            {
+                ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
+                processor.Emit(InstructionOpcode.Ldarg, parameterDefinition.Index, originalStatement);
+            }
+            else
+            {
+                VariableDefinition? variableDefinition = _currentContext.Locals[node.ArrayVariable];
+                processor.Emit(InstructionOpcode.Ldloc, variableDefinition, originalStatement);
+            }
+
+            EmitExpression(processor, node.IndexExpression, originalStatement);
+            processor.Emit(InstructionOpcode.Ldelem, originalStatement);
         }
 
         private void EmitCallExpression(NILProcessor processor, AbstractCallExpression node, Node originalStatement)
@@ -499,7 +534,7 @@ namespace Nebula.Core.Compilation.Emitting
             processor.Emit(callInstruction, arguments, originalStatement);
         }
 
-        private void EmitBundleFieldAssignmentExpression(NILProcessor processor, AbstractBundleFieldAssignmentExpression node, Node originalStatement)
+        private void EmitBundleFieldAssignmentExpression(NILProcessor processor, AbstractObjectFieldAssignmentExpression node, Node originalStatement)
         {
             if (node.BundleVariable is ParameterSymbol parameter)
             {
@@ -586,9 +621,16 @@ namespace Nebula.Core.Compilation.Emitting
         private void EmitVariableExpression(NILProcessor processor, AbstractVariableExpression node, Node originalStatement)
         {
             // TODO :: Rethink how variables vs bundles are handled to simplify the instruction set
-            if (node.Variable is ParameterSymbol parameter)
+            if (node.ArrayVariable is ParameterSymbol parameter)
             {
                 ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
+
+                if (node is AbstractArrayAccessExpression arrAccess)
+                {
+                    processor.Emit(InstructionOpcode.Ldarg, parameterDefinition.Index, originalStatement);
+                    EmitExpression(processor, arrAccess.IndexExpression, originalStatement);
+                    processor.Emit(InstructionOpcode.Ldc_i4, arrAccess.IndexExpression, originalStatement);
+                }
 
                 InstructionOpcode paramOpcode = InstructionOpcode.Ldarg;
                 object paramArg = parameterDefinition.Index;
@@ -605,7 +647,7 @@ namespace Nebula.Core.Compilation.Emitting
             // TODO :: Figure out if we want to keep this variable definition as instruction argument or pass the index
             // directly
 
-            VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
+            VariableDefinition? variableDefinition = _currentContext.Locals[node.ArrayVariable];
             InstructionOpcode opcode = InstructionOpcode.Ldloc;
             object argument = variableDefinition;
             if (node is AbstractBundleFieldAccessExpression f)

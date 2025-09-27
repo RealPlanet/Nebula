@@ -5,7 +5,6 @@ using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.CST.Tree.Expressions
 {
-
     public class CallExpression
         : Expression
     {

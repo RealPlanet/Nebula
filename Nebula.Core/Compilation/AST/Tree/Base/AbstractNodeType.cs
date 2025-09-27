@@ -31,8 +31,10 @@
         BinaryExpression,
         VariableExpression,
         AssignmentExpression,
-        BundleFieldAssignmentExpression,
+        ObjectFieldAssignmentExpression,
+        ObjectCallExpression,
         ArrayAssignmentExpression,
+        ArrayAccessExpression,
         CallExpression,
         ConversionExpression,
     }

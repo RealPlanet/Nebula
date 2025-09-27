@@ -41,11 +41,13 @@ namespace Nebula.Core.Compilation.Lowering
             AbstractNodeType.BinaryExpression => RewriteBinaryExpression((AbstractBinaryExpression)node),
             AbstractNodeType.VariableExpression => RewriteVariableExpression((AbstractVariableExpression)node),
             AbstractNodeType.AssignmentExpression => RewriteAssignmentExpression((AbstractAssignmentExpression)node),
-            AbstractNodeType.BundleFieldAssignmentExpression => RewriteBundleFieldAssignmentExpression((AbstractBundleFieldAssignmentExpression)node),
+            AbstractNodeType.ObjectFieldAssignmentExpression => RewriteBundleFieldAssignmentExpression((AbstractObjectFieldAssignmentExpression)node),
             AbstractNodeType.ArrayAssignmentExpression => RewriteArrayAssignmentExpression((AbstractArrayAssignmentExpression)node),
             AbstractNodeType.CallExpression => RewriteCallExpression((AbstractCallExpression)node),
             AbstractNodeType.ConversionExpression => RewriteConversionExpression((AbstractConversionExpression)node),
             AbstractNodeType.DefaultInitializationExpression => RewriteDefaultInitializationExpression((AbstractDefaultInitializationExpression)node),
+            AbstractNodeType.ObjectCallExpression => RewriteObjectCallExpression((AbstractObjectCallExpression)node),
+            AbstractNodeType.ArrayAccessExpression => RewriteArrayAccessExpression((AbstractArrayAccessExpression)node),
             _ => throw new Exception($"Unexpected node: {node.Type}"),
         };
 
@@ -61,6 +63,18 @@ namespace Nebula.Core.Compilation.Lowering
         }
 
         protected virtual AbstractExpression RewriteDefaultInitializationExpression(AbstractDefaultInitializationExpression node)
+        {
+            // Nothing to do yet
+            return node;
+        }
+
+        private AbstractExpression RewriteObjectCallExpression(AbstractObjectCallExpression node)
+        {
+            // Nothing to do yet
+            return node;
+        }
+
+        private AbstractExpression RewriteArrayAccessExpression(AbstractArrayAccessExpression node)
         {
             // Nothing to do yet
             return node;
@@ -237,7 +251,7 @@ namespace Nebula.Core.Compilation.Lowering
             return new AbstractAssignmentExpression(node.OriginalNode, node.Variable, expression);
         }
 
-        protected virtual AbstractExpression RewriteBundleFieldAssignmentExpression(AbstractBundleFieldAssignmentExpression node)
+        protected virtual AbstractExpression RewriteBundleFieldAssignmentExpression(AbstractObjectFieldAssignmentExpression node)
         {
             AbstractExpression expression = RewriteExpression(node.Expression);
             if (expression == node.Expression)
@@ -245,7 +259,7 @@ namespace Nebula.Core.Compilation.Lowering
                 return node;
             }
 
-            return new AbstractBundleFieldAssignmentExpression(node.OriginalNode, node.BundleVariable, node.FieldToAssign, expression);
+            return new AbstractObjectFieldAssignmentExpression(node.OriginalNode, node.BundleVariable, node.FieldToAssign, expression);
         }
 
         protected virtual AbstractExpression RewriteArrayAssignmentExpression(AbstractArrayAssignmentExpression node)

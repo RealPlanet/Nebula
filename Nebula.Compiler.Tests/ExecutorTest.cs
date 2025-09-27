@@ -57,7 +57,7 @@ namespace Nebula.Compiler.Tests
 
         private void WriteReport(Commons.Reporting.Report report)
         {
-            foreach (var r in report)
+            foreach (Commons.Reporting.ReportMessage r in report)
             {
                 TestContext.WriteLine(r.ToString());
             }

@@ -41,6 +41,7 @@ namespace Nebula.CodeGeneration
                 InstructionOpcode.Ldc_r4 => ((float)Operand!).ToString(),
                 InstructionOpcode.ConvType => CreateConvTypeArgument((TypeReference)Operand!),
                 InstructionOpcode.Call or InstructionOpcode.Call_t => GetCallArgumentString(),
+                InstructionOpcode.CallVirt => GetCallArgumentString(),
                 InstructionOpcode.Stloc => ((VariableDefinition)Operand!).Index.ToString(),
                 InstructionOpcode.StBloc => ProcessArrayOperand(),
                 InstructionOpcode.StArg => ((ParameterDefinition)Operand!).Index.ToString(),

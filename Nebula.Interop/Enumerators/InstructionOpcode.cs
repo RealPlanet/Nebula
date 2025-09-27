@@ -12,6 +12,8 @@
 
         /// <summary></summary>
         Call,		// Invoke function
+        /// <summary></summary>
+        CallVirt,	// Invoke instance function
 
         // Conversion
 
@@ -76,6 +78,8 @@
         LdBarg,     // Read data in parameter bundle and put it on top of stack
         Ldloc,
         LdBloc,     // Read data in local bundle and put it on top of stack
+        /// <summary>Loads the element at a specified array index onto the top of the evaluation stack as the type specified in the instruction.</summary>
+        Ldelem,
 
         // Store
         Stloc,		// Store local variable

@@ -7,15 +7,15 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression
     public class AbstractVariableExpression
         : AbstractExpression
     {
-        public override TypeSymbol ResultType => Variable.Type;
+        public override TypeSymbol ResultType => ArrayVariable.Type;
         public override AbstractNodeType Type => AbstractNodeType.VariableExpression;
-        public VariableSymbol Variable { get; }
-        public override AbstractConstant? ConstantValue => Variable.Constant;
+        public VariableSymbol ArrayVariable { get; }
+        public override AbstractConstant? ConstantValue => ArrayVariable.Constant;
 
         public AbstractVariableExpression(Node syntax, VariableSymbol variable)
             : base(syntax)
         {
-            Variable = variable;
+            ArrayVariable = variable;
         }
     }
 }

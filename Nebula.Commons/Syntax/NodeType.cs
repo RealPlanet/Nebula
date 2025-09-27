@@ -98,11 +98,12 @@
         UnaryExpression,
         BinaryExpression,
         AssignmentExpression,
-        BundleFieldAccessExpression,
+        ObjectVariableAccessExpression,
         ArrayAccessExpression,
         NameExpression,
         ParenthesizedExpression,
         CallExpression,
+        ObjectCallExpression,
         LiteralExpression,
         DefaultInitializationExpression,
 

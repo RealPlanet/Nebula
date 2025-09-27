@@ -302,7 +302,7 @@ namespace Nebula.Core.Utility.Concrete
             writer.WriteNestedExpression(precedence, node.Right);
         }
 
-        private static void WriteVariableExpression(AbstractVariableExpression node, IndentedTextWriter writer) => writer.WriteIdentifier(node.Variable.Name);
+        private static void WriteVariableExpression(AbstractVariableExpression node, IndentedTextWriter writer) => writer.WriteIdentifier(node.ArrayVariable.Name);
 
         private static void WriteAssignmentExpression(AbstractAssignmentExpression node, IndentedTextWriter writer)
         {

@@ -728,7 +728,38 @@ namespace Nebula.Core.Compilation.CST.Parsing
                 return functionCall;
             }
 
+            Expression? objectFunctionCall = ParseObjectFunctionCall();
+            if (objectFunctionCall is not null)
+            {
+                return objectFunctionCall;
+            }
+
             return ParseVariableNameExpression();
+        }
+
+        private Expression? ParseObjectFunctionCall()
+        {
+            if (Current.Type == NodeType.IdentifierToken &&
+                Peek(1).Type == NodeType.DotToken &&
+                Peek(2).Type == NodeType.IdentifierToken &&
+                Peek(3).Type == NodeType.OpenParenthesisToken)
+            {
+                Token name = MatchToken(NodeType.IdentifierToken);
+                Token accessToken = MatchToken(NodeType.DotToken);
+                Token fieldName = MatchToken(NodeType.IdentifierToken);
+                Token openParenthesis = MatchToken(NodeType.OpenParenthesisToken);
+                TokenSeparatedList<Expression> args = ParseArguments();
+                Token closeParenthesis = MatchToken(NodeType.ClosedParenthesisToken);
+                return new ObjectCallExpression(_currentSource,
+                                                name,
+                                                accessToken,
+                                                fieldName,
+                                                openParenthesis,
+                                                args,
+                                                closeParenthesis);
+            }
+
+            return null;
         }
 
         private NameExpression ParseVariableNameExpression()
@@ -738,7 +769,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
             {
                 Token accessToken = MatchToken(NodeType.DotToken);
                 Token fieldName = MatchToken(NodeType.IdentifierToken);
-                return new BundleFieldAccessExpression(_currentSource, name, accessToken, fieldName);
+                return new ObjectVariableAccessExpression(_currentSource, name, accessToken, fieldName);
             }
 
             if (Current.Type == NodeType.OpenSquareBracketToken)

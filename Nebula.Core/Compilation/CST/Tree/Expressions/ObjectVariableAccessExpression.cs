@@ -7,14 +7,14 @@ namespace Nebula.Core.Compilation.CST.Tree.Expressions
     /// <summary>
     /// Access a field in a bundle to read/write it's value
     /// </summary>
-    public sealed class BundleFieldAccessExpression
+    public sealed class ObjectVariableAccessExpression
         : NameExpression
     {
-        public override NodeType Type => NodeType.BundleFieldAccessExpression;
+        public override NodeType Type => NodeType.ObjectVariableAccessExpression;
         public Token AccessToken { get; }
         public Token FieldName { get; }
 
-        public BundleFieldAccessExpression(SourceCode sourceCode, Token identifier, Token accessToken, Token fieldName)
+        public ObjectVariableAccessExpression(SourceCode sourceCode, Token identifier, Token accessToken, Token fieldName)
             : base(sourceCode, identifier)
         {
             AccessToken = accessToken;

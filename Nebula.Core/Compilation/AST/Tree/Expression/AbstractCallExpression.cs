@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 namespace Nebula.Core.Compilation.AST.Tree.Expression
 {
 
-    public sealed class AbstractCallExpression
+    public class AbstractCallExpression
         : AbstractExpression
     {
         public override TypeSymbol ResultType => Function.ReturnType;

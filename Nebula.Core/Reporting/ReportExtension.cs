@@ -173,6 +173,12 @@ namespace Nebula.Core.Reporting
             string message = string.Format(template, functionName);
             r.PushCode(code, message, location);
         }
+        public static void ReportObjectFunctionDoesNotExist(this Report r, string objectType, TextLocation location, string functionName)
+        {
+            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorObjectFunctionDoesNotExists;
+            string message = string.Format(template, functionName, objectType);
+            r.PushCode(code, message, location);
+        }
         public static void ReportNotAFunction(this Report r, TextLocation location, string name)
         {
             (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorIdentifierIsNotAFunction;
