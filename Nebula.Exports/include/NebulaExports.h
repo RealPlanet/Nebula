@@ -107,8 +107,8 @@ extern "C"
     __declspec(dllexport) const char* DataStackVariant_GetStringValue(nebula::DataStackVariant* handle);
     __declspec(dllexport) int DataStackVariant_GetIntValue(nebula::DataStackVariant* handle);
     __declspec(dllexport) float DataStackVariant_GetFloatValue(nebula::DataStackVariant* handle);
-    __declspec(dllexport) nebula::TBundle* DataStackVariant_GetBundleValue(nebula::DataStackVariant* handle);
-    __declspec(dllexport) nebula::TArray* DataStackVariant_GetArrayValue(nebula::DataStackVariant* handle);
+    __declspec(dllexport) nebula::Bundle* DataStackVariant_GetBundleValue(nebula::DataStackVariant* handle);
+    __declspec(dllexport) nebula::VariantArray* DataStackVariant_GetArrayValue(nebula::DataStackVariant* handle);
 
     // BundleField
     __declspec(dllexport) const char* BundleField_GetName(nebula::BundleFieldDefinition* handle);

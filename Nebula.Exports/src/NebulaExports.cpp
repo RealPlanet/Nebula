@@ -734,7 +734,11 @@ int Bundle_GetFieldCount(nebula::Bundle* handle)
 
 nebula::DataStackVariant* Bundle_GetField(nebula::Bundle* handle, int index)
 {
-    return nullptr;
+    if (handle == nullptr)
+    {
+        return nullptr;
+    }
+    return &handle->Get(index);
 }
 
 /////////////////////////////////////////////////////////
@@ -783,24 +787,24 @@ float DataStackVariant_GetFloatValue(nebula::DataStackVariant* handle)
     return std::get<nebula::DataStackVariantIndex::_TypeFloat>(*handle);
 }
 
-nebula::TBundle* DataStackVariant_GetBundleValue(nebula::DataStackVariant* handle)
+nebula::Bundle* DataStackVariant_GetBundleValue(nebula::DataStackVariant* handle)
 {
     if (handle == nullptr)
     {
         return nullptr;
     }
 
-    return std::get_if<nebula::TBundle>(handle);
+    return std::get_if<nebula::TBundle>(handle)->get();
 }
 
-nebula::TArray* DataStackVariant_GetArrayValue(nebula::DataStackVariant* handle)
+nebula::VariantArray* DataStackVariant_GetArrayValue(nebula::DataStackVariant* handle)
 {
     if (handle == nullptr)
     {
         return nullptr;
     }
 
-    return std::get_if<nebula::TArray>(handle);
+    return std::get_if<nebula::TArray>(handle)->get();
 }
 
 /////////////////////////////////////////////////////////
