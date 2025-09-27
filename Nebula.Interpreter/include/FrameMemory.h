@@ -19,6 +19,7 @@ namespace nebula
         const TString&          AsString() const { return std::get<DataStackVariantIndex::_TypeString>(_value); }
         const TBundle*          AsBundle() const { return std::get_if<TBundle>(&_value); }
         const TArray*           AsArray() const { return std::get_if<TArray>(&_value); }
+        const TGCObject*        AsGCObject() const;
 
     private:
         DataStackVariantIndex _type{ DataStackVariantIndex::_UnknownType };

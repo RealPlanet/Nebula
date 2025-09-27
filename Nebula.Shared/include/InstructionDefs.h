@@ -16,6 +16,7 @@ namespace nebula {
         Dup,		// Duplicates value on top of stack
 
         Call,		// Invoke function
+        CallVirt,
 
         // Conversion
         ConvType,	// Convert the top of the stack value from to [type]
@@ -64,6 +65,7 @@ namespace nebula {
         LdBarg,     // Read data in parameter bundle and put it on top of stack
         Ldloc,
         LdBloc,     // Read data in local bundle and put it on top of stack
+        LdElem, 
 
         // Store
         Stloc,		// Store local variable
@@ -131,6 +133,8 @@ namespace nebula {
             return "dup";
         case VMInstruction::Call:
             return "call";
+        case VMInstruction::CallVirt:
+            return "callvirt";
         case VMInstruction::ConvType:
             return "convtype";
         case VMInstruction::Ret:
@@ -189,6 +193,10 @@ namespace nebula {
             return "ldloc";
         case VMInstruction::Stloc:
             return "stloc";
+        case VMInstruction::NewArr:
+            return "newarr";
+        case VMInstruction::LdElem:
+            return "ldelem";
         }
 
         return nullptr;
@@ -198,6 +206,7 @@ namespace nebula {
             {"nop",			VMInstruction::Nop			},
             {"pop",			VMInstruction::Pop			},
             {"dup",			VMInstruction::Dup			},
+            {"callvirt",	VMInstruction::CallVirt 	},
             {"call",		VMInstruction::Call			},
             {"convtype",	VMInstruction::ConvType		},
             {"ret",			VMInstruction::Ret			},
@@ -237,6 +246,8 @@ namespace nebula {
             {"ldbloc",		VMInstruction::LdBloc		},
             {"ldbarg",		VMInstruction::LdBarg		},
             {"newarr",		VMInstruction::NewArr		},
+            {"stelem",		VMInstruction::StElem		},
+            {"ldelem",		VMInstruction::LdElem		},
         };
 
         auto instPair = instructionMap.find(s);

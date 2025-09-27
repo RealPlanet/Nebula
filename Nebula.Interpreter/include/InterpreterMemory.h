@@ -18,6 +18,7 @@ namespace nebula
         InterpreterMemory(Interpreter* parent);
 
         TBundle AllocBundle(const BundleDefinition& definition);
+        TArray AllocArray(const DataStackVariantIndex& type);
 
         void Collect(bool force = false);
         void Sweep();
