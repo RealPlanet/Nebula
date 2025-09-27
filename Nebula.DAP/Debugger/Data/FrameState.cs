@@ -1,6 +1,7 @@
 ﻿using Nebula.Commons.Debugger;
 using Nebula.Interop.Structures;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Nebula.Debugger.Debugger.Data
 {
@@ -31,25 +32,35 @@ namespace Nebula.Debugger.Debugger.Data
             DebugFunction? dbgFunc = thread.GetDebugInfo(this);
             if (dbgFunc != null)
             {
-                ScopeState localsScope = new(parent, "Local variables");
+                ScopeState localsScope = new(parent, "Local variables", true);
                 int locCount = frame.LocalCount;
                 for (int i = 0; i < locCount; i++)
                 {
-                    string varName = dbgFunc.LocalVariables[i].Name;
-                    localsScope.Add(varName, frame.GetLocalVariableAt(i));
+                    localsScope.Add(dbgFunc.LocalVariables[i], frame.GetLocalVariableAt(i));
                 }
 
                 _scopes[localsScope.VarReference] = localsScope;
 
-                ScopeState parametersScope = new(parent, "Parameters");
+                ScopeState parametersScope = new(parent, "Parameters", true);
                 int paramCount = frame.ParameterCount;
                 for (int i = 0; i < paramCount; i++)
                 {
-                    string varName = dbgFunc.Parameters[i].Name;
-                    parametersScope.Add(varName, frame.GetParameterVariableAt(i));
+                    parametersScope.Add(dbgFunc.Parameters[i], frame.GetParameterVariableAt(i));
                 }
 
                 _scopes[parametersScope.VarReference] = parametersScope;
+            }
+
+            foreach(var scope in _scopes.Values.ToList())
+            {
+                foreach(var variable in scope.Children)
+                {
+                    if(variable.ValueType == Interop.Enumerators.TypeIdentifier.Bundle)
+                    {
+                        BundleScopeState bState = (BundleScopeState)variable;
+                        _scopes.Add(bState.VarReference, bState);
+                    }
+                }
             }
         }
     }

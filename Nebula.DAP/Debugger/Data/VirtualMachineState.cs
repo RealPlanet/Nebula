@@ -62,7 +62,7 @@ namespace Nebula.Debugger.Debugger.Data
                 int lastLine = -1;
                 foreach (KeyValuePair<int, int> kvp in debugFunc.LineStartingOpcodeIndex)
                 {
-                    if(kvp.Value == currentOpcode)
+                    if (kvp.Value == currentOpcode)
                     {
                         return kvp.Key;
                     }
