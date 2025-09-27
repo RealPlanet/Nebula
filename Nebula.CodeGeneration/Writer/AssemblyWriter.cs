@@ -77,10 +77,14 @@ namespace Nebula.CodeGeneration.Writer
 
                 foreach (VariableDefinition v in func.Body.Variables)
                 {
-                    dbgFunc.LocalVariables.Add(new()
+                    DebugVariable dbgVariable = new()
                     {
                         Name = v.Name,
-                    });
+                        SourceNamespace = v.SourceNamespace,
+                        SourceType = v.SourceTypeName,
+                    };
+
+                    dbgFunc.LocalVariables.Add(dbgVariable);
                 }
 
                 int lastLineNumber = -1;

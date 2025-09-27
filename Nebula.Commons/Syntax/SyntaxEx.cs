@@ -71,6 +71,8 @@ namespace Nebula.Commons.Syntax
             NodeType.NativeKeyword => "native",
             NodeType.BundleKeyword => "bundle",
             NodeType.ImportKeyword => "import",
+            NodeType.OpenSquareBracketToken => "[",
+            NodeType.ClosedSquareBracketToken => "]",
             _ => null,
         };
 

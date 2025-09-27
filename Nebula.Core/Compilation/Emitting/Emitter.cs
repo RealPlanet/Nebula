@@ -311,6 +311,13 @@ namespace Nebula.Core.Compilation.Emitting
             TypeReference typeReference = _knownTypes[node.Variable.Type.BaseType];
 
             VariableDefinition variableDefinition = new(typeReference, node.Variable.Name, processor.Body.Variables.Count);
+
+            if(node.Variable.Type is ObjectTypeSymbol objSymbol)
+            {
+                variableDefinition.SourceNamespace = objSymbol.Namespace;
+                variableDefinition.SourceTypeName = objSymbol.Name;
+            }
+
             _currentContext.Locals.Add(node.Variable, variableDefinition);
             processor.Body.Variables.Add(variableDefinition);
 
