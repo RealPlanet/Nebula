@@ -57,7 +57,7 @@ namespace nebula {
         Ldc_i4,		// Load constant i32
         Ldc_r4,		// Load constant f32
         Ldc_s,		// Load string constant
-        Ld_b,       // Load bundle [ObjectNamespace] ObjectType
+        Newobj,       // Load bundle [ObjectNamespace] ObjectType
         NewArr,     // Load array DataStackIndex [ObjectNamespace] ObjectType
 
         // Load variables
@@ -236,7 +236,7 @@ namespace nebula {
             {"ldc_i4",		VMInstruction::Ldc_i4		},
             {"ldc_r4",		VMInstruction::Ldc_r4		},
             {"ldc_s",		VMInstruction::Ldc_s		},
-            {"ld_b",		VMInstruction::Ld_b		    },
+            {"newobj",		VMInstruction::Newobj		    },
             {"ldarg",		VMInstruction::Ldarg		},
             {"ldloc",		VMInstruction::Ldloc		},
             {"stloc",		VMInstruction::Stloc		},

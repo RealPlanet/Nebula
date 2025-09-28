@@ -344,7 +344,7 @@ namespace Nebula.Core.Compilation.Emitting
                     arguments = new string[] { typeNamespace, typedName };
                 }
 
-                processor.Emit(InstructionOpcode.Ld_b, arguments, originalStatement);
+                processor.Emit(InstructionOpcode.Newobj, arguments, originalStatement);
                 processor.Emit(InstructionOpcode.Stloc, variableDefinition, originalStatement);
                 return;
             }
@@ -514,7 +514,7 @@ namespace Nebula.Core.Compilation.Emitting
             if (node.ArrayVariable is ParameterSymbol parameter)
             {
                 ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
-                processor.Emit(InstructionOpcode.Ldarg, parameterDefinition.Index, originalStatement);
+                processor.Emit(InstructionOpcode.Ldarg, parameterDefinition, originalStatement);
             }
             else
             {

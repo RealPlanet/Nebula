@@ -17,5 +17,9 @@
         <None Update="Nebula.Exports.pdb">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+
+        <ProjectReference Include="..\Nebula.SourceGeneration\Nebula.SourceGeneration.csproj"
+            OutputItemType="Analyzer"
+            ReferenceOutputAssembly="false" />
     </ItemGroup>
 </Project>

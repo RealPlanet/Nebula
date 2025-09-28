@@ -334,7 +334,7 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
     }
     case VMInstruction::Call_t:
     case VMInstruction::Call:
-    case VMInstruction::Ld_b:
+    case VMInstruction::Newobj:
     {
         assert(args.size() == 1 || args.size() == 2);
 
@@ -685,7 +685,7 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
         stack.Push(cStr);
         return InstructionErrorCode::None;
     }
-    case VMInstruction::Ld_b:
+    case VMInstruction::Newobj:
     {
         assert(args.size() == 1 || args.size() == 2);
         const BundleDefinition* bundleDefinition = nullptr;

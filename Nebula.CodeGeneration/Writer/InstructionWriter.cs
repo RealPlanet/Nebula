@@ -8,7 +8,8 @@ namespace Nebula.CodeGeneration.Writer
         {
             writer.Write(instruction.Opcode.ToString().ToLower());
             writer.WriteSpace();
-            writer.Write(instruction.GetArgumentString());
+            string arguments = InstructionArgumentFactory.GetOpcodeArguments(instruction);
+            writer.Write(arguments);
         }
     }
 }

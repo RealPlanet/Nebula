@@ -1,0 +1,144 @@
+<?xml-model href="Opcodes.xsd"?>
+<Opcodes>
+    <Opcode Type="Nop">
+        <Description>Empty operation</Description>
+    </Opcode>
+    <Opcode Type="Pop">
+        <Description>Pop the value on top of the stack</Description>
+    </Opcode>
+    <Opcode Type="Dup">
+        <Description>Duplicates value on top of stack</Description>
+    </Opcode>
+    <Opcode Type="Call">
+        <Description>Invoke function</Description>
+    </Opcode>
+    <Opcode Type="Call_t">
+        <Description>Invoke function on a new thread</Description>
+    </Opcode>
+    <Opcode Type="Callvirt">
+        <Description>Invoke function on object</Description>
+    </Opcode>
+    <Opcode Type="ConvType">
+        <Description>Convert the top of the stack value from to [type]</Description>
+    </Opcode>
+    <Opcode Type="Ret">
+        <Description>Return control flow</Description>
+    </Opcode>
+    <Opcode Type="Br">
+        <Description>Jump always</Description>
+    </Opcode>
+    <Opcode Type="BrTrue">
+        <Description>Jump if true</Description>
+    </Opcode>
+    <Opcode Type="BrFalse">
+        <Description>Jump if false</Description>
+    </Opcode>
+    <Opcode Type="Ceq">
+        <Description>Compares two values on the stack and pushes 1 if they're equal otherwise 0</Description>
+    </Opcode>
+    <Opcode Type="Neg">
+        <Description>Negates the value on top of the stack</Description>
+    </Opcode>
+    <Opcode Type="Not">
+        <Description></Description>
+    </Opcode>
+    <Opcode Type="And">
+        <Description></Description>
+    </Opcode>
+    <Opcode Type="Or">
+        <Description></Description>
+    </Opcode>
+    <Opcode Type="Xor">
+        <Description></Description>
+    </Opcode>
+    <Opcode Type="Clt">
+        <Description></Description>
+    </Opcode>
+    <Opcode Type="Cgt">
+        <Description></Description>
+    </Opcode>
+    <Opcode Type="Wait">
+        <Description></Description>
+    </Opcode>
+    <Opcode Type="Wait_n">
+        <Description></Description>
+    </Opcode>
+    <Opcode Type="Notify">
+        <Description></Description>
+    </Opcode>
+    <Opcode Type="Add">
+        <Description></Description>
+    </Opcode>
+    <Opcode Type="Sub">
+        <Description></Description>
+    </Opcode>
+    <Opcode Type="Mul">
+        <Description></Description>
+    </Opcode>
+    <Opcode Type="Div">
+        <Description></Description>
+    </Opcode>
+    <Opcode Type="Rem">
+        <Description>Pushes the remainer of a division onto the stack</Description>
+    </Opcode>
+    <Opcode Type="AddStr">
+        <Description></Description>
+    </Opcode>
+    <Opcode Type="Ldc_i4_0">
+        <Description>Load constant i32 0</Description>
+    </Opcode>
+    <Opcode Type="Ldc_i4_1">
+        <Description>Load constant i32 1</Description>
+    </Opcode>
+    <Opcode Type="Ldc_i4">
+        <Description>Load constant i32</Description>
+    </Opcode>
+    <Opcode Type="Ldc_r4">
+        <Description>Load constant f32</Description>
+    </Opcode>
+    <Opcode Type="Ldc_s">
+        <Description>Load string constant</Description>
+    </Opcode>
+    <Opcode Type="Newobj">
+        <Description>Allocates an object and initializes all it's values to their default value</Description>
+    </Opcode>
+    <Opcode Type="Newarr">
+        <Description>Creates a new array with elements of type</Description>
+    </Opcode>
+    <Opcode Type="Ldarg">
+        <Description></Description>
+    </Opcode>
+    <Opcode Type="LdBarg">
+        <Description>Read data in parameter bundle and put it on top of stack</Description>
+    </Opcode>
+    <Opcode Type="Ldloc">
+        <Description></Description>
+    </Opcode>
+    <Opcode Type="LdBloc">
+        <Description>Read data in local bundle and put it on top of stack</Description>
+    </Opcode>
+    <Opcode Type="Stloc">
+        <Description>Store local variable</Description>
+    </Opcode>
+    <Opcode Type="StBloc">
+        <Description>Store data in local bundle</Description>
+    </Opcode>
+    <Opcode Type="StArg">
+        <Description></Description>
+    </Opcode>
+    <Opcode Type="StBArg">
+        <Description></Description>
+    </Opcode>
+    <Opcode Type="Stelem">
+        <Description>
+            Replaces the array element at a given index with the value on the evaluation
+            stack
+        </Description>
+    </Opcode>
+    <Opcode Type="Ldelem">
+        <Description>
+            Replaces the array element at a given index with the value on the evaluation
+            stack
+        </Description>
+    </Opcode>
+</Opcodes>
