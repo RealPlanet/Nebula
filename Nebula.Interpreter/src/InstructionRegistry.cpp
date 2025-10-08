@@ -586,8 +586,8 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
     }
     case VMInstruction::Wait:
     {
-        TInt32& millis = std::get<TInt32>(stack.Peek());
-        context->SetScheduledSleep(((size_t)millis) * 1000);
+        TFloat& seconds = std::get<TFloat>(stack.Peek());
+        context->SetScheduledSleep((size_t)(seconds * 1000));
         stack.Pop();
 
         return InstructionErrorCode::None;
