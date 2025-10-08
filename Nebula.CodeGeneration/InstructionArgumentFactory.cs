@@ -26,9 +26,9 @@ namespace Nebula.CodeGeneration
 
             Register(InstructionOpcode.AddStr, RequireInt32);
 
-            Register(InstructionOpcode.Br, RequireString);
-            Register(InstructionOpcode.BrFalse, RequireString);
-            Register(InstructionOpcode.BrTrue, RequireString);
+            Register(InstructionOpcode.Br, RequireInt32);
+            Register(InstructionOpcode.BrFalse, RequireInt32);
+            Register(InstructionOpcode.BrTrue, RequireInt32);
 
             Register(InstructionOpcode.ConvType, RequireTypeName);
 
