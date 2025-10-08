@@ -439,6 +439,15 @@ namespace Nebula.Commons.Reporting.Strings {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Argument &apos;{0}&apos; of wait keyword must evaluate to a number.
+        /// </summary>
+        internal static string WaitMustBeNumber {
+            get {
+                return ResourceManager.GetString("WaitMustBeNumber", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Function &apos;{0}&apos; requires &apos;{1}&apos; arguments but was given {2}..
         /// </summary>
         internal static string WrongNumberOfArguments {

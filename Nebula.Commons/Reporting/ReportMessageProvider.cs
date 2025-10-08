@@ -101,7 +101,9 @@ namespace Nebula.Commons.Reporting
         /// <summary></summary>
         E0029 = ReportMessageProvider.ErrorOffset + 41,
         /// <summary></summary>
-        E0030 = ReportMessageProvider.ErrorOffset + 42,
+        E002A = ReportMessageProvider.ErrorOffset + 42,
+        /// <summary></summary>
+        E002B = ReportMessageProvider.ErrorOffset + 43,
     }
 
     /// <summary>
@@ -206,7 +208,9 @@ namespace Nebula.Commons.Reporting
         public static ReportMessageTemplate ErrorFloatTooManyMarkers =>
     (ReportMessageCodes.E0029, ErrorMessages.FloatTooManyMarkers);
         public static ReportMessageTemplate ErrorObjectFunctionDoesNotExists =>
-    (ReportMessageCodes.E0030, ErrorMessages.ObjectFunctionDoesNotExists);
+    (ReportMessageCodes.E002A, ErrorMessages.ObjectFunctionDoesNotExists);
+        public static ReportMessageTemplate ErrorWaitMustBeNumber =>
+    (ReportMessageCodes.E002B, ErrorMessages.WaitMustBeNumber);
 
         #endregion
     }

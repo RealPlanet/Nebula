@@ -246,4 +246,7 @@
   <data name="ObjectFunctionDoesNotExists" xml:space="preserve">
     <value>Function '{0}' does not exist in type '{1}'</value>
   </data>
+  <data name="WaitMustBeNumber" xml:space="preserve">
+    <value>Argument '{0}' of wait keyword must evaluate to a number</value>
+  </data>
 </root>
