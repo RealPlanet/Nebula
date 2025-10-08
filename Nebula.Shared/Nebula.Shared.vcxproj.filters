@@ -11,12 +11,9 @@
     <ClInclude Include="include\DiagnosticReport.h" />
     <ClInclude Include="include\LanguageTypes.h" />
     <ClInclude Include="include\Stack.h" />
-    <ClInclude Include="include\EmitTokens.h" />
     <ClInclude Include="include\ErrorCallStack.h" />
     <ClInclude Include="include\Instruction.h" />
     <ClInclude Include="include\DebuggerDefinitions.h" />
-    <ClInclude Include="include\interfaces\AllocatedObject.h" />
-    <ClInclude Include="include\interfaces\AwaitableObject.h" />
     <ClInclude Include="include\interfaces\IScriptParser.h" />
     <ClInclude Include="include\interfaces\IStreamWrapper.h" />
     <ClInclude Include="include\interfaces\IGCObject.h" />

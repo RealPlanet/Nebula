@@ -10,25 +10,25 @@ namespace nebula {
 
     /// <summary> Despite the names in this enum all instructions will be emitted/read as lower case identifiers </summary>
     enum class VMInstruction {
-        Nop,		// Empty operation
+        Nop,
 
-        Pop,		// Pop the value on top of the stack
-        Dup,		// Duplicates value on top of stack
+        Pop,
+        Dup,
 
-        Call,		// Invoke function
+        Call,
         CallVirt,
 
         // Conversion
-        ConvType,	// Convert the top of the stack value from to [type]
+        ConvType,
 
         // Control flow 
-        Ret,		// Return control flow
-        Br,			// Jump always
-        BrTrue,		// Jump if true
-        BrFalse,	// Jump if false
-        Ceq,		// Compares two values on the stack and pushes 1 if they're equal otherwise 0
-        Neg,		// Negates the value on top of the stack
-        Not,		// 
+        Ret,
+        Br,
+        BrTrue,
+        BrFalse,
+        Ceq,
+        Neg,
+        Not,
         And,
         Or,
         Xor,
@@ -46,33 +46,33 @@ namespace nebula {
         Sub,
         Mul,
         Div,
-        Rem,		// Pushes the remainer of a division onto the stack
+        Rem,
 
         // String
         AddStr,
 
         // Load
-        Ldc_i4_0,	// Load constant i32 0
-        Ldc_i4_1,	// Load constant i32 1
-        Ldc_i4,		// Load constant i32
-        Ldc_r4,		// Load constant f32
-        Ldc_s,		// Load string constant
-        Newobj,       // Load bundle [ObjectNamespace] ObjectType
-        NewArr,     // Load array DataStackIndex [ObjectNamespace] ObjectType
+        Ldc_i4_0,
+        Ldc_i4_1,
+        Ldc_i4,
+        Ldc_r4,
+        Ldc_s,
+        Newobj,
+        NewArr,
 
         // Load variables
         Ldarg,
-        LdBarg,     // Read data in parameter bundle and put it on top of stack
+        LdBarg,
         Ldloc,
-        LdBloc,     // Read data in local bundle and put it on top of stack
-        LdElem, 
+        LdBloc,
+        LdElem,
 
         // Store
-        Stloc,		// Store local variable
-        StBloc,     // Store data in local bundle
+        Stloc,
+        StBloc,
         StArg,
         StBArg,
-        StElem,     // Replaces the array element at a given index with the value on the evaluation stack
+        StElem,
 
         LastInstruction
     };

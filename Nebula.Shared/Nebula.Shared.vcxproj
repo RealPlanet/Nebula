@@ -13,7 +13,6 @@
   <ItemGroup>
     <ClInclude Include="include\DebuggerDefinitions.h" />
     <ClInclude Include="include\DiagnosticReport.h" />
-    <ClInclude Include="include\EmitTokens.h" />
     <ClInclude Include="include\Instruction.h" />
     <ClInclude Include="include\interfaces\IGCObject.h" />
     <ClInclude Include="include\interfaces\INotificationListener.h" />
