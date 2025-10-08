@@ -234,11 +234,11 @@ namespace Nebula.Core.Reporting
             string message = string.Format(template, name);
             r.PushCode(code, message, location);
         }
-        public static void ReportWaitMustBeNumber(this Report r, AbstractExpression expr, TypeSymbol expectedType)
+        public static void ReportWaitMustBeNumber(this Report r, AbstractExpression expr)
         {
             string expression = expr.OriginalNode.SourceCode.ToString(expr.OriginalNode.Span);
-            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorCannotReassignReadonlyVariable;
-            string message = string.Format(template, expression.ToString(), expectedType.ToString());
+            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorWaitMustBeNumber;
+            string message = string.Format(template, expression.ToString());
             r.PushCode(code, message, expr.OriginalNode.Location);
         }
         public static void ReportCannotAssign(this Report r, TextLocation location, string name)

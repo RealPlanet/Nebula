@@ -1040,9 +1040,11 @@ namespace Nebula.Core.Compilation.AST.Binding
         private AbstractStatement BindWaitStatement(WaitStatement expr)
         {
             AbstractExpression timeExpr = BindExpression(expr.Time, canBeVoid: false);
-            if (timeExpr is not AbstractErrorExpression && timeExpr.ResultType != TypeSymbol.Int)
+            if (timeExpr is not AbstractErrorExpression &&
+                timeExpr.ResultType != TypeSymbol.Int &&
+                timeExpr.ResultType != TypeSymbol.Float)
             {
-                _binderReport.ReportWaitMustBeNumber(timeExpr, TypeSymbol.Int);
+                _binderReport.ReportWaitMustBeNumber(timeExpr);
                 timeExpr = new AbstractErrorExpression(timeExpr.OriginalNode);
             }
 
@@ -1060,7 +1062,7 @@ namespace Nebula.Core.Compilation.AST.Binding
             AbstractExpression notifyExpr = BindExpression(syntax.Expression, canBeVoid: false);
             if (notifyExpr is not AbstractErrorExpression && notifyExpr.ResultType != TypeSymbol.String)
             {
-                _binderReport.ReportWaitMustBeNumber(notifyExpr, TypeSymbol.String);
+                _binderReport.ReportCannotConvertType(notifyExpr.OriginalNode.Location, notifyExpr.ResultType, TypeSymbol.String);
                 notifyExpr = new AbstractErrorExpression(notifyExpr.OriginalNode);
             }
 
@@ -1078,7 +1080,7 @@ namespace Nebula.Core.Compilation.AST.Binding
             AbstractExpression notifyExpr = BindExpression(syntax.Expression, canBeVoid: false);
             if (notifyExpr is not AbstractErrorExpression && notifyExpr.ResultType != TypeSymbol.String)
             {
-                _binderReport.ReportWaitMustBeNumber(notifyExpr, TypeSymbol.String);
+                _binderReport.ReportCannotConvertType(notifyExpr.OriginalNode.Location, notifyExpr.ResultType, TypeSymbol.String);
                 notifyExpr = new AbstractErrorExpression(notifyExpr.OriginalNode);
             }
 
