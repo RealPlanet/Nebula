@@ -9,8 +9,6 @@
 #include "Script.h"
 #include "DebuggerDefinitions.h"
 
-
-
 class StdRedirector
     : public nebula::IStreamWrapper {
 private:
