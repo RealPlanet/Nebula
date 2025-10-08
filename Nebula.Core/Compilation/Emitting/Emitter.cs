@@ -370,7 +370,7 @@ namespace Nebula.Core.Compilation.Emitting
         {
             object arguments = ExtractNewArrArguments(arraySymbol, baseValueType);
 
-            processor.Emit(InstructionOpcode.NewArr, arguments, originalNode);
+            processor.Emit(InstructionOpcode.Newarr, arguments, originalNode);
             processor.Emit(InstructionOpcode.Stloc, variableDefinition, originalNode);
         }
 
@@ -382,7 +382,7 @@ namespace Nebula.Core.Compilation.Emitting
         {
             object arguments = ExtractNewArrArguments(arraySymbol, baseValueType);
 
-            processor.Emit(InstructionOpcode.NewArr, arguments, originalNode);
+            processor.Emit(InstructionOpcode.Newarr, arguments, originalNode);
             processor.Emit(InstructionOpcode.StArg, parameter, originalNode);
         }
 
@@ -506,7 +506,7 @@ namespace Nebula.Core.Compilation.Emitting
             }
 
             VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
-            processor.Emit(InstructionOpcode.CallVirt, new string[] { variableDefinition.Index.ToString(), node.Function.Name }, originalStatement);
+            processor.Emit(InstructionOpcode.Callvirt, new string[] { variableDefinition.Index.ToString(), node.Function.Name }, originalStatement);
         }
 
         private void EmitArrayAccessExpression(NILProcessor processor, AbstractArrayAccessExpression node, Node originalStatement)
@@ -586,7 +586,7 @@ namespace Nebula.Core.Compilation.Emitting
 
             EmitExpression(processor, node.IndexExpression, originalStatement);
             EmitExpression(processor, node.Expression, originalStatement);
-            processor.Emit(InstructionOpcode.StElem, originalStatement);
+            processor.Emit(InstructionOpcode.Stelem, originalStatement);
         }
 
         private void EmitAssignmentExpression(NILProcessor processor, AbstractAssignmentExpression node, Node originalStatement)
