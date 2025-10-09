@@ -385,14 +385,14 @@ namespace Nebula.Core.Compilation.AST.Binding
             return boundBundle;
         }
 
-        private AbstractExpression BindObjectVariableAccessExpression(AssignmentExpression syntax, ObjectVariableAccessExpression bundleAccess)
+        private AbstractExpression BindObjectVariableAccessExpression(AssignmentExpression syntax, ObjectVariableAccessExpression objectAccess)
         {
-            string? name = bundleAccess.Identifier.Text;
-            string fieldName = bundleAccess.FieldName.Text;
+            string? name = objectAccess.Identifier.Text;
+            string fieldName = objectAccess.FieldName.Text;
 
             AbstractExpression boundExpression = BindExpression(syntax.RightExpr);
             // Get the instantiated bundle which is in a variable
-            VariableSymbol? localVariable = BindVariableReference(bundleAccess.Identifier);
+            VariableSymbol? localVariable = BindVariableReference(objectAccess.Identifier);
 
             if (localVariable is null)
             {
@@ -402,14 +402,17 @@ namespace Nebula.Core.Compilation.AST.Binding
             BundleSymbol? bundleTemplate = GetBundleSymbol(localVariable);
             if (bundleTemplate is null)
             {
-                _binderReport.ReportBundleDoesNotExist(bundleAccess.Identifier);
+                _binderReport.ReportBundleDoesNotExist(objectAccess.Identifier);
                 return new AbstractErrorExpression(syntax);
             }
 
-            AbstractBundleField? fieldToAccess = bundleTemplate.Fields.FirstOrDefault(f => f.FieldName == bundleAccess.FieldName.Text);
+            // TODO Parse concatenation of multiple accesses
+            // ie obj.field.secondFied ....
+
+            AbstractBundleField? fieldToAccess = bundleTemplate.Fields.FirstOrDefault(f => f.FieldName == objectAccess.FieldName.Text);
             if (fieldToAccess is null)
             {
-                _binderReport.ReportFieldDoesNotExist(bundleAccess.FieldName);
+                _binderReport.ReportFieldDoesNotExist(objectAccess.FieldName);
                 return new AbstractErrorExpression(syntax);
             }
 
