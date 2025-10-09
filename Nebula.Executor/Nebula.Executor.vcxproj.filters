@@ -5,5 +5,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\ConsoleWriter.h" />
+    <ClInclude Include="include\ArgParser.h" />
   </ItemGroup>
 </Project>

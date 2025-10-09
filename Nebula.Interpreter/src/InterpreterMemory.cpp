@@ -69,6 +69,7 @@ TBundle InterpreterMemory::AllocBundle(const BundleDefinition& definition)
     TBundle ptr = Bundle::FromDefinition(definition);
     // Keep track of the allocated objectsw
     m_IGCObjects.push_back(dynamic_pointer_cast<IGCObject>(ptr));
+
     return ptr;
 }
 
