@@ -5,17 +5,17 @@ using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.CST.Tree.Expressions
 {
-    public sealed class DefaultInitializationExpression
+    public sealed class InitializationExpression
         : Expression
     {
-        public DefaultInitializationExpression(SourceCode sourceCode, Token openSquareBracket, Token closedSquareBracket)
+        public InitializationExpression(SourceCode sourceCode, Token openSquareBracket, Token closedSquareBracket)
             : base(sourceCode)
         {
             OpenSquareBracket = openSquareBracket;
             ClosedSquareBracket = closedSquareBracket;
         }
 
-        public override NodeType Type => NodeType.DefaultInitializationExpression;
+        public override NodeType Type => NodeType.InitializationExpression;
 
         public Token OpenSquareBracket { get; }
         public Token ClosedSquareBracket { get; }
