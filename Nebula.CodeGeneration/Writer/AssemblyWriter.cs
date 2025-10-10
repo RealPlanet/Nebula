@@ -245,6 +245,16 @@ namespace Nebula.CodeGeneration.Writer
 
         public static void WriteInstruction(this IndentedTextWriter writer, Instruction instruction, int labelCount)
         {
+            if (instruction is TriviaInstruction t)
+            {
+                foreach (var c in t.LeadingComments)
+                {
+                    writer.WriteComment(c);
+                }
+
+                return;
+            }
+
             writer.WriteLabel(labelCount);
             writer.WriteSpace();
             writer.WriteInstruction(instruction);

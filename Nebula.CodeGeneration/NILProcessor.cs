@@ -1,7 +1,9 @@
 ﻿using Nebula.CodeGeneration.Definitions;
 using Nebula.Commons.Syntax;
 using Nebula.Interop.Enumerators;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Nebula.CodeGeneration
 {
@@ -18,12 +20,17 @@ namespace Nebula.CodeGeneration
 
         public void Emit(InstructionOpcode opcode, Node? originalNode)
         {
-            _instructions.Add(new(opcode, originalNode));
+            _instructions.Add(new Instruction(opcode, originalNode));
         }
 
         public void Emit(InstructionOpcode opcode, object argument, Node? originalNode)
         {
-            _instructions.Add(new(opcode, argument, originalNode));
+            _instructions.Add(new Instruction(opcode, argument, originalNode));
+        }
+
+        public void WriteComment(string trivia)
+        {
+            _instructions.Add(new TriviaInstruction(trivia));
         }
     }
 }
