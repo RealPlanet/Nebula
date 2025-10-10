@@ -32,12 +32,6 @@ namespace Nebula.Core.Compilation.AST
             //if (from == TypeSymbol.Any && to != TypeSymbol.Void)
             //    return Explicit;
 
-            // Default initializer for objects
-            if (from == TypeSymbol.Int && to.IsObject)
-            {
-                return Implict;
-            }
-
             if (from == TypeSymbol.Int || from == TypeSymbol.Bool || from == TypeSymbol.Float)
             {
                 if (to == TypeSymbol.String)
