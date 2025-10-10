@@ -104,6 +104,8 @@ namespace Nebula.Commons.Reporting
         E002A = ReportMessageProvider.ErrorOffset + 42,
         /// <summary></summary>
         E002B = ReportMessageProvider.ErrorOffset + 43,
+        /// <summary></summary>
+        E002C = ReportMessageProvider.ErrorOffset + 44,
     }
 
     /// <summary>
@@ -211,6 +213,8 @@ namespace Nebula.Commons.Reporting
     (ReportMessageCodes.E002A, ErrorMessages.ObjectFunctionDoesNotExists);
         public static ReportMessageTemplate ErrorWaitMustBeNumber =>
     (ReportMessageCodes.E002B, ErrorMessages.WaitMustBeNumber);
+        public static ReportMessageTemplate ErrorAssignmentLeftHandSideNotValid =>
+    (ReportMessageCodes.E002B, ErrorMessages.AssignmentLeftHandSideNotValid);
 
         #endregion
     }

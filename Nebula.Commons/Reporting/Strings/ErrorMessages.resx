@@ -249,4 +249,7 @@
   <data name="WaitMustBeNumber" xml:space="preserve">
     <value>Argument '{0}' of wait keyword must evaluate to a number</value>
   </data>
+  <data name="AssignmentLeftHandSideNotValid" xml:space="preserve">
+    <value>The left-hand side of an assignment must be a variable, property or indexer</value>
+  </data>
 </root>

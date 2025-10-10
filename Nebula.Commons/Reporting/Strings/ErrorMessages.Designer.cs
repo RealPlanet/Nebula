@@ -70,6 +70,15 @@ namespace Nebula.Commons.Reporting.Strings {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The left-hand side of an assignment must be a variable, property or indexer.
+        /// </summary>
+        internal static string AssignmentLeftHandSideNotValid {
+            get {
+                return ResourceManager.GetString("AssignmentLeftHandSideNotValid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Attribute &apos;{0}&apos; requires void return parameter..
         /// </summary>
         internal static string AttributeRequiresVoidReturnType {

@@ -210,6 +210,14 @@ namespace Nebula.Core.Reporting
             string message = string.Format(template, text, boundType);
             r.PushCode(code, message, location);
         }
+
+        public static void ReportAssignmentLeftHandSideNotValid(this Report r, TextLocation leftHandLocation)
+        {
+            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorAssignmentLeftHandSideNotValid;
+            string message = string.Format(template);
+            r.PushCode(code, message, leftHandLocation);
+        }
+
         public static void ReportUndefinedBinaryOperator(this Report r, TextLocation location, string operatorText, TypeSymbol leftType, TypeSymbol rightType)
         {
             (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorBinaryOperatorNotDefined;
