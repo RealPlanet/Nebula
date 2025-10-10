@@ -336,15 +336,7 @@ namespace Nebula.Core.Compilation.Emitting
             // Emit an instruction to allocate bundle
             if (typeReference == TypeReference.Bundle && node.Variable.Type is ObjectTypeSymbol objTypeSymbol)
             {
-                ExtractBundleNamespaceAndName(objTypeSymbol, out string typeNamespace, out string typedName);
-
-                object arguments = typedName;
-                if (_currentContext.Assembly.Namespace != typeNamespace)
-                {
-                    arguments = new string[] { typeNamespace, typedName };
-                }
-
-                processor.Emit(InstructionOpcode.Newobj, arguments, originalStatement);
+                EmitBundleAllocation(processor, originalStatement, objTypeSymbol);
                 processor.Emit(InstructionOpcode.Stloc, variableDefinition, originalStatement);
                 return;
             }
@@ -360,6 +352,19 @@ namespace Nebula.Core.Compilation.Emitting
 
             EmitExpression(processor, node.Initializer, originalStatement);
             processor.Emit(InstructionOpcode.Stloc, variableDefinition, originalStatement);
+        }
+
+        private void EmitBundleAllocation(NILProcessor processor, Node originalStatement, ObjectTypeSymbol objTypeSymbol)
+        {
+            ExtractBundleNamespaceAndName(objTypeSymbol, out string typeNamespace, out string typedName);
+
+            object arguments = typedName;
+            if (_currentContext.Assembly.Namespace != typeNamespace)
+            {
+                arguments = new string[] { typeNamespace, typedName };
+            }
+
+            processor.Emit(InstructionOpcode.Newobj, arguments, originalStatement);
         }
 
         private void StoreNewArrIntoLocal(NILProcessor processor,
@@ -467,7 +472,7 @@ namespace Nebula.Core.Compilation.Emitting
                     EmitVariableExpression(processor, (AbstractVariableExpression)node, originalStatement);
                     break;
                 case AbstractNodeType.ObjectFieldAssignmentExpression:
-                    EmitBundleFieldAssignmentExpression(processor, (AbstractObjectFieldAssignmentExpression)node, originalStatement);
+                    EmitObjectFieldAssignment(processor, (AbstractObjectFieldAssignmentExpression)node, originalStatement);
                     break;
                 case AbstractNodeType.ArrayAssignmentExpression:
                     EmitArrayAssignmentExpression(processor, (AbstractArrayAssignmentExpression)node, originalStatement);
@@ -486,6 +491,12 @@ namespace Nebula.Core.Compilation.Emitting
                     break;
                 case AbstractNodeType.ArrayAccessExpression:
                     EmitArrayAccessExpression(processor, (AbstractArrayAccessExpression)node, originalStatement);
+                    break;
+                case AbstractNodeType.ObjectAllocationExpression:
+                    EmitObjectAllocationExpression(processor, (AbstractObjectAllocationExpression)node, originalStatement);
+                    break;
+                case AbstractNodeType.ObjectFieldAccessExpression:
+                    EmitObjectFieldAccess(processor, (AbstractObjectFieldAccessExpression)node, originalStatement);
                     break;
                 default:
                     throw new Exception($"Unexpected node type {node.Type}");
@@ -511,19 +522,48 @@ namespace Nebula.Core.Compilation.Emitting
 
         private void EmitArrayAccessExpression(NILProcessor processor, AbstractArrayAccessExpression node, Node originalStatement)
         {
-            if (node.ArrayVariable is ParameterSymbol parameter)
+            if (node.Variable is ParameterSymbol parameter)
             {
                 ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
                 processor.Emit(InstructionOpcode.Ldarg, parameterDefinition, originalStatement);
             }
             else
             {
-                VariableDefinition? variableDefinition = _currentContext.Locals[node.ArrayVariable];
+                VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
                 processor.Emit(InstructionOpcode.Ldloc, variableDefinition, originalStatement);
             }
 
             EmitExpression(processor, node.IndexExpression, originalStatement);
             processor.Emit(InstructionOpcode.Ldelem, originalStatement);
+        }
+
+        private void EmitObjectAllocationExpression(NILProcessor processor, AbstractObjectAllocationExpression node, Node originalStatement)
+        {
+            EmitExpression(processor, node.Target, originalStatement);
+            EmitBundleAllocation(processor, originalStatement, (ObjectTypeSymbol)node.ResultType);
+
+            switch (node.Target)
+            {
+                case AbstractObjectFieldAccessExpression fieldAccess:
+                    {
+                        processor.Emit(InstructionOpcode.Stfld, fieldAccess.Field.OrdinalPosition, originalStatement);
+                        break;
+                    }
+                default:
+                    throw new NotSupportedException(node.Target.GetType().ToString());
+            }
+        }
+
+        private void EmitObjectFieldAccess(NILProcessor processor, AbstractObjectFieldAccessExpression node, Node originalStatement)
+        {
+            EmitExpression(processor, node.Target, originalStatement);
+            processor.Emit(InstructionOpcode.Ldfld, node.Field.OrdinalPosition, originalStatement);
+        }
+
+        private void EmitObjectFieldAssignment(NILProcessor processor, AbstractObjectFieldAssignmentExpression node, Node originalStatement)
+        {
+            EmitExpression(processor, node.Target, originalStatement);
+            processor.Emit(InstructionOpcode.Stfld, node.Field.OrdinalPosition, originalStatement);
         }
 
         private void EmitCallExpression(NILProcessor processor, AbstractCallExpression node, Node originalStatement)
@@ -545,38 +585,12 @@ namespace Nebula.Core.Compilation.Emitting
             processor.Emit(callInstruction, arguments, originalStatement);
         }
 
-        private void EmitBundleFieldAssignmentExpression(NILProcessor processor, AbstractObjectFieldAssignmentExpression node, Node originalStatement)
-        {
-            if (node.BundleVariable is ParameterSymbol parameter)
-            {
-                ParameterDefinition? parameterDefinition = _currentContext.Parameters[node.BundleVariable];
-                EmitExpression(processor, node.Expression, originalStatement);
-                processor.Emit(InstructionOpcode.Dup,
-                    originalStatement); // Takes current value on stack and pushes it again
-
-                processor.Emit(InstructionOpcode.StBArg,
-                    new int[] { parameter.OrdinalPosition, node.FieldToAssign.OrdinalPosition },
-                    originalStatement); // Writes value into local
-                return;
-            }
-
-            VariableDefinition? variableDefinition = _currentContext.Locals[node.BundleVariable];
-            EmitExpression(processor, node.Expression, originalStatement);
-            processor.Emit(InstructionOpcode.Dup,
-                originalStatement); // Takes current value on stack and pushes it again
-
-            // TODO Add a concept of bundle fields in the emitter too
-            processor.Emit(InstructionOpcode.StBloc,
-                new int[] { variableDefinition.Index, node.FieldToAssign.OrdinalPosition },
-                originalStatement); // Writes value into local
-        }
-
         private void EmitArrayAssignmentExpression(NILProcessor processor, AbstractArrayAssignmentExpression node, Node originalStatement)
         {
             if (node.ArrayVariable is ParameterSymbol parameter)
             {
                 ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
-                processor.Emit(InstructionOpcode.Ldarg, parameterDefinition.Index, originalStatement);
+                processor.Emit(InstructionOpcode.Ldarg, parameterDefinition, originalStatement);
             }
             else
             {
@@ -632,41 +646,28 @@ namespace Nebula.Core.Compilation.Emitting
         private void EmitVariableExpression(NILProcessor processor, AbstractVariableExpression node, Node originalStatement)
         {
             // TODO :: Rethink how variables vs bundles are handled to simplify the instruction set
-            if (node.ArrayVariable is ParameterSymbol parameter)
+            if (node.Variable is ParameterSymbol parameter)
             {
                 ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
 
                 if (node is AbstractArrayAccessExpression arrAccess)
                 {
-                    processor.Emit(InstructionOpcode.Ldarg, parameterDefinition.Index, originalStatement);
+                    processor.Emit(InstructionOpcode.Ldarg, parameterDefinition, originalStatement);
                     EmitExpression(processor, arrAccess.IndexExpression, originalStatement);
                     processor.Emit(InstructionOpcode.Ldc_i4, arrAccess.IndexExpression, originalStatement);
                 }
 
                 InstructionOpcode paramOpcode = InstructionOpcode.Ldarg;
-                object paramArg = parameterDefinition.Index;
-                if (node is AbstractBundleFieldAccessExpression fParam)
-                {
-                    paramOpcode = InstructionOpcode.LdBarg;
-                    paramArg = new int[] { parameterDefinition.Index, fParam.Field.OrdinalPosition };
-                }
-
-                processor.Emit(paramOpcode, paramArg, originalStatement);
+                processor.Emit(paramOpcode, parameterDefinition, originalStatement);
                 return;
             }
 
             // TODO :: Figure out if we want to keep this variable definition as instruction argument or pass the index
             // directly
 
-            VariableDefinition? variableDefinition = _currentContext.Locals[node.ArrayVariable];
+            VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
             InstructionOpcode opcode = InstructionOpcode.Ldloc;
             object argument = variableDefinition;
-            if (node is AbstractBundleFieldAccessExpression f)
-            {
-                opcode = InstructionOpcode.LdBloc;
-                argument = new int[] { variableDefinition.Index, f.Field.OrdinalPosition };
-            }
-
             processor.Emit(opcode, argument, originalStatement);
         }
 
