@@ -108,26 +108,20 @@
     <Opcode Type="Ldarg">
         <Description></Description>
     </Opcode>
-    <Opcode Type="LdBarg">
-        <Description>Read data in parameter bundle and put it on top of stack</Description>
-    </Opcode>
     <Opcode Type="Ldloc">
         <Description></Description>
     </Opcode>
-    <Opcode Type="LdBloc">
+    <Opcode Type="Ldfld">
         <Description>Read data in local bundle and put it on top of stack</Description>
     </Opcode>
     <Opcode Type="Stloc">
         <Description>Store local variable</Description>
     </Opcode>
-    <Opcode Type="StBloc">
-        <Description>Store data in local bundle</Description>
-    </Opcode>
     <Opcode Type="StArg">
         <Description></Description>
     </Opcode>
-    <Opcode Type="StBArg">
-        <Description></Description>
+    <Opcode Type="Stfld">
+        <Description>Store data in local bundle</Description>
     </Opcode>
     <Opcode Type="Stelem">
         <Description>
