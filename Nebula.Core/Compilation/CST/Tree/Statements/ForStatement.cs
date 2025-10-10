@@ -55,6 +55,5 @@ namespace Nebula.Core.Compilation.CST.Tree.Statements
             yield return CloseParenthesis;
             yield return Body;
         }
-
     }
 }

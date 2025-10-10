@@ -87,7 +87,7 @@ namespace Nebula.Core.Utility.Abstract
         public static AbstractExpressionStatement Increment(Node syntax, AbstractVariableExpression variable)
         {
             AbstractBinaryExpression increment = Add(syntax, variable, Literal(syntax, 1));
-            AbstractAssignmentExpression incrementAssign = new(syntax, variable.ArrayVariable, increment);
+            AbstractAssignmentExpression incrementAssign = new(syntax, variable.Variable, increment);
             return new AbstractExpressionStatement(syntax, incrementAssign);
         }
 

@@ -431,7 +431,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
             }
         }
 
-        private Statement ParseNotifyStatement()
+        private NotifyStatement ParseNotifyStatement()
         {
             NameExpression identifier = ParseVariableNameExpression();
             Token keyword = MatchToken(NodeType.NotifyKeyword);
@@ -441,7 +441,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
             return new NotifyStatement(_currentSource, identifier, keyword, expression, semicolon);
         }
 
-        private Statement ParseWaitNotificationStatement()
+        private WaitNotificationStatement ParseWaitNotificationStatement()
         {
             NameExpression identifier = ParseVariableNameExpression();
             Token keyword = MatchToken(NodeType.WaitNotificationKeyword);
@@ -907,19 +907,19 @@ namespace Nebula.Core.Compilation.CST.Parsing
 
         #region Literal Parsing
 
-        private Expression ParseStringLiteral()
+        private LiteralExpression ParseStringLiteral()
         {
             Token b = MatchToken(NodeType.StringToken);
             return new LiteralExpression(_currentSource, b);
         }
 
-        private Expression ParseNumberLiteral()
+        private LiteralExpression ParseNumberLiteral()
         {
             Token b = MatchToken(NodeType.NumberToken);
             return new LiteralExpression(_currentSource, b);
         }
 
-        private Expression ParseBoolLiteral()
+        private LiteralExpression ParseBoolLiteral()
         {
             bool isTrue = Current.Type == NodeType.TrueKeyword;
             Token b = isTrue ? MatchToken(NodeType.TrueKeyword) : MatchToken(NodeType.FalseKeyword);

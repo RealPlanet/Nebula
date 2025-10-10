@@ -91,6 +91,11 @@ namespace Nebula.Compiler
         {
             allFiles = [];
 
+            if (!Directory.Exists(path))
+            {
+                return false;
+            }
+
             FileAttributes attrs = File.GetAttributes(path);
             if (attrs.HasFlag(FileAttributes.Directory))
             {

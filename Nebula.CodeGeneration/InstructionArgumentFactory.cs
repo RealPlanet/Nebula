@@ -39,10 +39,8 @@ namespace Nebula.CodeGeneration
             Register(InstructionOpcode.Newobj, ConvertGenericOperand);
             Register(InstructionOpcode.Newarr, ConvertGenericOperand);
 
-            Register(InstructionOpcode.StBloc, ConvertGenericOperand);
-            Register(InstructionOpcode.StBArg, ConvertGenericOperand);
-            Register(InstructionOpcode.LdBarg, ConvertGenericOperand);
-            Register(InstructionOpcode.LdBloc, ConvertGenericOperand);
+            Register(InstructionOpcode.Ldfld, RequireInt32);
+            Register(InstructionOpcode.Stfld, RequireInt32);
         }
 
         #region Generator callbacks
