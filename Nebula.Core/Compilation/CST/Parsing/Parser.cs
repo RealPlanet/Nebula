@@ -623,29 +623,26 @@ namespace Nebula.Core.Compilation.CST.Parsing
 
         private Expression ParseExpression()
         {
-            if (Current.Type == NodeType.IdentifierToken)
+            Expression expression = ParseBinaryExpression();
+            // Token lookAheadOperator = PeekAfterNameExpression();
+            switch (Current.Type)
             {
-                Token lookAheadOperator = PeekAfterNameExpression();
-                switch (lookAheadOperator.Type)
-                {
-                    case NodeType.PlusEqualsToken:
-                    case NodeType.MinusEqualsToken:
-                    case NodeType.StarEqualsToken:
-                    case NodeType.SlashEqualsToken:
-                    case NodeType.AmpersandEqualsToken:
-                    case NodeType.PipeEqualsToken:
-                    case NodeType.HatEqualsToken:
-                    case NodeType.EqualsToken:
-                        {
-                            Expression identifier = ParseVariableNameExpression();
-                            Token op = MatchToken(Current.Type);
-                            Expression rightExpr = ParseExpression();
-                            return new AssignmentExpression(_currentSource, identifier, op, rightExpr);
-                        }
-                }
+                case NodeType.PlusEqualsToken:
+                case NodeType.MinusEqualsToken:
+                case NodeType.StarEqualsToken:
+                case NodeType.SlashEqualsToken:
+                case NodeType.AmpersandEqualsToken:
+                case NodeType.PipeEqualsToken:
+                case NodeType.HatEqualsToken:
+                case NodeType.EqualsToken:
+                    {
+                        Token op = MatchToken(Current.Type);
+                        Expression rightExpr = ParseExpression();
+                        return new AssignmentExpression(_currentSource, expression, op, rightExpr);
+                    }
             }
 
-            return ParseBinaryExpression();
+            return expression;
         }
 
         private Expression ParseBinaryExpression(int parentPrecedence = 0)
@@ -705,19 +702,19 @@ namespace Nebula.Core.Compilation.CST.Parsing
                     }
                 case NodeType.OpenSquareBracketToken:
                     {
-                        return ParseExpressionList();
+                        return ParseInitializationExpression();
                     }
             }
 
             return ParseNameOrFunctionCallExpression();
         }
 
-        private DefaultInitializationExpression ParseExpressionList()
+        private InitializationExpression ParseInitializationExpression()
         {
             Token open = MatchToken(NodeType.OpenSquareBracketToken);
             Token close = MatchToken(NodeType.ClosedSquareBracketToken);
 
-            return new DefaultInitializationExpression(_currentSource, open, close);
+            return new InitializationExpression(_currentSource, open, close);
         }
 
         private Expression ParseNameOrFunctionCallExpression()
@@ -781,39 +778,6 @@ namespace Nebula.Core.Compilation.CST.Parsing
             }
 
             return new NameExpression(_currentSource, name);
-        }
-
-        private Token PeekAfterNameExpression()
-        {
-            if (Current.Type != NodeType.IdentifierToken)
-            {
-                return Current;
-            }
-
-            if (Peek(1).Type == NodeType.DotToken)
-            {
-                return Peek(3);
-            }
-
-            if (Peek(1).Type == NodeType.OpenSquareBracketToken)
-            {
-                int peekOffset = 2;
-                NodeType currentType = Peek(peekOffset).Type;
-                // Skip entire expression assuming it is correct
-                while (currentType != NodeType.ClosedSquareBracketToken &&
-                    currentType != NodeType.EndOfFileToken)
-                {
-                    peekOffset++;
-                    currentType = Peek(peekOffset).Type;
-                }
-
-                if (currentType == NodeType.ClosedSquareBracketToken)
-                {
-                    return Peek(peekOffset + 1);
-                }
-            }
-
-            return Peek(1);
         }
 
         private Expression? ParseFunctionCall()
