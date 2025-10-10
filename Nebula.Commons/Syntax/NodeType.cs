@@ -105,7 +105,7 @@
         CallExpression,
         ObjectCallExpression,
         LiteralExpression,
-        DefaultInitializationExpression,
+        InitializationExpression,
 
 
         EndOfFileToken,
