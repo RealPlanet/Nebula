@@ -236,6 +236,12 @@ bool ParserDebug::ParseFunctionBody(Function* newFunc)
         std::string num;
         ReadLiteral(num);
 
+        if (num.starts_with('#'))
+        {
+            SkipLine();
+            continue;
+        }
+
         std::string instName;
         ReadLiteral(instName);
 
