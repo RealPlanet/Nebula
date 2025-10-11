@@ -1,0 +1,77 @@
+namespace "Game";
+
+native void InitWindow(int width, int height, string title);
+native bool WindowShouldClose();
+native void BeginDrawing();
+native void EndDrawing();
+native void ClearBackground(Color color);
+native void DrawText(string text, int x, int y, int size, Color color);
+native void CloseWindow();
+
+bundle Color{
+    int r;
+    int g;
+    int b;
+    int a;
+}
+
+bundle UICore {
+    string MainMessage;
+    float posX;
+    float posY;
+}
+
+bundle GameCore {
+    bool isRunning;
+    UICore ui;
+}
+
+func void MoveUI(GameCore core)
+{
+    int counter = 0;
+    string original = core.ui.MainMessage;
+    while(core.isRunning)
+    {
+        wait 0.75f;
+        core.ui.MainMessage = original + " Async loop counter: " + string(counter += 1);
+    }
+}
+
+func void main() autoexec
+{
+    InitWindow(800,  450, "Nebula Game");
+
+    Color WHITE = [];
+    WHITE.r = 255;
+    WHITE.g = 255;
+    WHITE.b = 255;
+    WHITE.a = 255;
+
+    Color BLACK = [];
+    BLACK.r = 0;
+    BLACK.g = 0;
+    BLACK.b = 0;
+    BLACK.a = 255;
+
+    GameCore core = [];
+    core.ui = [];
+    core.ui.MainMessage = "Welcome!";
+    core.ui.posX = 190;
+    core.ui.posY = 200;
+
+    core.isRunning = true;
+
+    async MoveUI(core);
+
+    while(!WindowShouldClose())
+    {
+        BeginDrawing();
+
+        ClearBackground(WHITE);
+        DrawText(core.ui.MainMessage, int(core.ui.posX), int(core.ui.posY), 32, BLACK);
+        EndDrawing();
+    }
+
+    core.isRunning = false;
+    CloseWindow();
+}
