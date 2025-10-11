@@ -433,7 +433,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
 
         private NotifyStatement ParseNotifyStatement()
         {
-            NameExpression identifier = ParseVariableNameExpression();
+            NameExpression identifier = ParseNameExpression();
             Token keyword = MatchToken(NodeType.NotifyKeyword);
             Expression expression = ParseExpression();
             Token semicolon = MatchToken(NodeType.SemicolonToken);
@@ -443,7 +443,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
 
         private WaitNotificationStatement ParseWaitNotificationStatement()
         {
-            NameExpression identifier = ParseVariableNameExpression();
+            NameExpression identifier = ParseNameExpression();
             Token keyword = MatchToken(NodeType.WaitNotificationKeyword);
             Expression expression = ParseExpression();
             Token semicolon = MatchToken(NodeType.SemicolonToken);
@@ -731,7 +731,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
                 return objectFunctionCall;
             }
 
-            return ParseVariableNameExpression();
+            return ParseNameExpression();
         }
 
         private Expression? ParseObjectFunctionCall()
@@ -759,7 +759,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
             return null;
         }
 
-        private NameExpression ParseVariableNameExpression()
+        private NameExpression ParseNameExpression()
         {
             Token name = MatchToken(NodeType.IdentifierToken);
             if (Current.Type == NodeType.DotToken)

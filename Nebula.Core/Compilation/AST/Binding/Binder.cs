@@ -232,6 +232,12 @@ namespace Nebula.Core.Compilation.AST.Binding
         {
             TypeSymbol type = BindTypeClause(declaration.VarType);
             AbstractExpression initializer = BindExpression(declaration.Initializer);
+
+            if (initializer is AbstractInitializationExpression initExpr)
+            {
+                initExpr.SetAllocationResult(type);
+            }
+
             VariableSymbol variable = BindVariableDeclaration(declaration.Identifier, isReadOnly, type, initializer.ConstantValue);
             AbstractExpression? convertedInitializer = BindConversion(declaration.Location, initializer, type);
             return new(declaration, variable, convertedInitializer);
@@ -636,14 +642,15 @@ namespace Nebula.Core.Compilation.AST.Binding
             AbstractExpression identifierExpression = BindExpression(expr.Identifier);
             AbstractExpression boundExpression = BindExpression(expr.RightExpr);
 
-            if (identifierExpression is AbstractObjectFieldAccessExpression objectAccessExpression)
+            if (identifierExpression is AbstractObjectFieldAccessExpression fieldAccess)
             {
-                if (boundExpression is AbstractInitializationExpression initializationExpression)
+                if (boundExpression is AbstractInitializationExpression initExpr)
                 {
-                    return new AbstractObjectAllocationExpression(expr, identifierExpression, initializationExpression);
+                    initExpr.SetAllocationResult(fieldAccess.ResultType);
                 }
 
-                return new AbstractObjectFieldAssignmentExpression(expr, objectAccessExpression, objectAccessExpression.Field, boundExpression);
+                AbstractExpression? convertedInitializer = BindConversion(expr.RightExpr.Location, boundExpression, fieldAccess.Field.FieldType);
+                return new AbstractObjectFieldAssignmentExpression(expr, fieldAccess.Target, fieldAccess.Field, convertedInitializer);
             }
 
             VariableSymbol variable;
@@ -744,18 +751,18 @@ namespace Nebula.Core.Compilation.AST.Binding
         private AbstractExpression BindBinaryObjectExpression(BinaryExpression binaryNode, ObjectVariableAccessExpression node)
         {
             // Recursive bind access expression
-            AbstractExpression leftAccess = BindObjectVariableAccessExpression(node);
-            if (leftAccess is AbstractErrorExpression expr)
+            AbstractExpression boundLeftExpression = BindObjectVariableAccessExpression(node);
+            if (boundLeftExpression is AbstractErrorExpression expr)
             {
                 return expr;
             }
 
             // Last one is a name expression (field of bundle)
-            AbstractObjectFieldAccessExpression chainedAccessExpression = (AbstractObjectFieldAccessExpression)leftAccess;
+            AbstractObjectFieldAccessExpression chainedAccessExpression = (AbstractObjectFieldAccessExpression)boundLeftExpression;
             BundleSymbol? bundleTemplate = GetBundleSymbol(chainedAccessExpression.Field.FieldType);
             if (bundleTemplate is null)
             {
-                _binderReport.ReportCannotAssign(chainedAccessExpression.OriginalNode.Location, "aaa");
+                _binderReport.ReportBundleDoesNotExist(node.FieldName);
                 return new AbstractErrorExpression(node);
             }
 
@@ -769,7 +776,7 @@ namespace Nebula.Core.Compilation.AST.Binding
                 return new AbstractErrorExpression(binaryNode);
             }
 
-            AbstractObjectFieldAccessExpression right = new(binaryNode.Right, chainedAccessExpression, fieldToAccess);
+            AbstractObjectFieldAccessExpression right = new(binaryNode, chainedAccessExpression, fieldToAccess);
             return right;
         }
 
@@ -942,7 +949,6 @@ namespace Nebula.Core.Compilation.AST.Binding
                 bool isAllowedExpression = es.Expression.Type == AbstractNodeType.ErrorExpression ||
                                             es.Expression.Type == AbstractNodeType.AssignmentExpression ||
                                             es.Expression.Type == AbstractNodeType.ObjectFieldAssignmentExpression ||
-                                            es.Expression.Type == AbstractNodeType.ObjectAllocationExpression ||
                                             es.Expression.Type == AbstractNodeType.ObjectCallExpression ||
                                             es.Expression.Type == AbstractNodeType.ArrayAssignmentExpression ||
                                             es.Expression.Type == AbstractNodeType.CallExpression ||

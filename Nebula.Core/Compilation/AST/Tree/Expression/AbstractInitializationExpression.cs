@@ -7,14 +7,21 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression
     public sealed class AbstractInitializationExpression
         : AbstractExpression
     {
-        public override TypeSymbol ResultType { get; }
+        public override TypeSymbol ResultType => _internalAllocationType;
         public override AbstractNodeType Type => AbstractNodeType.InitializationExpression;
+
+        private TypeSymbol _internalAllocationType; 
 
         public AbstractInitializationExpression(Node syntax)
             : base(syntax)
         {
             // Does nothing for now
-            ResultType = TypeSymbol.BaseObject;
+            _internalAllocationType = TypeSymbol.BaseObject;
+        }
+
+        public void SetAllocationResult(TypeSymbol result)
+        {
+            _internalAllocationType = result;
         }
     }
 }
