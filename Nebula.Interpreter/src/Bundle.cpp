@@ -19,6 +19,18 @@ BundleField::BundleField(const std::string& name, DataStackVariantIndex fieldTyp
 		m_Value = { "" };
 		break;
 	}
+	case DataStackVariantIndex::_TypeBundle:
+	{
+		TBundle ptr = nullptr;
+		m_Value = { ptr };
+		break;
+	}
+	case DataStackVariantIndex::_TypeArray:
+	{
+		TArray ptr = nullptr;
+		m_Value = { ptr };
+		break;
+	}
 	}
 }
 
