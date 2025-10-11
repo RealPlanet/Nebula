@@ -1,11 +1,15 @@
 ﻿using Mono.Options;
 using Nebula.Commons.Text;
 using Nebula.Commons.Text.Printers;
+using Nebula.Core.Compilation.AST.Tree;
+using Nebula.Core.Utility.Concrete;
 using Nebula.Interop.SafeHandles;
 using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using static Nebula.Core.Compilation.Compiler;
 
 namespace Nebula.Compiler
 {
@@ -63,6 +67,7 @@ namespace Nebula.Compiler
                 { "f=", "A source file or directory path, if a directory is provided all sub directories will also be scanned for source files" , AddCompilationPathToCompiler },
                 { "r=", "A compiled file or directory path, if a directory is provided all sub directories will also be scanned for compiled files" , AddReferencePathToCompiler },
                 { "o=|output_folder" , AddOutputFolderToCompiler },
+                { "print_ast" , v => CompilerSettings.PrintAST = true },
                 { "next_to_source", v => CompilerSettings.OutputToSourceLocation = true }
             };
 
@@ -131,14 +136,15 @@ namespace Nebula.Compiler
                 references.Add(loadedScript);
             }
 
-            Core.Compilation.Compiler.Options options = new();
+            Options options = new();
             options.Sources.AddRange(sources);
             options.References.AddRange(references);
             options.OutputFolder = CompilerSettings.OutputFolder;
             options.OutputToSourceLocation = CompilerSettings.OutputToSourceLocation;
 
             Stopwatch compileTime = Stopwatch.StartNew();
-            bool compileOk = Core.Compilation.Compiler.Compile(options, out Core.Compilation.Compiler.Result? result);
+            bool compileOk = Compile(options, out Result? result);
+
             compileTime.Stop();
 
             Commons.Reporting.Report compileReport = result.Report;
@@ -154,7 +160,30 @@ namespace Nebula.Compiler
             }
 
             Writer.WriteLine($"Compilation took '{compileTime.ElapsedMilliseconds}' ms", ConsoleColor.DarkCyan);
+
+            if (CompilerSettings.PrintAST)
+            {
+                Writer.WriteLine("Writing AST tree...", ConsoleColor.Cyan);
+                foreach (var program in result.Programs)
+                {
+                    WriteAbstractProgram(program);
+                }
+            }
+
             return compileOk ? 0 : -1;
+        }
+
+        private static void WriteAbstractProgram(AbstractProgram program)
+        {
+            IndentedTextWriter writer = new(Console.Out);
+            Writer.WriteLine($"Program with namespace: {program.Namespace.Text}", ConsoleColor.Cyan);
+            Writer.WriteLine($"Functions:", ConsoleColor.Cyan);
+
+            foreach (var f in program.Functions)
+            {
+                AbstractTreeWriter.WriteTo(f.Value, writer);
+                Console.Out.WriteLine();
+            }
         }
 
         private static void OnReportCallback(string scriptPath, ReportType type, string message)

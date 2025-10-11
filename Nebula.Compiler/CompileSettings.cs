@@ -17,6 +17,7 @@ namespace Nebula.Compiler
         /// <summary> Where to put the compiled files </summary>
         public string OutputFolder { get; set; } = string.Empty;
         public bool OutputToSourceLocation { get; set; } = false;
+        public bool PrintAST { get; set; }
 
         private readonly List<string> _sourceFiles = [];
         private readonly List<string> _references = [];
