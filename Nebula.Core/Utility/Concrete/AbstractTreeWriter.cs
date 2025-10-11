@@ -1,8 +1,10 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Commons.Text.Printers;
+using Nebula.Core.Compilation.AST.Bundle;
 using Nebula.Core.Compilation.AST.Symbols;
 using Nebula.Core.Compilation.AST.Tree.Base;
 using Nebula.Core.Compilation.AST.Tree.Expression;
+using Nebula.Core.Compilation.AST.Tree.Expression.Bundles;
 using Nebula.Core.Compilation.AST.Tree.Statements;
 using Nebula.Core.Compilation.AST.Tree.Statements.ControlFlow;
 using Nebula.Core.Compilation.AST.Tree.Statements.Loop;
@@ -93,8 +95,57 @@ namespace Nebula.Core.Utility.Concrete
                 case AbstractNodeType.ConversionExpression:
                     WriteConversionExpression((AbstractConversionExpression)node, writer);
                     break;
+                case AbstractNodeType.VariableDeclarationCollection:
+                    WriteVariableDeclarationCollection((AbstractVariableDeclarationCollection)node, writer);
+                    break;
+                case AbstractNodeType.ObjectFieldAccessExpression:
+                    WriteObjectFieldAccessExpression((AbstractObjectFieldAccessExpression)node, writer);
+                    break;
+                case AbstractNodeType.ObjectFieldAssignmentExpression:
+                    WriteObjectFieldAssignmentExpression((AbstractObjectFieldAssignmentExpression)node, writer);
+                    break;
+                case AbstractNodeType.InitializationExpression:
+                    WriteInitializationExpression((AbstractInitializationExpression)node, writer);
+                    break;
                 default:
                     throw new Exception($"Unexpected node {node.Type}");
+            }
+        }
+
+        public static void WriteTo(this AbstractBundleField field, IndentedTextWriter writer)
+        {
+            writer.WritePunctuation(NodeType.DotToken);
+            writer.WriteString(field.FieldName);
+        }
+
+        private static void WriteInitializationExpression(AbstractInitializationExpression node, IndentedTextWriter writer)
+        {
+            writer.WritePunctuation(NodeType.OpenSquareBracketToken);
+            writer.Write($"{node.ResultType.BaseType}::{node.ResultType}");
+            writer.WritePunctuation(NodeType.ClosedSquareBracketToken);
+        }
+
+        private static void WriteObjectFieldAssignmentExpression(AbstractObjectFieldAssignmentExpression node, IndentedTextWriter writer)
+        {
+            node.Target.WriteTo(writer);
+            node.Field.WriteTo(writer);
+            writer.WriteSpace();
+            writer.WritePunctuation(NodeType.EqualsToken);
+            writer.WriteSpace();
+            node.Expression.WriteTo(writer);
+        }
+
+        private static void WriteObjectFieldAccessExpression(AbstractObjectFieldAccessExpression node, IndentedTextWriter writer)
+        {
+            node.Target.WriteTo(writer);
+            node.Field.WriteTo(writer);
+        }
+
+        private static void WriteVariableDeclarationCollection(AbstractVariableDeclarationCollection node, IndentedTextWriter writer)
+        {
+            foreach (var n in node.AllVariables)
+            {
+                WriteTo(n, writer);
             }
         }
 
@@ -154,9 +205,8 @@ namespace Nebula.Core.Utility.Concrete
             if (node.Variable.IsReadOnly)
             {
                 writer.WriteKeyword(NodeType.ConstKeyword);
+                writer.WriteSpace();
             }
-
-            writer.WriteSpace();
 
             node.Variable.Type.WriteTo(writer);
             writer.WriteSpace();
@@ -253,7 +303,8 @@ namespace Nebula.Core.Utility.Concrete
                 return;
             }
 
-            if (node.ResultType == TypeSymbol.Int)
+            if (node.ResultType == TypeSymbol.Int ||
+                node.ResultType == TypeSymbol.Float)
             {
                 writer.WriteNumber(value);
                 return;
@@ -266,7 +317,7 @@ namespace Nebula.Core.Utility.Concrete
                 return;
             }
 
-            throw new Exception($"Unexpected tpye {node.Type}");
+            throw new Exception($"Unexpected type {node.Type}");
         }
 
         private static void WriteCompoundAssignmentExpression(AbstractCompoundAssignmentExpression node, IndentedTextWriter writer)

@@ -10,7 +10,7 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression
         public override TypeSymbol ResultType => _internalAllocationType;
         public override AbstractNodeType Type => AbstractNodeType.InitializationExpression;
 
-        private TypeSymbol _internalAllocationType; 
+        private TypeSymbol _internalAllocationType;
 
         public AbstractInitializationExpression(Node syntax)
             : base(syntax)
