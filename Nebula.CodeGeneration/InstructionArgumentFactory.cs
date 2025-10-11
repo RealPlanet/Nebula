@@ -68,7 +68,7 @@ namespace Nebula.CodeGeneration
         {
             if (input.Operand is TypeReference type)
             {
-                return type.Name;
+                return ((int)type.Identifier).ToString();
             }
 
             throw new InvalidOperationException($"Unknown operand type '{input.Operand?.GetType().Name ?? "NULL"}'");
