@@ -492,15 +492,20 @@ namespace Nebula.Core.Compilation.Emitting
                 case AbstractNodeType.ArrayAccessExpression:
                     EmitArrayAccessExpression(processor, (AbstractArrayAccessExpression)node, originalStatement);
                     break;
-                case AbstractNodeType.ObjectAllocationExpression:
-                    EmitObjectAllocationExpression(processor, (AbstractObjectAllocationExpression)node, originalStatement);
-                    break;
                 case AbstractNodeType.ObjectFieldAccessExpression:
                     EmitObjectFieldAccess(processor, (AbstractObjectFieldAccessExpression)node, originalStatement);
+                    break;
+                case AbstractNodeType.InitializationExpression:
+                    EmitInitializationExpression(processor, (AbstractInitializationExpression)node, originalStatement);
                     break;
                 default:
                     throw new Exception($"Unexpected node type {node.Type}");
             }
+        }
+
+        private void EmitInitializationExpression(NILProcessor processor, AbstractInitializationExpression node, Node originalStatement)
+        {
+            EmitBundleAllocation(processor, originalStatement, (ObjectTypeSymbol)node.ResultType);
         }
 
         private void EmitConversionExpression(NILProcessor processor, AbstractConversionExpression node, Node originalStatement)
@@ -537,33 +542,21 @@ namespace Nebula.Core.Compilation.Emitting
             processor.Emit(InstructionOpcode.Ldelem, originalStatement);
         }
 
-        private void EmitObjectAllocationExpression(NILProcessor processor, AbstractObjectAllocationExpression node, Node originalStatement)
-        {
-            EmitExpression(processor, node.Target, originalStatement);
-            EmitBundleAllocation(processor, originalStatement, (ObjectTypeSymbol)node.ResultType);
 
-            switch (node.Target)
-            {
-                case AbstractObjectFieldAccessExpression fieldAccess:
-                    {
-                        processor.Emit(InstructionOpcode.Stfld, fieldAccess.Field.OrdinalPosition, originalStatement);
-                        break;
-                    }
-                default:
-                    throw new NotSupportedException(node.Target.GetType().ToString());
-            }
+        private void EmitObjectFieldAssignment(NILProcessor processor, AbstractObjectFieldAssignmentExpression node, Node originalStatement)
+        {
+            //processor.WriteComment("An object reference or pointer is pushed onto the stack.");
+            EmitExpression(processor, node.Target, originalStatement);
+            processor.Emit(InstructionOpcode.Dup, originalStatement);
+
+            EmitExpression(processor, node.Expression, originalStatement);
+            processor.Emit(InstructionOpcode.Stfld, node.Field.OrdinalPosition, originalStatement);
         }
 
         private void EmitObjectFieldAccess(NILProcessor processor, AbstractObjectFieldAccessExpression node, Node originalStatement)
         {
             EmitExpression(processor, node.Target, originalStatement);
             processor.Emit(InstructionOpcode.Ldfld, node.Field.OrdinalPosition, originalStatement);
-        }
-
-        private void EmitObjectFieldAssignment(NILProcessor processor, AbstractObjectFieldAssignmentExpression node, Node originalStatement)
-        {
-            EmitExpression(processor, node.Target, originalStatement);
-            processor.Emit(InstructionOpcode.Stfld, node.Field.OrdinalPosition, originalStatement);
         }
 
         private void EmitCallExpression(NILProcessor processor, AbstractCallExpression node, Node originalStatement)
