@@ -1,7 +1,9 @@
 ﻿using Nebula.Core.Compilation.AST.Symbols;
+using System.Diagnostics;
 
 namespace Nebula.Core.Compilation.AST
 {
+    [DebuggerDisplay("Exists: {Exists}, IsIdentity: {IsIdentity}, IsImplicit: {IsImplicit}, IsExplicit: {IsExplicit}")]
     public sealed class TypeConversion
     {
         public static readonly TypeConversion None = new(exists: false, isIdentity: false, isImplicit: false);
@@ -56,17 +58,6 @@ namespace Nebula.Core.Compilation.AST
                 {
                     return Explicit;
                 }
-            }
-
-            // BaseObject is default initialization
-            if (from == TypeSymbol.BaseObject && to is ObjectTypeSymbol)
-            {
-                return Implict;
-            }
-
-            if (from == TypeSymbol.BaseObject && to is ArrayTypeSymbol)
-            {
-                return Implict;
             }
 
             return None;
