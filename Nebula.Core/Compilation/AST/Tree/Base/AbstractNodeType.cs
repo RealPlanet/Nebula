@@ -34,7 +34,6 @@
         ObjectFieldAssignmentExpression,
         ObjectFieldAccessExpression,
         ObjectCallExpression,
-        ObjectAllocationExpression,
         ArrayAssignmentExpression,
         ArrayAccessExpression,
         CallExpression,
