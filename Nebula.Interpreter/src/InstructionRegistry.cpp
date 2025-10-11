@@ -4,6 +4,7 @@
 #include "Frame.h"
 #include "DataStack.h"
 #include "Bundle.h"
+#include "VariantArray.h"
 #include "Interpreter.h"
 
 using namespace nebula;
@@ -306,6 +307,8 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
 {
     switch (opcode)
     {
+    case VMInstruction::StElem:
+    case VMInstruction::LdElem:
     case VMInstruction::Nop:
     case VMInstruction::Pop:
     case VMInstruction::Dup:
@@ -331,7 +334,7 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
     }
     case VMInstruction::Call_t:
     case VMInstruction::Call:
-    case VMInstruction::Ld_b:
+    case VMInstruction::Newobj:
     {
         assert(args.size() == 1 || args.size() == 2);
 
@@ -350,6 +353,31 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
         }
         break;
     }
+    case VMInstruction::NewArr:
+    {
+        assert(args.size() == 1 || args.size() == 2 || args.size() == 3);
+        const std::string& targetType = args[0];
+        TInt32 dataType = (TInt32)StringToStackValue(targetType);
+
+        if (args.size() == 1)
+        {
+            return { dataType };
+        }
+
+        if (args.size() == 2)
+        {
+            return { dataType, args[1] };
+        }
+
+        return { dataType, args[1], args[2] };
+    }
+    case VMInstruction::CallVirt:
+    {
+        assert(args.size() == 2);
+        char* p{ nullptr };
+        long converted = strtol(args[0].data(), &p, 10);
+        return { converted, args[1] };
+    }
     case VMInstruction::AddStr:     // Number of strings on stack to sum
     {
         assert(args.size() == 1);
@@ -358,21 +386,6 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
         assert(p != nullptr);
         return { converted };
     }
-    case VMInstruction::StBloc:	    // Contains index so we convert it like an i4 constant
-    case VMInstruction::StBArg:	    // Contains index so we convert it like an i4 constant
-    case VMInstruction::LdBloc:	    // Contains index so we convert it like an i4 constant
-    case VMInstruction::LdBarg:	    // Contains index so we convert it like an i4 constant
-    {
-        assert(args.size() == 2);
-        char* p{ nullptr };
-        long converted = strtol(args[0].data(), &p, 10);
-        assert(p != nullptr);
-
-        long converted2 = strtol(args[1].data(), &p, 10);
-        assert(p != nullptr);
-
-        return { converted, converted2 };
-    }
     case VMInstruction::Stloc:	    // Contains index so we convert it like an i4 constant
     case VMInstruction::StArg:	    // Contains index so we convert it like an i4 constant
     case VMInstruction::Ldloc:	    // Contains index so we convert it like an i4 constant
@@ -380,6 +393,9 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
     case VMInstruction::BrFalse:    // Contains index so we convert it like an i4 constant
     case VMInstruction::BrTrue:     // Contains index so we convert it like an i4 constant
     case VMInstruction::Br:         // Contains index so we convert it like an i4 constant
+    case VMInstruction::LdFld:      // Contains index so we convert it like an i4 constant
+    case VMInstruction::StFld:      // Contains index so we convert it like an i4 constant
+    case VMInstruction::ConvType:   // Contains index so we convert it like an i4 constant
     case VMInstruction::Ldc_i4:
     {
         assert(args.size() == 1);
@@ -408,12 +424,6 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
     {
         assert(args.size() == 1);
         return { args[0] };
-    }
-    case VMInstruction::ConvType:
-    {
-        assert(args.size() == 1);
-        const std::string& targetType = args[0];
-        return { (TInt32)StringToStackValue(targetType) };
     }
     case VMInstruction::LastInstruction:
         __debugbreak(); //  should Not happen
@@ -490,6 +500,21 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
         stack.Dup();
         return InstructionErrorCode::None;
     }
+    case VMInstruction::CallVirt:
+    {
+        assert(args.size() == 2);
+        assert(std::holds_alternative<TInt32>(args[0]));
+        assert(std::holds_alternative<TString>(args[1]));
+
+        int localIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
+        FrameVariable& var = context->Memory().LocalAt(localIndex);
+
+        RefCounted<IGCObject> ptr = *var.AsGCObject();
+        const TString& funcName = std::get<DataStackVariantIndex::_TypeString>(args[1]);
+        InstructionErrorCode result = ptr->CallVirtual(funcName, interpreter, context);
+        assert(result == InstructionErrorCode::None);
+        return result;
+    }
     case VMInstruction::Call_t:
     case VMInstruction::Call:
     {
@@ -548,8 +573,8 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
     }
     case VMInstruction::Wait:
     {
-        TInt32& millis = std::get<TInt32>(stack.Peek());
-        context->SetScheduledSleep(((size_t)millis) * 1000);
+        TFloat& seconds = std::get<TFloat>(stack.Peek());
+        context->SetScheduledSleep((size_t)(seconds * 1000));
         stack.Pop();
 
         return InstructionErrorCode::None;
@@ -647,7 +672,7 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
         stack.Push(cStr);
         return InstructionErrorCode::None;
     }
-    case VMInstruction::Ld_b:
+    case VMInstruction::Newobj:
     {
         assert(args.size() == 1 || args.size() == 2);
         const BundleDefinition* bundleDefinition = nullptr;
@@ -681,33 +706,19 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
         stack.Push(bundle);
         return InstructionErrorCode::None;
     }
-    case VMInstruction::LdBloc:
+    case VMInstruction::LdFld:
     {
-        assert(args.size() == 2);
+        assert(args.size() == 1);
         assert(std::holds_alternative<TInt32>(args[0]));
-        assert(std::holds_alternative<TInt32>(args[1]));
 
-        TInt32 localIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
-        TInt32 bundleIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[1]);
-        FrameVariable& var = context->Memory().LocalAt(localIndex);
+        TInt32 fieldIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
 
-        TBundle bundle = std::get<DataStackVariantIndex::_TypeBundle>(var.Value());
-        stack.Push(bundle->Get(bundleIndex));
+        DataStackVariant variant = context->Stack().Peek();
+        context->Stack().Pop();
 
-        return InstructionErrorCode::None;
-    }
-    case VMInstruction::LdBarg:
-    {
-        assert(args.size() == 2);
-        assert(std::holds_alternative<TInt32>(args[0]));
-        assert(std::holds_alternative<TInt32>(args[1]));
-
-        TInt32 paramIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
-        TInt32 bundleIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[1]);
-        FrameVariable& var = context->Memory().ParamAt(paramIndex);
-
-        TBundle bundle = std::get<DataStackVariantIndex::_TypeBundle>(var.Value());
-        stack.Push(bundle->Get(bundleIndex));
+        TBundle bundle = std::get<DataStackVariantIndex::_TypeBundle>(variant);
+        DataStackVariant& dataStackVariant = bundle->Get(fieldIndex);
+        stack.Push(dataStackVariant);
         return InstructionErrorCode::None;
     }
     case VMInstruction::Ldloc:
@@ -758,43 +769,21 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
         context->Stack().Push({ finalString });
         return InstructionErrorCode::None;
     }
-    case VMInstruction::StBloc:
+    case VMInstruction::StFld:
     {
-        TInt32 localIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
-        TInt32 bundleIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[1]);
+        assert(args.size() == 1);
+        assert(std::holds_alternative<TInt32>(args[0]));
 
-        FrameVariable& var = context->Memory().LocalAt(localIndex);
-        DataStackVariant& value = stack.Peek();
-        TBundle bundlePtr = std::get<DataStackVariantIndex::_TypeBundle>(var.Value());
+        DataStackVariant value = context->Stack().Peek();
+        context->Stack().Pop();
 
-        if (bundlePtr->SetAt(bundleIndex, value))
-        {
-            stack.Pop();
-            return InstructionErrorCode::None;
-        }
+        DataStackVariant variant = context->Stack().Peek();
+        context->Stack().Pop();
 
-        stack.Pop();
-        // Types don't match
-        return InstructionErrorCode::Fatal;
-    }
-    case VMInstruction::StBArg:
-    {
-        TInt32 localIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
-        TInt32 bundleIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[1]);
-
-        FrameVariable& var = context->Memory().ParamAt(localIndex);
-        DataStackVariant value = stack.Peek();
-
-        TBundle bundlePtr = std::get<DataStackVariantIndex::_TypeBundle>(var.Value());
-        if (bundlePtr->SetAt(bundleIndex, value))
-        {
-            stack.Pop();
-            return InstructionErrorCode::None;
-        }
-
-        stack.Pop();
-        // Types don't match
-        return InstructionErrorCode::Fatal;
+        TInt32 fieldIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
+        TBundle bundle = std::get<DataStackVariantIndex::_TypeBundle>(variant);
+        bundle->SetAt(fieldIndex, value);
+        return InstructionErrorCode::None;
     }
     case VMInstruction::Stloc:
     {
@@ -1041,6 +1030,35 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
             return InstructionErrorCode::Fatal;
         }
 
+        return InstructionErrorCode::None;
+    }
+    case VMInstruction::NewArr:
+    {
+        assert(args.size() == 1 || // Alloc a primitive type
+            args.size() == 2 || // Alloc an object and object name
+            args.size() == 3); // Alloc an object, namespace and object name
+
+        DataStackVariantIndex typeIndex = (DataStackVariantIndex)std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
+        if (args.size() == 1)
+        {
+            TArray newArr = interpreter->m_Memory.AllocArray(typeIndex);
+            context->Stack().Push({ newArr });
+            return InstructionErrorCode::None;
+        }
+
+        return InstructionErrorCode::Fatal;
+    }
+    case VMInstruction::LdElem:
+    {
+        assert(args.size() == 0);
+        DataStackVariant indexVariant = context->Stack().Peek();
+        context->Stack().Pop();
+
+        const TInt32 index = std::get<DataStackVariantIndex::_TypeInt32>(indexVariant);
+        TArray array = std::get<DataStackVariantIndex::_TypeArray>(context->Stack().Peek());
+        context->Stack().Pop();
+        DataStackVariant& value = (*array)[index];
+        context->Stack().Push(value);
         return InstructionErrorCode::None;
     }
     case VMInstruction::LastInstruction:

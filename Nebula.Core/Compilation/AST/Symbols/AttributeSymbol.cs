@@ -1,15 +1,16 @@
-﻿using Nebula.CodeEmitter;
+﻿using Nebula.Core.Compilation.AST.Symbols.Base;
+using Nebula.Interop.Enumerators;
 using System;
 using System.Collections.Generic;
 
-namespace Nebula.Core.Binding.Symbols
+namespace Nebula.Core.Compilation.AST.Symbols
 {
     public sealed class AttributeSymbol
         : Symbol
     {
         public override SymbolType SymbolType => SymbolType.Attribute;
         public object? Attribute { get; } = null;
-        public bool IsMethodAttribute => Attribute is NativeAttribute;
+        public bool IsMethodAttribute => Attribute is AttributeType;
         public bool CanHaveReturnType { get; } = true;
         public bool CanHaveParameters { get; } = true;
 
@@ -18,7 +19,7 @@ namespace Nebula.Core.Binding.Symbols
         {
             CanHaveReturnType = canHaveReturnType;
             CanHaveParameters = canHaveParameters;
-            if (Enum.TryParse<NativeAttribute>(name, ignoreCase: true, out NativeAttribute result))
+            if (Enum.TryParse<AttributeType>(name, ignoreCase: true, out AttributeType result))
             {
                 Attribute = result;
                 return;
@@ -27,7 +28,7 @@ namespace Nebula.Core.Binding.Symbols
 
         private static readonly Dictionary<string, AttributeSymbol> _symbols = new(StringComparer.OrdinalIgnoreCase)
         {
-            { NativeAttribute.AutoExec.ToString(), new(NativeAttribute.AutoExec.ToString(), false, false)},
+            { AttributeType.AutoExec.ToString(), new(AttributeType.AutoExec.ToString(), false, false)},
         };
 
         public static AttributeSymbol FromName(string name)

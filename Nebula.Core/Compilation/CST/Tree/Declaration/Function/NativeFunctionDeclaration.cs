@@ -1,8 +1,9 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
+using Nebula.Core.Compilation.CST.Tree.Types;
 using System.Collections.Generic;
 
-namespace Nebula.Core.Parsing
+namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
 {
     public sealed class NativeFunctionDeclaration
         : BaseFunctionDeclaration
@@ -27,7 +28,9 @@ namespace Nebula.Core.Parsing
         public override IEnumerable<Node> GetChildren()
         {
             foreach (Node n in base.GetChildren())
+            {
                 yield return n;
+            }
 
             yield return Semicolon;
         }

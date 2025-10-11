@@ -11,10 +11,14 @@ namespace Nebula.Commons.Text.Printers
         private static bool IsConsole(this TextWriter writer)
         {
             if (writer == Console.Out)
+            {
                 return !Console.IsOutputRedirected;
+            }
 
             if (writer == Console.Error)
+            {
                 return !Console.IsErrorRedirected && !Console.IsOutputRedirected; // Color codes are always output to Console.Out
+            }
 
             return writer is IndentedTextWriter iw && iw.InnerWriter.IsConsole();
         }

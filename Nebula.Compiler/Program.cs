@@ -1,14 +1,17 @@
 ﻿using Mono.Options;
 using Nebula.Commons.Text;
 using Nebula.Commons.Text.Printers;
-using Nebula.Core.Compilation;
-using Nebula.Interop;
+using Nebula.Core.Compilation.AST.Tree;
+using Nebula.Core.Utility.Concrete;
+using Nebula.Interop.SafeHandles;
 using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using static Nebula.Core.Compilation.Compiler;
 
-namespace Nebula.Compilation
+namespace Nebula.Compiler
 {
     internal class Program
     {
@@ -18,6 +21,7 @@ namespace Nebula.Compilation
         #region Arguments
         static void AddCompilationPathToCompiler(string path)
         {
+            path = path.Trim();
             if (!CompilerSettings.AddCompilationPath(path))
             {
                 Writer.WriteLine($"Path '{path}' is not a valid source file or root directory", ConsoleColor.Red);
@@ -26,6 +30,7 @@ namespace Nebula.Compilation
 
         static void AddReferencePathToCompiler(string path)
         {
+            path = path.Trim();
             if (!CompilerSettings.AddReferenceFile(path))
             {
                 Writer.WriteLine($"Path '{path}' is not a valid source file or root directory", ConsoleColor.Red);
@@ -45,7 +50,6 @@ namespace Nebula.Compilation
                 {
                     Writer.WriteLine($"Path '{path}' is not a valid directory", ConsoleColor.Red);
                 }
-
             }
 
             Writer.WriteLine($"Using directory '{path}' for compilation result", ConsoleColor.Green);
@@ -63,6 +67,8 @@ namespace Nebula.Compilation
                 { "f=", "A source file or directory path, if a directory is provided all sub directories will also be scanned for source files" , AddCompilationPathToCompiler },
                 { "r=", "A compiled file or directory path, if a directory is provided all sub directories will also be scanned for compiled files" , AddReferencePathToCompiler },
                 { "o=|output_folder" , AddOutputFolderToCompiler },
+                { "print_ast" , v => CompilerSettings.PrintAST = true },
+                { "next_to_source", v => CompilerSettings.OutputToSourceLocation = true }
             };
 
             options.Parse(args);
@@ -75,7 +81,8 @@ namespace Nebula.Compilation
                 return false;
             }
 
-            if (string.IsNullOrEmpty(CompilerSettings.OutputFolder) || CompilerSettings.SourceFiles.Count == 0)
+            bool noOutputFolder = string.IsNullOrEmpty(CompilerSettings.OutputFolder) && !CompilerSettings.OutputToSourceLocation;
+            if (noOutputFolder || CompilerSettings.SourceFiles.Count == 0)
             {
                 CompilerSettings.Clear();
                 return false;
@@ -86,14 +93,14 @@ namespace Nebula.Compilation
 
         #endregion
 
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
             Writer.WriteLine("Compiler initializing.", ConsoleColor.DarkGreen);
             if (!ParseArguments(args))
             {
                 Writer.WriteLine("Compiler exiting.", ConsoleColor.DarkGreen);
                 /* We quit if we show help screen or something is not valid */
-                return;
+                return -1;
             }
 
             List<SourceCode> sources = new() { Capacity = CompilerSettings.SourceFiles.Count };
@@ -110,7 +117,7 @@ namespace Nebula.Compilation
                 sources.Add(SourceCode.From(sourcePath));
             }
 
-            List<CompiledScript> references = new() { Capacity = CompilerSettings.SourceFiles.Count };
+            List<Script> references = new() { Capacity = CompilerSettings.SourceFiles.Count };
             foreach (string referencePath in CompilerSettings.References)
             {
                 Writer.WriteLine($"Including: {referencePath}", ConsoleColor.DarkGreen);
@@ -120,7 +127,7 @@ namespace Nebula.Compilation
                     continue;
                 }
 
-                if (!CompiledScript.LoadScriptFromFile(referencePath, out CompiledScript loadedScript))
+                if (!Script.FromFile(referencePath, OnReportCallback, out Script loadedScript))
                 {
                     Writer.WriteLine($"Could not load compiled script at '{referencePath}'", ConsoleColor.Red);
                     continue;
@@ -129,19 +136,20 @@ namespace Nebula.Compilation
                 references.Add(loadedScript);
             }
 
-            Compiler.Options options = new();
+            Options options = new();
             options.Sources.AddRange(sources);
             options.References.AddRange(references);
             options.OutputFolder = CompilerSettings.OutputFolder;
+            options.OutputToSourceLocation = CompilerSettings.OutputToSourceLocation;
 
             Stopwatch compileTime = Stopwatch.StartNew();
-            bool compileOk = Compiler.Compile(options, out Compiler.Result? result);
+            bool compileOk = Compile(options, out Result? result);
+
             compileTime.Stop();
 
             Commons.Reporting.Report compileReport = result.Report;
             if (!compileOk)
             {
-
                 Writer.WriteLine($"Compilation failed for {options.Sources.Count} source codes", ConsoleColor.Red);
                 Writer.WriteLine($"First failed compilation is: {result.FailedSourcePath}", ConsoleColor.Red);
                 Console.Out.WriteReport(compileReport);
@@ -152,6 +160,50 @@ namespace Nebula.Compilation
             }
 
             Writer.WriteLine($"Compilation took '{compileTime.ElapsedMilliseconds}' ms", ConsoleColor.DarkCyan);
+
+            if (CompilerSettings.PrintAST)
+            {
+                Writer.WriteLine("Writing AST tree...", ConsoleColor.Cyan);
+                foreach (var program in result.Programs)
+                {
+                    WriteAbstractProgram(program);
+                }
+            }
+
+            return compileOk ? 0 : -1;
+        }
+
+        private static void WriteAbstractProgram(AbstractProgram program)
+        {
+            IndentedTextWriter writer = new(Console.Out);
+            Writer.WriteLine($"Program with namespace: {program.Namespace.Text}", ConsoleColor.Cyan);
+            Writer.WriteLine($"Functions:", ConsoleColor.Cyan);
+
+            foreach (var f in program.Functions)
+            {
+                AbstractTreeWriter.WriteTo(f.Value, writer);
+                Console.Out.WriteLine();
+            }
+        }
+
+        private static void OnReportCallback(string scriptPath, ReportType type, string message)
+        {
+            ConsoleColor color = ConsoleColor.White;
+            switch (type)
+            {
+                case ReportType.Error:
+                    {
+                        color = ConsoleColor.Red;
+                        break;
+                    }
+                case ReportType.Warning:
+                    {
+                        color = ConsoleColor.Yellow;
+                        break;
+                    }
+            }
+
+            Writer.WriteLine($"[{scriptPath}] - {message}", color);
         }
     }
 }

@@ -1,19 +1,23 @@
 ﻿using Nebula.Commons.Reporting;
 using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
-using Nebula.Core.Compilation;
-using Nebula.Core.Parsing.Expressions;
-using Nebula.Core.Parsing.Lexing;
-using Nebula.Core.Parsing.Statements;
+using Nebula.Core.Compilation.CST.Lexing;
+using Nebula.Core.Compilation.CST.Tree;
+using Nebula.Core.Compilation.CST.Tree.Base;
+using Nebula.Core.Compilation.CST.Tree.Declaration;
+using Nebula.Core.Compilation.CST.Tree.Declaration.Bundle;
+using Nebula.Core.Compilation.CST.Tree.Declaration.Function;
+using Nebula.Core.Compilation.CST.Tree.Expressions;
+using Nebula.Core.Compilation.CST.Tree.Statements;
+using Nebula.Core.Compilation.CST.Tree.Types;
 using Nebula.Core.Reporting;
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
-namespace Nebula.Core.Parsing
+namespace Nebula.Core.Compilation.CST.Parsing
 {
     public sealed class Parser
     {
@@ -125,7 +129,9 @@ namespace Nebula.Core.Parsing
 
                 // Don't get stuck in an infinite loop
                 if (start == Current)
+                {
                     _currentTokenIndex++;
+                }
             }
 
             Token closebracket = MatchToken(NodeType.ClosedBracketToken);
@@ -218,14 +224,43 @@ namespace Nebula.Core.Parsing
         {
             Token first = MatchToken(NodeType.IdentifierToken);
 
+            // For bundle delcarations outside scope
             if (Current.Type == NodeType.DoubleColonToken)
             {
                 Token doubleColon = MatchToken(NodeType.DoubleColonToken);
                 Token typeName = MatchToken(NodeType.IdentifierToken);
-                return new TypeClause(_currentSource, first, doubleColon, typeName);
+                RankSpecifier? rs = ParseRankSpecifier();
+                return new TypeClause(_currentSource, first, doubleColon, typeName, rs);
             }
 
-            return new TypeClause(_currentSource, null, null, first);
+            RankSpecifier? rankSpecifier = ParseRankSpecifier();
+            return new TypeClause(_currentSource, null, null, first, rankSpecifier);
+        }
+
+        private RankSpecifier? ParseRankSpecifier()
+        {
+            if (Current.Type != NodeType.OpenSquareBracketToken)
+            {
+                return null;
+            }
+
+            Token open = MatchToken(NodeType.OpenSquareBracketToken);
+
+            NodeType separator = NodeType.CommaToken;
+            TokenSeparatedList<Token> parameters = new(separator);
+            while (Current.Type != NodeType.ClosedParenthesisToken && Current.Type != NodeType.EndOfFileToken)
+            {
+                if (Current.Type != NodeType.CommaToken)
+                {
+                    break;
+                }
+
+                Token comma = MatchToken(separator);
+                parameters.AppendSeparator(comma);
+            }
+
+            Token close = MatchToken(NodeType.ClosedSquareBracketToken);
+            return new RankSpecifier(_currentSource, open, parameters, close);
         }
 
         private TokenSeparatedList<Token> ParseAttributeList()
@@ -291,7 +326,9 @@ namespace Nebula.Core.Parsing
 
                 // Don't get stuck in an infinite loop
                 if (start == Current)
+                {
                     _currentTokenIndex++;
+                }
             }
 
             Token close = MatchToken(NodeType.ClosedBracketToken);
@@ -340,22 +377,35 @@ namespace Nebula.Core.Parsing
                     }
                 default:
                     {
-                        if (Current.Type == NodeType.IdentifierToken &&
-                            Peek(1).Type == NodeType.IdentifierToken)
+                        bool isBaseVariableDefinition = Current.Type == NodeType.IdentifierToken &&
+                            Peek(1).Type == NodeType.IdentifierToken;
+
+                        if (isBaseVariableDefinition)
                         {
                             return ParseVariableDeclarations();
                         }
 
-                        // Variable declaration with type from another namespace
-                        if (Current.Type == NodeType.IdentifierToken &&
+                        bool isVariableDefinitionWithRank = Current.Type == NodeType.IdentifierToken &&
+                            Peek(1).Type == NodeType.OpenSquareBracketToken &&
+                           (Peek(2).Type == NodeType.CommaToken || Peek(2).Type == NodeType.ClosedSquareBracketToken);
+
+                        if (isVariableDefinitionWithRank)
+                        {
+                            return ParseVariableDeclarations();
+                        }
+
+                        // This also executes if with namespace and rank
+                        bool isVariableDefinitionWithNamespace = Current.Type == NodeType.IdentifierToken &&
                             Peek(1).Type == NodeType.DoubleColonToken &&
                             Peek(2).Type == NodeType.IdentifierToken &&
-                            Peek(3).Type != NodeType.OpenParenthesisToken)
+                            Peek(3).Type != NodeType.OpenParenthesisToken;
+                        // Variable declaration with type from another namespace
+                        if (isVariableDefinitionWithNamespace)
                         {
                             return ParseVariableDeclarations();
                         }
 
-                        if(Current.Type == NodeType.IdentifierToken &&
+                        if (Current.Type == NodeType.IdentifierToken &&
                             Peek(1).Type == NodeType.WaitNotificationKeyword)
                         {
                             return ParseWaitNotificationStatement();
@@ -381,9 +431,9 @@ namespace Nebula.Core.Parsing
             }
         }
 
-        private Statement ParseNotifyStatement()
+        private NotifyStatement ParseNotifyStatement()
         {
-            NameExpression identifier = ParseVariableNameExpression();
+            NameExpression identifier = ParseNameExpression();
             Token keyword = MatchToken(NodeType.NotifyKeyword);
             Expression expression = ParseExpression();
             Token semicolon = MatchToken(NodeType.SemicolonToken);
@@ -391,9 +441,9 @@ namespace Nebula.Core.Parsing
             return new NotifyStatement(_currentSource, identifier, keyword, expression, semicolon);
         }
 
-        private Statement ParseWaitNotificationStatement()
+        private WaitNotificationStatement ParseWaitNotificationStatement()
         {
-            NameExpression identifier = ParseVariableNameExpression();
+            NameExpression identifier = ParseNameExpression();
             Token keyword = MatchToken(NodeType.WaitNotificationKeyword);
             Expression expression = ParseExpression();
             Token semicolon = MatchToken(NodeType.SemicolonToken);
@@ -496,7 +546,9 @@ namespace Nebula.Core.Parsing
         private Expression? ParseForLoopCondition()
         {
             if (Current.Type == NodeType.SemicolonToken)
+            {
                 return null;
+            }
 
             return ParseExpression();
         }
@@ -507,7 +559,9 @@ namespace Nebula.Core.Parsing
         private Expression? ParseForLoopExpression()
         {
             if (Current.Type == NodeType.ClosedParenthesisToken)
+            {
                 return null;
+            }
 
             return ParseExpression();
         }
@@ -517,7 +571,9 @@ namespace Nebula.Core.Parsing
         private ElseClauseStatement? ParseOptionalElseClause()
         {
             if (Current.Type is not NodeType.ElseKeyword)
+            {
                 return null;
+            }
 
             Token keyword = MatchToken(NodeType.ElseKeyword);
             Statement statement = ParseStatement();
@@ -567,29 +623,26 @@ namespace Nebula.Core.Parsing
 
         private Expression ParseExpression()
         {
-            if (Current.Type == NodeType.IdentifierToken)
+            Expression expression = ParseBinaryExpression();
+            // Token lookAheadOperator = PeekAfterNameExpression();
+            switch (Current.Type)
             {
-                Token lookAheadOperator = PeekAfterNameExpression();
-                switch (lookAheadOperator.Type)
-                {
-                    case NodeType.PlusEqualsToken:
-                    case NodeType.MinusEqualsToken:
-                    case NodeType.StarEqualsToken:
-                    case NodeType.SlashEqualsToken:
-                    case NodeType.AmpersandEqualsToken:
-                    case NodeType.PipeEqualsToken:
-                    case NodeType.HatEqualsToken:
-                    case NodeType.EqualsToken:
-                        {
-                            Expression identifier = ParseVariableNameExpression();
-                            Token op = MatchToken(Current.Type);
-                            Expression rightExpr = ParseExpression();
-                            return new AssignmentExpression(_currentSource, identifier, op, rightExpr);
-                        }
-                }
+                case NodeType.PlusEqualsToken:
+                case NodeType.MinusEqualsToken:
+                case NodeType.StarEqualsToken:
+                case NodeType.SlashEqualsToken:
+                case NodeType.AmpersandEqualsToken:
+                case NodeType.PipeEqualsToken:
+                case NodeType.HatEqualsToken:
+                case NodeType.EqualsToken:
+                    {
+                        Token op = MatchToken(Current.Type);
+                        Expression rightExpr = ParseExpression();
+                        return new AssignmentExpression(_currentSource, expression, op, rightExpr);
+                    }
             }
 
-            return ParseBinaryExpression();
+            return expression;
         }
 
         private Expression ParseBinaryExpression(int parentPrecedence = 0)
@@ -614,7 +667,9 @@ namespace Nebula.Core.Parsing
             {
                 int binaryPrecedence = Current.Type.GetBinaryPrecedence();
                 if (binaryPrecedence == 0 || binaryPrecedence <= parentPrecedence)
+                {
                     break;
+                }
 
                 Token op = MatchToken(Current.Type);
                 Expression right = ParseBinaryExpression(binaryPrecedence);
@@ -645,44 +700,84 @@ namespace Nebula.Core.Parsing
                     {
                         return ParseStringLiteral();
                     }
+                case NodeType.OpenSquareBracketToken:
+                    {
+                        return ParseInitializationExpression();
+                    }
             }
 
             return ParseNameOrFunctionCallExpression();
+        }
+
+        private InitializationExpression ParseInitializationExpression()
+        {
+            Token open = MatchToken(NodeType.OpenSquareBracketToken);
+            Token close = MatchToken(NodeType.ClosedSquareBracketToken);
+
+            return new InitializationExpression(_currentSource, open, close);
         }
 
         private Expression ParseNameOrFunctionCallExpression()
         {
             Expression? functionCall = ParseFunctionCall();
             if (functionCall is not null)
+            {
                 return functionCall;
+            }
 
-            return ParseVariableNameExpression();
+            Expression? objectFunctionCall = ParseObjectFunctionCall();
+            if (objectFunctionCall is not null)
+            {
+                return objectFunctionCall;
+            }
+
+            return ParseNameExpression();
         }
 
-        private NameExpression ParseVariableNameExpression()
+        private Expression? ParseObjectFunctionCall()
+        {
+            if (Current.Type == NodeType.IdentifierToken &&
+                Peek(1).Type == NodeType.DotToken &&
+                Peek(2).Type == NodeType.IdentifierToken &&
+                Peek(3).Type == NodeType.OpenParenthesisToken)
+            {
+                Token name = MatchToken(NodeType.IdentifierToken);
+                Token accessToken = MatchToken(NodeType.DotToken);
+                Token fieldName = MatchToken(NodeType.IdentifierToken);
+                Token openParenthesis = MatchToken(NodeType.OpenParenthesisToken);
+                TokenSeparatedList<Expression> args = ParseArguments();
+                Token closeParenthesis = MatchToken(NodeType.ClosedParenthesisToken);
+                return new ObjectCallExpression(_currentSource,
+                                                name,
+                                                accessToken,
+                                                fieldName,
+                                                openParenthesis,
+                                                args,
+                                                closeParenthesis);
+            }
+
+            return null;
+        }
+
+        private NameExpression ParseNameExpression()
         {
             Token name = MatchToken(NodeType.IdentifierToken);
             if (Current.Type == NodeType.DotToken)
             {
                 Token accessToken = MatchToken(NodeType.DotToken);
                 Token fieldName = MatchToken(NodeType.IdentifierToken);
-                return new BundleFieldAccessExpression(_currentSource, name, accessToken, fieldName);
+                return new ObjectVariableAccessExpression(_currentSource, name, accessToken, fieldName);
+            }
+
+            if (Current.Type == NodeType.OpenSquareBracketToken)
+            {
+                Token openSquare = MatchToken(NodeType.OpenSquareBracketToken);
+                Expression accessExpression = ParseExpression();
+                Token closeSquare = MatchToken(NodeType.ClosedSquareBracketToken);
+                return new ArrayAccessExpression(_currentSource, name, openSquare, accessExpression, closeSquare);
             }
 
             return new NameExpression(_currentSource, name);
-        }
-
-        private Token PeekAfterNameExpression()
-        {
-            if (Current.Type != NodeType.IdentifierToken)
-                return Current;
-
-            if (Peek(1).Type == NodeType.DotToken)
-            {
-                return Peek(3);
-            }
-
-            return Peek(1);
         }
 
         private Expression? ParseFunctionCall()
@@ -776,19 +871,19 @@ namespace Nebula.Core.Parsing
 
         #region Literal Parsing
 
-        private Expression ParseStringLiteral()
+        private LiteralExpression ParseStringLiteral()
         {
             Token b = MatchToken(NodeType.StringToken);
             return new LiteralExpression(_currentSource, b);
         }
 
-        private Expression ParseNumberLiteral()
+        private LiteralExpression ParseNumberLiteral()
         {
             Token b = MatchToken(NodeType.NumberToken);
             return new LiteralExpression(_currentSource, b);
         }
 
-        private Expression ParseBoolLiteral()
+        private LiteralExpression ParseBoolLiteral()
         {
             bool isTrue = Current.Type == NodeType.TrueKeyword;
             Token b = isTrue ? MatchToken(NodeType.TrueKeyword) : MatchToken(NodeType.FalseKeyword);
@@ -822,7 +917,9 @@ namespace Nebula.Core.Parsing
         private Token Peek(int offset)
         {
             if (_currentTokenIndex + offset >= _currentTokens.Count)
+            {
                 return _currentTokens[_currentTokens.Count - 1];
+            }
 
             return _currentTokens[_currentTokenIndex + offset];
         }

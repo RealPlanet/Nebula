@@ -1,9 +1,10 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
+using Nebula.Core.Compilation.CST.Tree.Base;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
-namespace Nebula.Core.Parsing.Statements
+namespace Nebula.Core.Compilation.CST.Tree.Statements
 {
     public sealed class BlockStatement
         : Statement
@@ -26,7 +27,10 @@ namespace Nebula.Core.Parsing.Statements
         {
             yield return OpenBracket;
             foreach (Statement statement in Statements)
+            {
                 yield return statement;
+            }
+
             yield return CloseBracket;
         }
     }

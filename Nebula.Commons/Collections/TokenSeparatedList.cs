@@ -45,7 +45,9 @@ namespace Nebula.Commons.Collections
         public void Append(T p)
         {
             if (_nodes.Count != 0 && _nodes.Last().Type != Separator)
+            {
                 throw new ArgumentException($"Cannot append {typeof(T).Name} if a separator was not added");
+            }
 
             _nodes.Add(p);
         }
@@ -53,10 +55,14 @@ namespace Nebula.Commons.Collections
         public void AppendSeparator(Token token)
         {
             if (token.Type != Separator)
+            {
                 throw new ArgumentException($"Wrong separator type, expected: {Separator}, received: {token.Type}");
+            }
 
             if (_nodes.Count == 0 || _nodes.Last().Type == Separator)
+            {
                 throw new ArgumentException($"Cannot append separator if a parameter was not added");
+            }
 
             _nodes.Add(token);
         }
@@ -64,13 +70,17 @@ namespace Nebula.Commons.Collections
         public IEnumerator<T> GetEnumerator()
         {
             for (int i = 0; i < _nodes.Count; i += 2)
+            {
                 yield return (T)_nodes[i];
+            }
         }
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         internal Token GetSeparator(int index)
         {
             if (index < 0 || index >= Count - 1)
+            {
                 throw new ArgumentException(null, nameof(index));
+            }
 
             return (Token)_nodes[index * 2 + 1];
         }

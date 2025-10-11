@@ -19,7 +19,7 @@ namespace nebula
     // Function pointer definition to bind Nebula function calls to C++ calls
     using NativeFunctionCallback = ::std::function<InstructionErrorCode(Interpreter*, Frame*)>;
     using NativeFunctionCallbackPtr = InstructionErrorCode(*)(Interpreter*, Frame*);
-
+    using InterpreterExitCallbackPtr = void(*)();
     class IStreamWrapper;
 
     // Core of the virtual machine
@@ -56,7 +56,8 @@ namespace nebula
         bool BindNativeFunction(const std::string& name, const NativeFunctionCallback callback);
         bool AddScript(std::shared_ptr<Script> script);
         bool SetStandardOutput(IStreamWrapper* stream);
-
+        bool SetExitCallback(InterpreterExitCallbackPtr callbackPtr);
+        bool ClearStandardOutput();
 
         bool Step();
 
@@ -103,6 +104,7 @@ namespace nebula
         std::chrono::steady_clock::time_point m_LastSchedulingUpdate{};
 
         IStreamWrapper* m_pStandardOutput;
+        InterpreterExitCallbackPtr m_fExitCallback;
         InterpreterMemory m_Memory;
     };
 }

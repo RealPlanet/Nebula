@@ -25,7 +25,7 @@ namespace nebula
     struct ScriptLoadResult
     {
         shared::DiagnosticReport ParsingReport;
-        std::shared_ptr<Script> Script;
+        Script* Script;
     };
 
     // A in-memory rapresentation of a compiled 'Nebula' script

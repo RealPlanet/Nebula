@@ -1,5 +1,5 @@
-﻿using Nebula.Core.Binding;
-using Nebula.Core.Utility;
+﻿using Nebula.Core.Compilation.AST.Tree.Base;
+using Nebula.Core.Utility.Concrete;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.IO;
@@ -33,16 +33,22 @@ namespace Nebula.Core.Graph
         public override string ToString()
         {
             if (IsStart)
+            {
                 return "<start>";
+            }
 
             if (IsEnd)
+            {
                 return "<end>";
+            }
 
             using (StringWriter writer = new())
             using (IndentedTextWriter indentedWriter = new(writer))
             {
                 foreach (AbstractStatement statement in Statements)
+                {
                     statement.WriteTo(indentedWriter);
+                }
 
                 return writer.ToString();
             }

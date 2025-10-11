@@ -1,7 +1,7 @@
 ﻿using Nebula.Commons.Syntax;
-using Nebula.Core.Binding.Symbols;
+using Nebula.Core.Compilation.AST.Tree.Base;
 
-namespace Nebula.Core.Binding
+namespace Nebula.Core.Compilation.AST.Tree.Statements
 {
     public sealed class AbstractNotifyStatement
         : AbstractStatement
@@ -11,7 +11,7 @@ namespace Nebula.Core.Binding
         public AbstractExpression BundleToNotifyFrom { get; }
         public AbstractExpression NotifyExpression { get; }
 
-        public AbstractNotifyStatement(Node syntax, AbstractExpression bundleNotifier, AbstractExpression notifyExpr) 
+        public AbstractNotifyStatement(Node syntax, AbstractExpression bundleNotifier, AbstractExpression notifyExpr)
             : base(syntax)
         {
             BundleToNotifyFrom = bundleNotifier;

@@ -1,4 +1,6 @@
-﻿namespace Nebula.Core.Binding.Symbols
+﻿using Nebula.Core.Compilation.AST.Symbols;
+
+namespace Nebula.Core.Compilation.AST.Bundle
 {
     public sealed class AbstractBundleField(TypeSymbol fieldType, string fieldName, int ordinalPosition)
     {

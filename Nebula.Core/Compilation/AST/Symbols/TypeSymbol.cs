@@ -1,8 +1,10 @@
-﻿using Nebula.CodeEmitter.Types;
+﻿using Nebula.Core.Compilation.AST.Symbols.Base;
+using Nebula.Interop.Enumerators;
+using System.Collections.Generic;
 
-namespace Nebula.Core.Binding.Symbols
+namespace Nebula.Core.Compilation.AST.Symbols
 {
-    public sealed class TypeSymbol
+    public class TypeSymbol
         : Symbol
     {
         #region Static
@@ -13,48 +15,44 @@ namespace Nebula.Core.Binding.Symbols
         public static readonly TypeSymbol Float = new("float");
         public static readonly TypeSymbol String = new("string");
         public static readonly TypeSymbol Void = new("void");
-        public static readonly TypeSymbol Bundle = new("bundle");
-
-        public string? Alias { get; private set; }
-        public string? Namespace { get; private set; }
-        public bool IsNamedBundle => IsBundle && !string.IsNullOrEmpty(Alias);
+        public static readonly TypeSymbol BaseObject = new("object");
+        public static readonly TypeSymbol BaseArray = new("array");
 
         public bool IsError => this == Error;
         public bool IsBool => this == Bool;
         public bool IsInt => this == Int;
         public bool IsString => this == String;
         public bool IsVoid => this == Void;
-        public bool IsBundle => this == Bundle;
+        public bool IsArray => this is ArrayTypeSymbol;
+
+        public bool IsObject => this is ObjectTypeSymbol;
 
         public static TypeSymbol TypeFromEnum(TypeIdentifier identifier)
         {
             switch (identifier)
             {
                 case TypeIdentifier.Void:
-                    return TypeSymbol.Void;
+                    return Void;
                 case TypeIdentifier.Int32:
-                    return TypeSymbol.Int;
+                    return Int;
                 case TypeIdentifier.String:
-                    return TypeSymbol.String;
-                case TypeIdentifier.Bundle:
-                    return TypeSymbol.Bundle;
+                    return String;
                 default:
                     throw new System.Exception($"Unknown type: {identifier}");
             }
         }
 
-        public static TypeSymbol GetNamedBundleType(string @namespace, string bundleType)
-        {
-            return new TypeSymbol(Bundle.Name)
-            {
-                Namespace = @namespace,
-                Alias = bundleType
-            };
-        }
         #endregion
 
+        protected readonly HashSet<FunctionSymbol> _registeredFunctions = [];
+
+        public IReadOnlySet<FunctionSymbol> RegisteredFunctions => _registeredFunctions;
+
         public override SymbolType SymbolType => SymbolType.Type;
-        private TypeSymbol(string name)
+
+        public virtual TypeSymbol BaseType => this;
+
+        protected TypeSymbol(string name)
             : base(name)
         {
         }
@@ -73,18 +71,22 @@ namespace Nebula.Core.Binding.Symbols
             return false;
         }
 
-        public static bool operator ==(TypeSymbol a, TypeSymbol b)
+        public static bool operator ==(TypeSymbol? a, TypeSymbol? b)
         {
             if (a is null && b is null)
+            {
                 return true;
+            }
 
             if (a is null || b is null)
+            {
                 return false;
+            }
 
             return a.Equals(b);
         }
 
-        public static bool operator !=(TypeSymbol a, TypeSymbol b)
+        public static bool operator !=(TypeSymbol? a, TypeSymbol? b)
         {
             return !(a == b);
         }

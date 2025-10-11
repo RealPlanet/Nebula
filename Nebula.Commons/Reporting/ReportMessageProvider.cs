@@ -98,6 +98,14 @@ namespace Nebula.Commons.Reporting
         E0027 = ReportMessageProvider.ErrorOffset + 39,
         /// <summary></summary>
         E0028 = ReportMessageProvider.ErrorOffset + 40,
+        /// <summary></summary>
+        E0029 = ReportMessageProvider.ErrorOffset + 41,
+        /// <summary></summary>
+        E002A = ReportMessageProvider.ErrorOffset + 42,
+        /// <summary></summary>
+        E002B = ReportMessageProvider.ErrorOffset + 43,
+        /// <summary></summary>
+        E002C = ReportMessageProvider.ErrorOffset + 44,
     }
 
     /// <summary>
@@ -199,6 +207,14 @@ namespace Nebula.Commons.Reporting
     (ReportMessageCodes.E0027, ErrorMessages.InvalidExpressionStatement);
         public static ReportMessageTemplate ErrorFloatNoMarker =>
     (ReportMessageCodes.E0028, ErrorMessages.FloatNoMarker);
+        public static ReportMessageTemplate ErrorFloatTooManyMarkers =>
+    (ReportMessageCodes.E0029, ErrorMessages.FloatTooManyMarkers);
+        public static ReportMessageTemplate ErrorObjectFunctionDoesNotExists =>
+    (ReportMessageCodes.E002A, ErrorMessages.ObjectFunctionDoesNotExists);
+        public static ReportMessageTemplate ErrorWaitMustBeNumber =>
+    (ReportMessageCodes.E002B, ErrorMessages.WaitMustBeNumber);
+        public static ReportMessageTemplate ErrorAssignmentLeftHandSideNotValid =>
+    (ReportMessageCodes.E002B, ErrorMessages.AssignmentLeftHandSideNotValid);
 
         #endregion
     }

@@ -1,7 +1,7 @@
 ﻿using Nebula.Commons.Syntax;
-using Nebula.Core.Binding.Symbols;
+using Nebula.Core.Compilation.AST.Symbols;
 
-namespace Nebula.Core.Binding
+namespace Nebula.Core.Compilation.AST.Tree.Base
 {
     /// <summary>
     /// Rapresents an Expression within the Bound Syntax Tree

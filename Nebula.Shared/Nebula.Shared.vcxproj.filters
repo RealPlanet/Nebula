@@ -11,14 +11,19 @@
     <ClInclude Include="include\DiagnosticReport.h" />
     <ClInclude Include="include\LanguageTypes.h" />
     <ClInclude Include="include\Stack.h" />
-    <ClInclude Include="include\EmitTokens.h" />
     <ClInclude Include="include\ErrorCallStack.h" />
     <ClInclude Include="include\Instruction.h" />
     <ClInclude Include="include\DebuggerDefinitions.h" />
+    <ClInclude Include="include\interfaces\IScriptParser.h" />
+    <ClInclude Include="include\interfaces\IStreamWrapper.h" />
+    <ClInclude Include="include\interfaces\IGCObject.h" />
+    <ClInclude Include="include\interfaces\INotificationListener.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DiagnosticReport.cpp" />
     <ClCompile Include="src\LanguageTypes.cpp" />
     <ClCompile Include="src\ErrorCallStack.cpp" />
+    <ClCompile Include="src\INotificationListener.cpp" />
+    <ClCompile Include="src\IGCObject.cpp" />
   </ItemGroup>
 </Project>

@@ -1,4 +1,4 @@
-﻿namespace Nebula.Core.Binding.Symbols
+﻿namespace Nebula.Core.Compilation.AST.Symbols.Base
 {
     public enum SymbolType
     {
@@ -8,6 +8,7 @@
         Parameter,
         Type,
         Attribute,
-        Bundle,
+        Object,
+        Array
     }
 }

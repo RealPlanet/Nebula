@@ -27,7 +27,7 @@ Interpreter::~Interpreter()
     m_Threads.Clear();
     m_Scripts.clear();
     m_NativeFunctions.clear();
-    delete m_pStandardOutput;
+    ClearStandardOutput();
     delete m_LastErrorCallstack;
 }
 
@@ -109,7 +109,7 @@ bool Interpreter::AddScript(std::shared_ptr<Script> script)
     m_Scripts.insert(std::make_pair(script->Namespace(), script));
 
     for (auto& kvp : script->Functions()) {
-        if (std::find(kvp.second.Attributes().begin(), kvp.second.Attributes().end(), VMAttribute::autoexec) == kvp.second.Attributes().end()) {
+        if (std::find(kvp.second.Attributes().begin(), kvp.second.Attributes().end(), VMAttribute::AutoExec) == kvp.second.Attributes().end()) {
             continue;
         }
 
@@ -129,15 +129,22 @@ bool Interpreter::SetStandardOutput(IStreamWrapper* stream)
     return true;
 }
 
+bool nebula::Interpreter::SetExitCallback(InterpreterExitCallbackPtr callbackPtr)
+{
+    m_fExitCallback = callbackPtr;
+    return true;
+}
+
+bool Interpreter::ClearStandardOutput() {
+    delete m_pStandardOutput;
+    m_pStandardOutput = nullptr;
+    return true;
+}
+
 bool Interpreter::Step()
 {
     if (CheckAndSetExitState())
         return false; // Early exit
-
-    if (ShouldScheduleNewFrame())
-    {
-        SwapExecutingThread();
-    }
 
     Frame* currentFrame = GetCurrentCallstack()->back();
     Frame::Status frameStatus = currentFrame->Tick(this);
@@ -161,6 +168,10 @@ bool Interpreter::Step()
         m_Threads.RemoveCallstack(m_CurrentThreadIndex);
         SwapExecutingThread();
     }
+    else if (ShouldScheduleNewFrame())
+    {
+        SwapExecutingThread();
+    }
 
     CheckAndSetExitState();
     return true;
@@ -171,6 +182,11 @@ bool Interpreter::CheckAndSetExitState()
     if (!m_Threads.HasCallStacks())
     {
         SetState(State::Exited);
+        if (m_fExitCallback != nullptr)
+        {
+            m_fExitCallback();
+        }
+
         return true;
     }
 

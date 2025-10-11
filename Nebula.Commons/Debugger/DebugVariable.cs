@@ -1,18 +1,18 @@
-﻿using System.Runtime.Serialization;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
-namespace Nebula.Commons.Text
+namespace Nebula.Commons.Debugger
 {
-    [DataContract]
     public class DebugVariable
     {
-        [DataMember]
-        public string Name { get; private set; }
+        [JsonInclude]
+        public string Name { get; init; } = string.Empty;
 
-        [JsonConstructor]
-        public DebugVariable(string name)
-        {
-            Name = name;
-        }
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public string? SourceNamespace { get; init; }
+
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public string? SourceType { get; init; }
     }
 }

@@ -1,6 +1,7 @@
-﻿using Nebula.Core.Parsing;
+﻿using Nebula.Core.Compilation.AST.Tree.Base;
+using Nebula.Core.Compilation.CST.Tree.Statements;
 
-namespace Nebula.Core.Binding
+namespace Nebula.Core.Compilation.AST.Tree
 {
     public sealed class AbstractNamespace
         : AbstractNode

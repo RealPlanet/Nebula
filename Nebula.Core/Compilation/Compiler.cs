@@ -1,9 +1,10 @@
 ﻿using Nebula.Commons.Reporting;
 using Nebula.Commons.Text;
-using Nebula.Core.Binding;
-using Nebula.Core.Emitting;
-using Nebula.Core.Parsing;
-using Nebula.Interop;
+using Nebula.Core.Compilation.AST.Binding;
+using Nebula.Core.Compilation.AST.Tree;
+using Nebula.Core.Compilation.CST.Parsing;
+using Nebula.Core.Compilation.Emitting;
+using Nebula.Interop.SafeHandles;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -19,8 +20,9 @@ namespace Nebula.Core.Compilation
             public bool EmitProgram { get; set; } = true;
             public string OutputFolder { get; set; } = string.Empty;
             public bool ReadableBytecode { get; set; } = true;
+            public bool OutputToSourceLocation { get; set; } = false;
             public List<SourceCode> Sources { get; } = [];
-            public List<CompiledScript> References { get; } = [];
+            public List<Script> References { get; } = [];
         }
 
         /// <summary>Result data of a compilation</summary>
@@ -46,7 +48,7 @@ namespace Nebula.Core.Compilation
                 return false;
             }
 
-            if (string.IsNullOrEmpty(options.OutputFolder) && options.EmitProgram)
+            if (!options.OutputToSourceLocation && string.IsNullOrEmpty(options.OutputFolder) && options.EmitProgram)
             {
                 result.Report.PushError("No output folder provided", default);
                 return false;
@@ -108,8 +110,14 @@ namespace Nebula.Core.Compilation
             }
 
             // Emit
-            Emitter emitter = new(moduleName, options.OutputFolder);
-            emitter.Emit(program, options.ReadableBytecode, out emitReport);
+            Emitter emitter = new(moduleName, new()
+            {
+                OutputToSourceLocation = options.OutputToSourceLocation,
+                OutputFolder = options.OutputFolder,
+                ReadableBytecode = options.ReadableBytecode,
+            });
+
+            emitter.Emit(program, out emitReport);
             return !emitReport.HasErrors;
         }
     }

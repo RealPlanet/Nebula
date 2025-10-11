@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Nebula.Core.Parsing
+namespace Nebula.Core.Compilation.AST.Binding.Bundles
 {
     public struct BundleIdentifier : IEquatable<BundleIdentifier>
     {

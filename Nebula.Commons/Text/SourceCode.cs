@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -19,7 +20,9 @@ namespace Nebula.Commons.Text
             FileName = fileName;
         }
 
+        [DebuggerStepThrough]
         public static SourceCode From(string text, string fileName = "") => new(text, fileName);
+        [DebuggerStepThrough]
         public static SourceCode From(string fileName)
         {
             if (!File.Exists(fileName))

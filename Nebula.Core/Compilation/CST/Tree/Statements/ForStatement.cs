@@ -1,8 +1,9 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
+using Nebula.Core.Compilation.CST.Tree.Base;
 using System.Collections.Generic;
 
-namespace Nebula.Core.Parsing
+namespace Nebula.Core.Compilation.CST.Tree.Statements
 {
     public sealed class ForStatement
         : Statement
@@ -36,15 +37,23 @@ namespace Nebula.Core.Parsing
             yield return Keyword;
             yield return OpenParenthesis;
             if (InitStatement is not null)
+            {
                 yield return InitStatement;
+            }
+
             if (Condition is not null)
+            {
                 yield return Condition;
+            }
+
             yield return SecondSemicolon;
             if (Expression is not null)
+            {
                 yield return Expression;
+            }
+
             yield return CloseParenthesis;
             yield return Body;
         }
-
     }
 }

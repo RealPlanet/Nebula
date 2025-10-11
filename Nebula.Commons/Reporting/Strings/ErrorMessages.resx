@@ -240,4 +240,16 @@
   <data name="FloatNoMarker" xml:space="preserve">
     <value>The float number '{0}' does not end with 'f'</value>
   </data>
+  <data name="FloatTooManyMarkers" xml:space="preserve">
+    <value>Too many decimal points in number</value>
+  </data>
+  <data name="ObjectFunctionDoesNotExists" xml:space="preserve">
+    <value>Function '{0}' does not exist in type '{1}'</value>
+  </data>
+  <data name="WaitMustBeNumber" xml:space="preserve">
+    <value>Argument '{0}' of wait keyword must evaluate to a number</value>
+  </data>
+  <data name="AssignmentLeftHandSideNotValid" xml:space="preserve">
+    <value>The left-hand side of an assignment must be a variable, property or indexer</value>
+  </data>
 </root>

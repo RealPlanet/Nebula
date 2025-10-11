@@ -21,6 +21,8 @@
         DoubleColonToken,       // ::
         OpenBracketToken,       // {
         ClosedBracketToken,     // }
+        OpenSquareBracketToken, // [
+        ClosedSquareBracketToken, // ]
         OpenParenthesisToken,   // (
         ClosedParenthesisToken, // )
         EqualsToken,            // =
@@ -96,14 +98,19 @@
         UnaryExpression,
         BinaryExpression,
         AssignmentExpression,
-        BundleFieldAccessExpression,
+        ObjectVariableAccessExpression,
+        ArrayAccessExpression,
         NameExpression,
         ParenthesizedExpression,
         CallExpression,
+        ObjectCallExpression,
         LiteralExpression,
+        InitializationExpression,
+
 
         EndOfFileToken,
         TypeClause,
+        RankSpecifier,
         ElseClause,
         Parameter,
 

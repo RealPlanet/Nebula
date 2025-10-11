@@ -43,9 +43,14 @@ namespace Nebula.Commons.Reporting
             string codeString = code.ToString();
             ReportType type = ReportType.Information;
             if (codeString[0] == 'W')
+            {
                 type = ReportType.Warning;
+            }
             else if (codeString[0] == 'E')
+            {
                 type = ReportType.Error;
+            }
+
             return type;
         }
 

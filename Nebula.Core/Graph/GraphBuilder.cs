@@ -1,5 +1,8 @@
-﻿using Nebula.Core.Binding;
-using Nebula.Core.Utility;
+﻿using Nebula.Core.Compilation.AST.Tree;
+using Nebula.Core.Compilation.AST.Tree.Base;
+using Nebula.Core.Compilation.AST.Tree.Expression;
+using Nebula.Core.Compilation.AST.Tree.Statements.ControlFlow;
+using Nebula.Core.Utility.Abstract;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,9 +19,13 @@ namespace Nebula.Core.Graph
         public ControlFlowGraph Build(List<BasicBlock> blocks)
         {
             if (blocks.Count == 0)
+            {
                 Connect(Start, End);
+            }
             else
+            {
                 Connect(Start, blocks[0]);
+            }
 
             foreach ((BasicBlock block, AbstractStatement statement) in from block in blocks
                                                                         from statement in block.Statements
@@ -26,7 +33,9 @@ namespace Nebula.Core.Graph
             {
                 BlockFromStatement.Add(statement, block);
                 if (statement is AbstractLabelStatement l)
+                {
                     BlockFromLabel.Add(l.Label, block);
+                }
             }
 
             for (int i = 0; i < blocks.Count; i++)
@@ -49,7 +58,10 @@ namespace Nebula.Core.Graph
                         case AbstractNodeType.LabelStatement:
                             {
                                 if (isLastStatementInBlock)
+                                {
                                     Connect(current, next);
+                                }
+
                                 break;
                             }
                         case AbstractNodeType.ReturnStatement:
@@ -120,7 +132,9 @@ namespace Nebula.Core.Graph
         {
             AbstractUnaryExpression? negated = AbstractNodeFactory.Not(condition.OriginalNode, condition);
             if (negated.ConstantValue != null)
+            {
                 return new AbstractLiteralExpression(condition.OriginalNode, negated.ConstantValue.Value);
+            }
 
             return negated;
         }
@@ -131,9 +145,13 @@ namespace Nebula.Core.Graph
             {
                 bool value = (bool)l.Value;
                 if (value)
+                {
                     condition = null;
+                }
                 else
+                {
                     return;
+                }
             }
 
             BasicBlockBranch branch = new(from, to, condition);

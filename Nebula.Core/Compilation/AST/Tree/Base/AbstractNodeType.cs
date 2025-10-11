@@ -1,4 +1,4 @@
-﻿namespace Nebula.Core.Binding
+﻿namespace Nebula.Core.Compilation.AST.Tree.Base
 {
     public enum AbstractNodeType
     {
@@ -25,12 +25,17 @@
         // Expression
         ErrorExpression,
         LiteralExpression,
+        InitializationExpression,
         CompoundAssignmentExpression,
         UnaryExpression,
         BinaryExpression,
         VariableExpression,
         AssignmentExpression,
-        BundleFieldAssignmentExpression,
+        ObjectFieldAssignmentExpression,
+        ObjectFieldAccessExpression,
+        ObjectCallExpression,
+        ArrayAssignmentExpression,
+        ArrayAccessExpression,
         CallExpression,
         ConversionExpression,
     }

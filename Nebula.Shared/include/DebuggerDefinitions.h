@@ -13,7 +13,8 @@
 #define NEB_GET_NATIVE_BINDING_NAME TO_STR(NEB_GET_NATIVE_BINDING)
 
 #define NEB_GET_BINDING_PTR nebula::NativeFunctionCallbackPtr(*)(const char*)
-#define NEB_GET_ALL_BINDINGS_PTR const std::map<std::string_view, nebula::NativeFunctionCallbackPtr>*(*)(void)
+#define NEB_GET_ALL_BINDINGS_PTR(name) const std::map<std::string_view, nebula::NativeFunctionCallbackPtr>*(*name)(void)
+#define NEB_GET_ALL_BINDINGS_PTR_TYPE const std::map<std::string_view, nebula::NativeFunctionCallbackPtr>*(*)(void)
 #define NEB_DECLARE_GET_BINDING(bindingName) nebula::NativeFunctionCallbackPtr NEB_GET_NATIVE_BINDING##(const char* bindingName)
 #define NEB_DECLARE_GET_ALL_BINDINGS const std::map<std::string_view, nebula::NativeFunctionCallbackPtr>* NEB_GET_ALL_NATIVE_BINDINGS##()
 

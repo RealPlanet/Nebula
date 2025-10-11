@@ -4,15 +4,14 @@
 #include <vector>
 
 #include "LanguageTypes.h"
-#include "interfaces/AwaitableObject.h"
-#include "interfaces/AllocatedObject.h"
+#include "interfaces/IGCObject.h"
 
 namespace nebula
 {
     // Definition of a bundle field as imported from a script
     using BundleFieldDefinition = std::pair<std::string, DataStackVariantIndex>;
 
-    using BundleFields = std::vector<std::pair<std::string, DataStackVariantIndex>>;
+    using BundleFields = std::vector<BundleFieldDefinition>;
 
     // Definition of a bundle as imported from a script
     class BundleDefinition
@@ -51,7 +50,7 @@ namespace nebula
 
     // In memory rapresentation of a bundle
     class Bundle
-        : public AllocatedObject, public AwaitableObject
+        : public IGCObject
     {
     public:
         static std::shared_ptr<Bundle> FromDefinition(const BundleDefinition& definition);

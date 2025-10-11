@@ -93,13 +93,19 @@ namespace Nebula.Commons.Reporting
         public IEnumerator<ReportMessage> GetEnumerator()
         {
             foreach (ReportMessage error in Errors)
+            {
                 yield return error;
+            }
 
             foreach (ReportMessage error in Warnings)
+            {
                 yield return error;
+            }
 
             foreach (ReportMessage error in Messages)
+            {
                 yield return error;
+            }
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

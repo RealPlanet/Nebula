@@ -5,8 +5,25 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <OutputType>Exe</OutputType>
-    <StartupObject>Nebula.Debugger.Program</StartupObject>
+    <StartupObject>Nebula.Debugger.App.Program</StartupObject>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Bridge\**" />
+    <Compile Remove="DAP\**" />
+    <EmbeddedResource Remove="Bridge\**" />
+    <EmbeddedResource Remove="DAP\**" />
+    <None Remove="Bridge\**" />
+    <None Remove="DAP\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="DAP\DebuggerConfiguration.cs" />
+    <Compile Include="DAP\DebuggerConstants.cs" />
+    <Compile Include="DAP\EventInfo.cs" />
+    <Compile Include="DAP\EventType.cs" />
+    <Compile Include="DAP\NebulaDebuggerAdapter.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.1" />
@@ -16,7 +33,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Nebula.Commons\Nebula.Commons.csproj" />
-    <ProjectReference Include="..\Nebula.Interop\Nebula.Interop.vcxproj" />
+    <ProjectReference Include="..\Nebula.Interop\Nebula.Interop.csproj" />
   </ItemGroup>
 
 </Project>

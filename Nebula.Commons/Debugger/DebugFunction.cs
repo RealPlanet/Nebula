@@ -1,40 +1,37 @@
 ﻿using System.Collections.Generic;
-using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
-namespace Nebula.Commons.Text
+namespace Nebula.Commons.Debugger
 {
-    [DataContract]
     public class DebugFunction
     {
-        [DataMember]
-        public string Name { get; private set; }
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public string Name { get; init; } = string.Empty;
 
-        [DataMember]
-        public int LineNumber { get; private set; }
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public int LineNumber { get; init; }
 
-        [DataMember]
-        public List<DebugVariable> Parameters { get; private set; } = [];
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public int EndLineNumber { get; init; }
 
-        [DataMember]
-        public List<DebugVariable> LocalVariables { get; private set; } = [];
+        /// <summary> Number of instructions this function has </summary>
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public long InstructionCount { get; init; }
 
-        [DataMember]
-        public List<int> InstructionLines { get; private set; } = [];
+        [JsonInclude]
+        public List<DebugVariable> Parameters { get; init; } = [];
 
-        public DebugFunction(string name, int lineNumber)
-        {
-            Name = name;
-            LineNumber = lineNumber;
-        }
+        [JsonInclude]
+        public List<DebugVariable> LocalVariables { get; init; } = [];
 
-        [JsonConstructor]
-        public DebugFunction(string name, int lineNumber, List<DebugVariable> parameters, List<DebugVariable> localVariables, List<int> instructionLines)
-            : this(name, lineNumber)
-        {
-            Parameters = parameters;
-            LocalVariables = localVariables;
-            InstructionLines = instructionLines;
-        }
+        [JsonInclude]
+        public Dictionary<int, int> LineStartingOpcodeIndex { get; init; } = [];
+
+        [JsonInclude]
+        public List<int> Statements { get; init; } = [];
     }
 }

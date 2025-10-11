@@ -1,7 +1,6 @@
-﻿using Nebula.Commons.Syntax;
-using Nebula.Commons.Text;
+﻿using Nebula.Commons.Text;
 
-namespace Nebula.Core.Compilation
+namespace Nebula.Commons.Syntax
 {
     /// <summary>
     /// Trivia is associated with a token, each token can have leading and trailing trivia. Trivia can be single or multiline comments, whitespaces, ecc..

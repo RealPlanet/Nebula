@@ -25,12 +25,13 @@ func void main() autoexec
     async work_task(taskResult, 10);
 
     taskResult waittill taskResult.msg_done;
+
     int endTime = GetCurrentTimeMillis();
     int timePassed = endTime - startingTime;
     float timePassedSeconds = timePassed / 1000f;
 
     WriteLine("Task has finished!");
-    WriteLine("Task took to finish" + string(timePassedSeconds) + " seconds");
+    WriteLine("Task took to finish " + string(timePassedSeconds) + " seconds");
     WriteLine("Awaiter status is now ->" + taskResult.status);
 }
 

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Nebula.Compilation
+namespace Nebula.Compiler
 {
     public sealed class ConsoleCompilerWriter
     {

@@ -2,7 +2,7 @@
 using Nebula.Commons.Text;
 using System.Collections.Generic;
 
-namespace Nebula.Core.Parsing
+namespace Nebula.Core.Compilation.CST.Tree.Base
 {
     public sealed partial class ExpressionStatement
          : Statement

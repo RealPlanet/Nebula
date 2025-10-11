@@ -1,4 +1,4 @@
-﻿using Nebula.Core.Binding;
+﻿using Nebula.Core.Compilation.AST.Tree.Base;
 
 namespace Nebula.Core.Graph
 {
@@ -16,7 +16,9 @@ namespace Nebula.Core.Graph
         public override string ToString()
         {
             if (Condition is null)
+            {
                 return string.Empty;
+            }
 
             return Condition.ToString()!;
         }

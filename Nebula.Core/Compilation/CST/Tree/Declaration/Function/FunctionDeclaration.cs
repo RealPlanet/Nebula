@@ -1,9 +1,10 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
-using Nebula.Core.Parsing.Statements;
+using Nebula.Core.Compilation.CST.Tree.Statements;
+using Nebula.Core.Compilation.CST.Tree.Types;
 using System.Collections.Generic;
 
-namespace Nebula.Core.Parsing
+namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
 {
     public sealed class FunctionDeclaration
         : BaseFunctionDeclaration
@@ -32,10 +33,14 @@ namespace Nebula.Core.Parsing
         public override IEnumerable<Node> GetChildren()
         {
             foreach (Node n in base.GetChildren())
+            {
                 yield return n;
+            }
 
             foreach (Node child in Attributes.GetWithSeparators())
+            {
                 yield return child;
+            }
 
             yield return Body;
         }

@@ -1,8 +1,9 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
+using Nebula.Core.Compilation.CST.Tree.Base;
 using System.Collections.Generic;
 
-namespace Nebula.Core.Parsing.Statements
+namespace Nebula.Core.Compilation.CST.Tree.Statements
 {
     public sealed class ImportStatement
         : Statement

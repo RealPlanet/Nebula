@@ -1,12 +1,17 @@
-﻿using Nebula.Core.Binding;
+﻿using Nebula.Core.Compilation.AST.Tree.Base;
+using Nebula.Core.Compilation.AST.Tree.Expression;
+using Nebula.Core.Compilation.AST.Tree.Expression.Bundles;
+using Nebula.Core.Compilation.AST.Tree.Statements;
+using Nebula.Core.Compilation.AST.Tree.Statements.ControlFlow;
+using Nebula.Core.Compilation.AST.Tree.Statements.Loop;
 using System;
 using System.Collections.Immutable;
 
-namespace Nebula.Core.Lowering
+namespace Nebula.Core.Compilation.Lowering
 {
     public abstract class AbstractTreeRewriter
     {
-        public virtual AbstractStatement RewriteStatement(AbstractStatement node) => node.Type switch
+        protected virtual AbstractStatement RewriteStatement(AbstractStatement node) => node.Type switch
         {
             AbstractNodeType.BlockStatement => RewriteBlockStatement((AbstractBlockStatement)node),
             AbstractNodeType.NopStatement => RewriteNopStatement((AbstractNopStatement)node),
@@ -25,9 +30,10 @@ namespace Nebula.Core.Lowering
             AbstractNodeType.NotifyStatement => RewriteNotifyStatement((AbstractNotifyStatement)node),
             _ => throw new Exception($"Unexpected node: {node.Type}"),
         };
-        public virtual AbstractStatement RewriteNopStatement(AbstractNopStatement node) => node;
 
-        public virtual AbstractExpression RewriteExpression(AbstractExpression node) => node.Type switch
+        protected virtual AbstractStatement RewriteNopStatement(AbstractNopStatement node) => node;
+
+        protected virtual AbstractExpression RewriteExpression(AbstractExpression node) => node.Type switch
         {
             AbstractNodeType.ErrorExpression => RewriteErrorExpression((AbstractErrorExpression)node),
             AbstractNodeType.CompoundAssignmentExpression => RewriteCompoundAssignmentExpression((AbstractCompoundAssignmentExpression)node),
@@ -36,9 +42,14 @@ namespace Nebula.Core.Lowering
             AbstractNodeType.BinaryExpression => RewriteBinaryExpression((AbstractBinaryExpression)node),
             AbstractNodeType.VariableExpression => RewriteVariableExpression((AbstractVariableExpression)node),
             AbstractNodeType.AssignmentExpression => RewriteAssignmentExpression((AbstractAssignmentExpression)node),
-            AbstractNodeType.BundleFieldAssignmentExpression => RewriteBundleFieldAssignmentExpression((AbstractBundleFieldAssignment)node),
+            AbstractNodeType.ObjectFieldAssignmentExpression => RewriteBundleFieldAssignmentExpression((AbstractObjectFieldAssignmentExpression)node),
+            AbstractNodeType.InitializationExpression => RewriteInitializationExpression((AbstractInitializationExpression)node),
+            AbstractNodeType.ArrayAssignmentExpression => RewriteArrayAssignmentExpression((AbstractArrayAssignmentExpression)node),
             AbstractNodeType.CallExpression => RewriteCallExpression((AbstractCallExpression)node),
             AbstractNodeType.ConversionExpression => RewriteConversionExpression((AbstractConversionExpression)node),
+            AbstractNodeType.ObjectCallExpression => RewriteObjectCallExpression((AbstractObjectCallExpression)node),
+            AbstractNodeType.ObjectFieldAccessExpression => RewriteObjectFieldAccessExpression((AbstractObjectFieldAccessExpression)node),
+            AbstractNodeType.ArrayAccessExpression => RewriteArrayAccessExpression((AbstractArrayAccessExpression)node),
             _ => throw new Exception($"Unexpected node: {node.Type}"),
         };
 
@@ -46,16 +57,77 @@ namespace Nebula.Core.Lowering
         {
             AbstractExpression? expression = RewriteExpression(node.Expression);
             if (expression == node.Expression)
+            {
                 return node;
+            }
 
             return new AbstractConversionExpression(node.OriginalNode, node.ResultType, expression);
+        }
+
+        protected virtual AbstractExpression RewriteObjectCallExpression(AbstractObjectCallExpression node)
+        {
+            ImmutableArray<AbstractExpression>.Builder? builder = null;
+            for (int i = 0; i < node.Arguments.Length; i++)
+            {
+                AbstractExpression? oldArgument = node.Arguments[i];
+                AbstractExpression? newArgument = RewriteExpression(oldArgument);
+
+                if (oldArgument != newArgument && builder == null)
+                {
+                    builder = ImmutableArray.CreateBuilder<AbstractExpression>(node.Arguments.Length);
+                    for (int j = 0; j < i; j++)
+                    {
+                        builder.Add(node.Arguments[j]);
+                    }
+                }
+
+                builder?.Add(newArgument);
+            }
+
+            if (builder == null)
+            {
+                return node;
+            }
+
+            return new AbstractObjectCallExpression(node.OriginalNode, node.Variable, node.Function, builder.MoveToImmutable());
+
+        }
+
+        protected virtual AbstractExpression RewriteObjectFieldAccessExpression(AbstractObjectFieldAccessExpression node)
+        {
+            var target = RewriteExpression(node.Target);
+            if (target == node.Target)
+            {
+                return node;
+            }
+
+            return new AbstractObjectFieldAccessExpression(node.OriginalNode, target, node.Field);
+        }
+
+        protected virtual AbstractArrayAccessExpression RewriteArrayAccessExpression(AbstractArrayAccessExpression node)
+        {
+            var indexExpression = RewriteExpression(node.IndexExpression);
+            if (indexExpression == node.IndexExpression)
+            {
+                return node;
+            }
+
+            return new AbstractArrayAccessExpression(node.OriginalNode, node.Variable, indexExpression);
+        }
+
+        protected virtual AbstractInitializationExpression RewriteInitializationExpression(AbstractInitializationExpression node)
+        {
+            return node;
         }
 
         protected virtual AbstractStatement RewriteConditionalGotoStatement(AbstractConditionalGotoStatement node)
         {
             AbstractExpression? condition = RewriteExpression(node.Condition);
             if (condition == node.Condition)
+            {
                 return node;
+            }
+
             return new AbstractConditionalGotoStatement(node.OriginalNode, node.Label, condition, node.JumpIfTrue);
         }
 
@@ -68,7 +140,9 @@ namespace Nebula.Core.Lowering
             AbstractExpression? condition = RewriteExpression(node.Condition);
             AbstractStatement? body = RewriteStatement(node.Body);
             if (condition == node.Condition && body == node.Body)
+            {
                 return node;
+            }
 
             return new AbstractWhileStatement(node.OriginalNode, condition, body, node.BreakLabel, node.ContinueLabel);
         }
@@ -78,7 +152,9 @@ namespace Nebula.Core.Lowering
             AbstractStatement? body = RewriteStatement(node.Body);
             AbstractExpression? condition = RewriteExpression(node.Condition);
             if (condition == node.Condition && body == node.Body)
+            {
                 return node;
+            }
 
             return new AbstractDoWhileStatement(node.OriginalNode, body, condition, node.BreakLabel, node.ContinueLabel);
         }
@@ -101,7 +177,9 @@ namespace Nebula.Core.Lowering
 
             AbstractStatement? body = RewriteStatement(node.Body);
             if (init == node.InitStatement && condition == node.Condition && body == node.Body)
+            {
                 return node;
+            }
 
             return new AbstractForStatement(node.OriginalNode, init, condition, expression, body, node.BreakLabel, node.ContinueLabel);
         }
@@ -137,7 +215,9 @@ namespace Nebula.Core.Lowering
         {
             AbstractExpression? initializer = RewriteExpression(node.Initializer);
             if (initializer == node.Initializer)
+            {
                 return node;
+            }
 
             return new AbstractVariableDeclaration(node.OriginalNode, node.Variable, initializer);
         }
@@ -149,7 +229,9 @@ namespace Nebula.Core.Lowering
             AbstractStatement? elseStatement = node.ElseStatement == null ? null : RewriteStatement(node.ElseStatement);
 
             if (condition == node.Condition && thenStatement == node.ThenStatement && elseStatement == node.ElseStatement)
+            {
                 return node;
+            }
 
             return new AbstractIfStatement(node.OriginalNode, condition, thenStatement, elseStatement);
         }
@@ -158,7 +240,9 @@ namespace Nebula.Core.Lowering
         {
             AbstractExpression expression = RewriteExpression(node.Expression);
             if (expression == node.Expression)
+            {
                 return node;
+            }
 
             return new AbstractExpressionStatement(node.OriginalNode, expression);
         }
@@ -174,14 +258,19 @@ namespace Nebula.Core.Lowering
                 {
                     builder = ImmutableArray.CreateBuilder<AbstractStatement>(node.Statements.Length);
                     for (int j = 0; j < i; j++)
+                    {
                         builder.Add(node.Statements[j]);
+                    }
                 }
 
                 builder?.Add(newStatement);
             }
 
             if (builder == null)
+            {
                 return node;
+            }
+
             return new AbstractBlockStatement(node.OriginalNode, builder.MoveToImmutable());
         }
 
@@ -195,25 +284,46 @@ namespace Nebula.Core.Lowering
         {
             AbstractExpression expression = RewriteExpression(node.Expression);
             if (expression == node.Expression)
+            {
                 return node;
+            }
 
             return new AbstractAssignmentExpression(node.OriginalNode, node.Variable, expression);
         }
 
-        protected virtual AbstractExpression RewriteBundleFieldAssignmentExpression(AbstractBundleFieldAssignment node)
+        protected virtual AbstractExpression RewriteBundleFieldAssignmentExpression(AbstractObjectFieldAssignmentExpression node)
         {
+            AbstractExpression target = RewriteExpression(node.Target);
             AbstractExpression expression = RewriteExpression(node.Expression);
-            if (expression == node.Expression)
-                return node;
 
-            return new AbstractBundleFieldAssignment(node.OriginalNode, node.BundleVariable, node.FieldToAssign, expression);
+
+            if (target == node.Target && expression == node.Expression)
+            {
+                return node;
+            }
+
+            return new AbstractObjectFieldAssignmentExpression(node.OriginalNode, target, node.Field, expression);
+        }
+
+        protected virtual AbstractExpression RewriteArrayAssignmentExpression(AbstractArrayAssignmentExpression node)
+        {
+            AbstractExpression indexExpression = RewriteExpression(node.IndexExpression);
+            AbstractExpression expression = RewriteExpression(node.Expression);
+            if (expression == node.Expression && indexExpression == node.IndexExpression)
+            {
+                return node;
+            }
+
+            return new AbstractArrayAssignmentExpression(node.OriginalNode, node.ArrayVariable, indexExpression, expression);
         }
 
         protected virtual AbstractExpression RewriteCompoundAssignmentExpression(AbstractCompoundAssignmentExpression node)
         {
             AbstractExpression expression = RewriteExpression(node.Expression);
             if (expression == node.Expression)
+            {
                 return node;
+            }
 
             return new AbstractCompoundAssignmentExpression(node.OriginalNode, node.Variable, node.Operator, expression);
         }
@@ -222,7 +332,9 @@ namespace Nebula.Core.Lowering
         {
             AbstractExpression operand = RewriteExpression(node.Operand);
             if (operand == node.Operand)
+            {
                 return node;
+            }
 
             return new AbstractUnaryExpression(node.OriginalNode, node.Operator, operand);
         }
@@ -233,7 +345,9 @@ namespace Nebula.Core.Lowering
             AbstractExpression? right = RewriteExpression(node.Right);
 
             if (left == node.Left && right == node.Right)
+            {
                 return node;
+            }
 
             return new AbstractBinaryExpression(node.OriginalNode, left, node.Operator, right);
         }
@@ -250,14 +364,18 @@ namespace Nebula.Core.Lowering
                 {
                     builder = ImmutableArray.CreateBuilder<AbstractExpression>(node.Arguments.Length);
                     for (int j = 0; j < i; j++)
+                    {
                         builder.Add(node.Arguments[j]);
+                    }
                 }
 
                 builder?.Add(newArgument);
             }
 
             if (builder == null)
+            {
                 return node;
+            }
 
             return new AbstractCallExpression(node.OriginalNode, node.IsAsync, node.Namespace, node.Function, builder.MoveToImmutable());
         }
@@ -266,7 +384,9 @@ namespace Nebula.Core.Lowering
         {
             AbstractExpression? expression = node.Expression == null ? null : RewriteExpression(node.Expression);
             if (expression == node.Expression)
+            {
                 return node;
+            }
 
             return new AbstractReturnStatement(node.OriginalNode, expression);
         }
@@ -275,7 +395,9 @@ namespace Nebula.Core.Lowering
         {
             AbstractExpression rewrittenExpression = RewriteExpression(node.TimeExpression);
             if (rewrittenExpression == node.TimeExpression)
+            {
                 return node;
+            }
 
             return new AbstractWaitStatement(node.OriginalNode, rewrittenExpression);
         }
@@ -284,7 +406,9 @@ namespace Nebula.Core.Lowering
         {
             AbstractExpression rewrittenExpression = RewriteExpression(node.NotifyExpression);
             if (rewrittenExpression == node.NotifyExpression)
+            {
                 return node;
+            }
 
             return new AbstractNotifyStatement(node.OriginalNode, node.BundleToNotifyFrom, rewrittenExpression);
         }
@@ -293,7 +417,9 @@ namespace Nebula.Core.Lowering
         {
             AbstractExpression rewrittenExpression = RewriteExpression(node.NotifyExpression);
             if (rewrittenExpression == node.NotifyExpression)
+            {
                 return node;
+            }
 
             return new AbstractWaitNotificationStatement(node.OriginalNode, node.BundleToWaitOn, rewrittenExpression);
         }

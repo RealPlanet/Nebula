@@ -13,7 +13,8 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Nebula.CodeGeneration\Nebula.CodeGeneration.csproj" />
       <ProjectReference Include="..\Nebula.Commons\Nebula.Commons.csproj" />
-      <ProjectReference Include="..\Nebula.Emitter\Nebula.Emitter.csproj" />
+      <ProjectReference Include="..\Nebula.Interop\Nebula.Interop.csproj" />
     </ItemGroup>
 </Project>

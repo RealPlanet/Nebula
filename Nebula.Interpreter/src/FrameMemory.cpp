@@ -65,3 +65,14 @@ bool FrameVariable::SetValue(DataStackVariant& val)
     _value = val;
     return true;
 }
+
+const TGCObject* nebula::FrameVariable::AsGCObject() const
+{
+    const TBundle* bPtr = AsBundle();
+    if (bPtr != nullptr)
+    {
+        return (TGCObject*)bPtr;
+    }
+
+    return (TGCObject*)AsArray();
+}

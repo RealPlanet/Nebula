@@ -22,7 +22,7 @@ ScriptLoadResult nebula::Script::FromFile(const std::string& filePath)
 
     std::stringstream buffer;
     buffer << fs.rdbuf();
-    return FromMemory(buffer.str());
+    return std::move(FromMemory(buffer.str()));
 }
 
 ScriptLoadResult nebula::Script::FromMemory(const std::string_view& data)
@@ -32,7 +32,7 @@ ScriptLoadResult nebula::Script::FromMemory(const std::string_view& data)
     ScriptLoadResult result;
     result.Script = parser->ParseScript(data);
     result.ParsingReport = parser->GetLastParsingReport();
-    return result;
+    return std::move(result);
 }
 
 Script::Script()

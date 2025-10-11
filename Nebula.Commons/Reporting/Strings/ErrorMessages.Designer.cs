@@ -70,6 +70,15 @@ namespace Nebula.Commons.Reporting.Strings {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The left-hand side of an assignment must be a variable, property or indexer.
+        /// </summary>
+        internal static string AssignmentLeftHandSideNotValid {
+            get {
+                return ResourceManager.GetString("AssignmentLeftHandSideNotValid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Attribute &apos;{0}&apos; requires void return parameter..
         /// </summary>
         internal static string AttributeRequiresVoidReturnType {
@@ -214,6 +223,15 @@ namespace Nebula.Commons.Reporting.Strings {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Too many decimal points in number.
+        /// </summary>
+        internal static string FloatTooManyMarkers {
+            get {
+                return ResourceManager.GetString("FloatTooManyMarkers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Function &apos;{0}&apos; already declared..
         /// </summary>
         internal static string FunctionAlreadyExists {
@@ -309,6 +327,15 @@ namespace Nebula.Commons.Reporting.Strings {
         internal static string NotAllPathsReturn {
             get {
                 return ResourceManager.GetString("NotAllPathsReturn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Function &apos;{0}&apos; does not exist in type &apos;{1}&apos;.
+        /// </summary>
+        internal static string ObjectFunctionDoesNotExists {
+            get {
+                return ResourceManager.GetString("ObjectFunctionDoesNotExists", resourceCulture);
             }
         }
         
@@ -417,6 +444,15 @@ namespace Nebula.Commons.Reporting.Strings {
         internal static string VoidFunctionCannotReturnValue {
             get {
                 return ResourceManager.GetString("VoidFunctionCannotReturnValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Argument &apos;{0}&apos; of wait keyword must evaluate to a number.
+        /// </summary>
+        internal static string WaitMustBeNumber {
+            get {
+                return ResourceManager.GetString("WaitMustBeNumber", resourceCulture);
             }
         }
         

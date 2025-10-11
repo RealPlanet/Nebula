@@ -1,4 +1,5 @@
 #define _CRTDBG_MAP_ALLOC
+#define _PL_ARGPARSER_IMPL_
 
 #include <stdlib.h>
 #include <crtdbg.h>
@@ -11,6 +12,8 @@
 #include <variant>
 #include <chrono>
 #include <thread>
+
+#include "ArgParser.h"
 
 // Interpreter
 #include "Interpreter.h"
@@ -25,123 +28,192 @@
 using namespace nebula::frontend;
 using namespace nebula;
 
-static void PrintReport(shared::DiagnosticReport& report)
-{
-    for (auto& err : report.Errors())
-    {
-        std::string  msg = "[ERROR] :: " + err.Message();
-        writer::ConsoleWrite(msg.data(), writer::BG_RED);
-    }
+std::vector<std::string> g_inputScripts = {};
+std::vector<std::string> g_inputBindings = {};
+
+static void AddToScripts(const std::string& path) {
+	// TODO :: Validate
+	g_inputScripts.push_back(path);
+}
+static void AddToBindings(const std::string& path) {
+	// TODO :: Validate
+	g_inputBindings.push_back(path);
 }
 
-static void BindNativeFunctions(Interpreter& vm)
+static void PrintReport(shared::DiagnosticReport& report)
 {
-    auto* bindings = NEB_GET_ALL_NATIVE_BINDINGS();
-    for (auto& kvp : *bindings)
-    {
-        std::string bindingName{ kvp.first.data() };
-        vm.BindNativeFunction(bindingName, kvp.second);
-    }
+	for (auto& err : report.Errors())
+	{
+		std::string  msg = "[ERROR] :: " + err.Message();
+		writer::ConsoleWrite(msg.data(), writer::BG_RED);
+	}
 }
+
+static void BindStandardLibFunctions(Interpreter& vm)
+{
+	auto* bindings = NEB_GET_ALL_NATIVE_BINDINGS();
+	for (auto& kvp : *bindings)
+	{
+		std::string bindingName{ kvp.first.data() };
+		vm.BindNativeFunction(bindingName, kvp.second);
+	}
+}
+
+static void BindNativeFunctions(Interpreter& vm, const std::string& dll);
+
+#ifdef _WIN32
+#include <Windows.h>
+
+static void BindNativeFunctions(Interpreter& vm, const std::string& dll)
+{
+	CHAR buffer[512];
+	GetFullPathNameA(dll.data(), 512, buffer, nullptr);
+	HMODULE ass = LoadLibraryA(buffer);
+	if (ass != NULL)
+	{
+		auto ptr = (NEB_GET_ALL_BINDINGS_PTR_TYPE)GetProcAddress(ass, NEB_GET_ALL_NATIVE_BINDINGS_NAME);
+		auto* bindings = ptr();
+		for (auto& kvp : *bindings)
+		{
+			std::string bindingName{ kvp.first.data() };
+			vm.BindNativeFunction(bindingName, kvp.second);
+		}
+	}
+	else
+	{
+		DWORD lastError = GetLastError();
+		std::string errorLine = "Could load load native DLL because: ";
+		errorLine += std::to_string(lastError);
+		writer::ConsoleWrite(errorLine, writer::FG_RED);
+	}
+}
+
+#else
+
+#error "Unsupported platform"
+
+#endif // !_WIN32
 
 static int PrintVMLastError(nebula::Interpreter& vm)
 {
-    if (vm.GetState() == Interpreter::State::Abort)
-    {
-        writer::ConsoleWrite("VM was aborted, stack trace is:", writer::FG_RED);
+	if (vm.GetState() == Interpreter::State::Abort)
+	{
+		writer::ConsoleWrite("VM was aborted, stack trace is:", writer::FG_RED);
 
-        shared::ErrorCallStack* callstack = vm.GetFatalErrorCallstack();
-        writer::ConsoleWrite(callstack->GetAsText().data(), writer::FG_RED);
+		shared::ErrorCallStack* callstack = vm.GetFatalErrorCallstack();
+		writer::ConsoleWrite(callstack->GetAsText().data(), writer::FG_RED);
 
-        return (int)callstack->GetErrorCode();
-    }
-    else
-    {
-        writer::ConsoleWrite("[ No VM errors detected ]", writer::FG_BLUE);
-    }
+		return (int)callstack->GetErrorCode();
+	}
+	else
+	{
+		writer::ConsoleWrite("[ No VM errors detected ]", writer::FG_BLUE);
+	}
 
-    return 0;
+	return 0;
 }
 
-static int ExecuteVM(std::vector<std::string>& scripts) {
+static int ExecuteVM() {
 
-    // Setup interpreter and bind native functions
-    // Might be useful to have them available even if we haven't started the VM (Load time caching ecc..)
-    Interpreter vm;
-    BindNativeFunctions(vm);
+	// Setup interpreter and bind native functions
+	// Might be useful to have them available even if we haven't started the VM (Load time caching ecc..)
+	Interpreter vm;
+	BindStandardLibFunctions(vm);
 
-    std::vector<std::shared_ptr<Script>> loadedScripts;
-    loadedScripts.reserve(scripts.size());
+	std::vector<std::shared_ptr<Script>> loadedScripts;
+	loadedScripts.reserve(g_inputScripts.size());
 
-    for (auto& file : scripts)
-    {
-        ScriptLoadResult scriptLoadResult = Script::FromFile(file);
+	bool anyLoadError = false;
 
-        if (scriptLoadResult.ParsingReport.Errors().size() > 0)
-        {
-            std::string errMessage = std::format("Errors while loading script {}", file.data());
-            writer::ConsoleWrite(errMessage, writer::Code::FG_RED);
-            PrintReport(scriptLoadResult.ParsingReport);
-            return -2;
-        }
+	for (auto& file : g_inputBindings)
+	{
+		BindNativeFunctions(vm, file);
+	}
 
-        PrintReport(scriptLoadResult.ParsingReport);
-        writer::ConsoleWrite(std::format("Script with namespace {} has been loaded", scriptLoadResult.Script->Namespace()), writer::Code::FG_GREEN);
-        loadedScripts.push_back(scriptLoadResult.Script);
-    }
+	for (auto& file : g_inputScripts)
+	{
+		if (file.ends_with(".neb"))
+		{
+			ScriptLoadResult scriptLoadResult = Script::FromFile(file);
 
-    auto start = std::chrono::high_resolution_clock::now();
+			if (scriptLoadResult.ParsingReport.Errors().size() > 0)
+			{
+				std::string errMessage = std::format("Errors while loading script {}", file.data());
+				writer::ConsoleWrite(errMessage, writer::Code::FG_RED);
+				PrintReport(scriptLoadResult.ParsingReport);
+				anyLoadError = true;
+			}
+			else
+			{
+				PrintReport(scriptLoadResult.ParsingReport);
+				writer::ConsoleWrite(std::format("Script with namespace {} has been loaded", scriptLoadResult.Script->Namespace()), writer::Code::FG_GREEN);
+				loadedScripts.push_back(std::shared_ptr<Script>(scriptLoadResult.Script));
+			}
 
-    for (auto& ptr : loadedScripts)
-    {
-        bool scriptLoaded = vm.AddScript(ptr);
-        [[unlikely]]
-        if (!scriptLoaded)
-        {
-            std::string errMessage = std::format("Error while adding script '{}' to VM", ptr->Namespace().data());
-            writer::ConsoleWrite(errMessage, writer::Code::FG_RED);
-            return -99999;
-        }
-    }
+			continue;
+		}
+	}
 
-    auto startNoScriptLoading = std::chrono::high_resolution_clock::now();
+	if (anyLoadError)
+	{
+		return -2;
+	}
 
-    std::cout << ">------- Begin execution ---------\n";
+	auto start = std::chrono::high_resolution_clock::now();
 
-    vm.InitAndRun();
-    vm.Wait();
+	for (auto& ptr : loadedScripts)
+	{
+		bool scriptLoaded = vm.AddScript(ptr);
+		[[unlikely]]
+		if (!scriptLoaded)
+		{
+			std::string errMessage = std::format("Error while adding script '{}' to VM", ptr->Namespace().data());
+			writer::ConsoleWrite(errMessage, writer::Code::FG_RED);
+			return -99999;
+		}
+	}
 
-    auto finish = std::chrono::high_resolution_clock::now();
-    auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start);
-    auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
+	auto startNoScriptLoading = std::chrono::high_resolution_clock::now();
 
-    auto millisecondsNoLoading = std::chrono::duration_cast<std::chrono::milliseconds>(finish - startNoScriptLoading);
-    auto microsecondsNoLoading = std::chrono::duration_cast<std::chrono::microseconds>(finish - startNoScriptLoading);
+	std::cout << ">------- Begin execution ---------\n";
 
-    std::cout << ">---------------------------------\n";
-    std::cout << "Execution terminated with time:" << std::endl;
-    std::cout << "  (With script loading) ->   " << milliseconds.count() << "ms; " << microseconds.count() << "us\n";
-    std::cout << "  (No script loading) ->   " << millisecondsNoLoading.count() << "ms; " << microsecondsNoLoading.count() << "us\n";
+	vm.InitAndRun();
+	vm.Wait();
 
-    return PrintVMLastError(vm);
+	auto finish = std::chrono::high_resolution_clock::now();
+	auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start);
+	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
+
+	auto millisecondsNoLoading = std::chrono::duration_cast<std::chrono::milliseconds>(finish - startNoScriptLoading);
+	auto microsecondsNoLoading = std::chrono::duration_cast<std::chrono::microseconds>(finish - startNoScriptLoading);
+
+	std::cout << ">---------------------------------\n";
+	std::cout << "Execution terminated with time:" << std::endl;
+	std::cout << "  (With script loading) ->   " << milliseconds.count() << "ms; " << microseconds.count() << "us\n";
+	std::cout << "  (No script loading) ->   " << millisecondsNoLoading.count() << "ms; " << microsecondsNoLoading.count() << "us\n";
+
+	return PrintVMLastError(vm);
 }
 
 int main(int argc, char* argv[]) {
 #ifdef _DEBUG
-    // Enable memory anal
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-    _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
+	// Enable memory anal
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
 
 #endif // DEBUG
 
+	planet::argparser::ArgParser argParser([](const std::string& err) {
+		writer::ConsoleWrite(err + '\n', writer::Code::BG_RED);
+		});
 
-    std::vector<std::string> scriptPaths;
-    scriptPaths.reserve(argc);
-    for (int i = 1; i < argc; i++)
-        scriptPaths.push_back(argv[i]);
+	argParser.RegisterArgument("s|script=", AddToScripts);
+	argParser.RegisterArgument("b|binding=", AddToBindings);
+	if (!argParser.Parse(argc, argv)) {
+		writer::ConsoleWrite("Could not parse program arguments!", writer::Code::BG_RED);
+		return -1;
+	}
 
-    /* DO NOT DUMP MEMORY HERE OTHERWISE STATIC STUFF WILL BE REPORTED */
-    return ExecuteVM(scriptPaths);
+	/* DO NOT DUMP MEMORY HERE OTHERWISE STATIC STUFF WILL BE REPORTED */
+	return ExecuteVM();
 }
-
-

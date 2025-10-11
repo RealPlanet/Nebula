@@ -1,10 +1,16 @@
 ﻿using Nebula.Commons.Syntax;
-using Nebula.Core.Binding;
-using Nebula.Core.Binding.Symbols;
+using Nebula.Core.Compilation.AST.Symbols;
+using Nebula.Core.Compilation.AST.Tree;
+using Nebula.Core.Compilation.AST.Tree.Base;
+using Nebula.Core.Compilation.AST.Tree.Expression;
+using Nebula.Core.Compilation.AST.Tree.Operators;
+using Nebula.Core.Compilation.AST.Tree.Statements;
+using Nebula.Core.Compilation.AST.Tree.Statements.ControlFlow;
+using Nebula.Core.Compilation.AST.Tree.Statements.Loop;
 using System.Collections.Immutable;
 using System.Diagnostics;
 
-namespace Nebula.Core.Utility
+namespace Nebula.Core.Utility.Abstract
 {
     internal static class AbstractNodeFactory
     {

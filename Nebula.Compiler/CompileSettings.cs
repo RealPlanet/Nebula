@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace Nebula.Compilation
+namespace Nebula.Compiler
 {
     /// <summary>
     /// 
@@ -16,6 +16,8 @@ namespace Nebula.Compilation
 
         /// <summary> Where to put the compiled files </summary>
         public string OutputFolder { get; set; } = string.Empty;
+        public bool OutputToSourceLocation { get; set; } = false;
+        public bool PrintAST { get; set; }
 
         private readonly List<string> _sourceFiles = [];
         private readonly List<string> _references = [];
@@ -89,6 +91,11 @@ namespace Nebula.Compilation
         private static bool IsDirectory(string path, string extFile, out string[] allFiles)
         {
             allFiles = [];
+
+            if (!Directory.Exists(path))
+            {
+                return false;
+            }
 
             FileAttributes attrs = File.GetAttributes(path);
             if (attrs.HasFlag(FileAttributes.Directory))

@@ -1,4 +1,7 @@
-﻿namespace Nebula.Core.Binding.Symbols
+﻿using Nebula.Core.Compilation.AST.Symbols.Base;
+using Nebula.Core.Compilation.AST.Tree;
+
+namespace Nebula.Core.Compilation.AST.Symbols
 {
     public abstract class VariableSymbol
         : Symbol

@@ -1,4 +1,6 @@
-﻿namespace Nebula.Core.Binding.Symbols
+﻿using Nebula.Core.Compilation.AST.Symbols.Base;
+
+namespace Nebula.Core.Compilation.AST.Symbols
 {
     public sealed class ParameterSymbol
         : LocalVariableSymbol

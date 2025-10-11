@@ -1,6 +1,6 @@
 ﻿using Nebula.Commons.Syntax;
 
-namespace Nebula.Core.Binding
+namespace Nebula.Core.Compilation.AST.Tree.Base
 {
     public abstract class AbstractStatement
         : AbstractNode

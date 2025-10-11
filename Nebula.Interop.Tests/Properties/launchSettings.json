@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Nebula.Interop.Tests": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

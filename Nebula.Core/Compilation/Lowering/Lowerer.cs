@@ -1,12 +1,17 @@
-﻿using Nebula.Core.Binding;
-using Nebula.Core.Binding.Symbols;
+﻿using Nebula.Core.Compilation.AST.Symbols;
+using Nebula.Core.Compilation.AST.Tree;
+using Nebula.Core.Compilation.AST.Tree.Base;
+using Nebula.Core.Compilation.AST.Tree.Expression;
+using Nebula.Core.Compilation.AST.Tree.Statements;
+using Nebula.Core.Compilation.AST.Tree.Statements.ControlFlow;
+using Nebula.Core.Compilation.AST.Tree.Statements.Loop;
 using Nebula.Core.Graph;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using static Nebula.Core.Utility.AbstractNodeFactory;
+using static Nebula.Core.Utility.Abstract.AbstractNodeFactory;
 
-namespace Nebula.Core.Lowering
+namespace Nebula.Core.Compilation.Lowering
 {
     public sealed class Lowerer
         : AbstractTreeRewriter
@@ -37,7 +42,9 @@ namespace Nebula.Core.Lowering
                 {
                     // Reverse them to keep the correct order when pushing into the stack
                     foreach (AbstractStatement? s in block.Statements.Reverse())
+                    {
                         stack.Push(s);
+                    }
 
                     continue;
                 }
@@ -83,7 +90,9 @@ namespace Nebula.Core.Lowering
             for (int i = builder.Count - 1; i >= 0; i--)
             {
                 if (!reachableStatements.Contains(builder[i]))
+                {
                     builder.RemoveAt(i);
+                }
             }
 
             // Return the new block statement
@@ -227,7 +236,7 @@ namespace Nebula.Core.Lowering
 
             AbstractStatement initializationStatement = node.InitStatement ?? Nop(node.OriginalNode);
             AbstractExpression conditionExpression = node.Condition ?? Literal(node.OriginalNode, true);
-            AbstractStatement postExpression = ((AbstractStatement?)node.Expression) ?? Nop(node.OriginalNode);
+            AbstractStatement postExpression = (AbstractStatement?)node.Expression ?? Nop(node.OriginalNode);
 
             AbstractBlockStatement result = Block(node.OriginalNode,
                                 initializationStatement,
@@ -253,9 +262,13 @@ namespace Nebula.Core.Lowering
                 bool condition = (bool)node.Condition.ConstantValue.Value;
                 condition = node.JumpIfTrue ? condition : !condition;
                 if (condition)
+                {
                     return RewriteStatement(Goto(node.OriginalNode, node.Label));
+                }
                 else
+                {
                     return RewriteStatement(Nop(node.OriginalNode));
+                }
             }
 
             return base.RewriteConditionalGotoStatement(node);

@@ -1,7 +1,9 @@
-﻿using Nebula.Core.Binding.Symbols;
+﻿using Nebula.Core.Compilation.AST.Symbols;
+using System.Diagnostics;
 
 namespace Nebula.Core.Compilation.AST
 {
+    [DebuggerDisplay("Exists: {Exists}, IsIdentity: {IsIdentity}, IsImplicit: {IsImplicit}, IsExplicit: {IsExplicit}")]
     public sealed class TypeConversion
     {
         public static readonly TypeConversion None = new(exists: false, isIdentity: false, isImplicit: false);
@@ -22,7 +24,9 @@ namespace Nebula.Core.Compilation.AST
         public static TypeConversion Classify(TypeSymbol from, TypeSymbol to)
         {
             if (from == to)
+            {
                 return Identity;
+            }
 
             //if (from != TypeSymbol.Void && to == TypeSymbol.Any)
             //    return Implict;
@@ -30,17 +34,15 @@ namespace Nebula.Core.Compilation.AST
             //if (from == TypeSymbol.Any && to != TypeSymbol.Void)
             //    return Explicit;
 
-            // Default initializer, lookup name because bundles create a typesymbol on the spot with an alias
-            if (from == TypeSymbol.Int && to.Name == TypeSymbol.Bundle.Name)
-                return Implict;
-
             if (from == TypeSymbol.Int || from == TypeSymbol.Bool || from == TypeSymbol.Float)
             {
                 if (to == TypeSymbol.String)
-                    return Explicit;                
+                {
+                    return Explicit;
+                }
             }
 
-            if(from == TypeSymbol.Int && to == TypeSymbol.Float)
+            if (from == TypeSymbol.Int && to == TypeSymbol.Float)
             {
                 return Implict;
             }
@@ -53,7 +55,9 @@ namespace Nebula.Core.Compilation.AST
             if (from == TypeSymbol.String)
             {
                 if (to == TypeSymbol.Int || to == TypeSymbol.Bool)
+                {
                     return Explicit;
+                }
             }
 
             return None;

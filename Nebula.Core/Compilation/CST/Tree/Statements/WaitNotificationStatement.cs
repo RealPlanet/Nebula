@@ -1,10 +1,12 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
+using Nebula.Core.Compilation.CST.Tree.Base;
+using Nebula.Core.Compilation.CST.Tree.Expressions;
 using System.Collections.Generic;
 
-namespace Nebula.Core.Parsing.Expressions
+namespace Nebula.Core.Compilation.CST.Tree.Statements
 {
-    public sealed class WaitNotificationStatement 
+    public sealed class WaitNotificationStatement
         : Statement
     {
         public override NodeType Type => NodeType.WaitNotificationStatement;

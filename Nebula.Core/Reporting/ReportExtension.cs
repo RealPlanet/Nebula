@@ -1,11 +1,14 @@
 ﻿using Nebula.Commons.Reporting;
 using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
-using Nebula.Core.Binding;
-using Nebula.Core.Binding.Symbols;
-using Nebula.Core.Parsing;
-using Nebula.Core.Parsing.Expressions;
-using Nebula.Core.Parsing.Statements;
+using Nebula.Core.Compilation.AST.Symbols;
+using Nebula.Core.Compilation.AST.Tree.Base;
+using Nebula.Core.Compilation.CST.Tree;
+using Nebula.Core.Compilation.CST.Tree.Base;
+using Nebula.Core.Compilation.CST.Tree.Declaration;
+using Nebula.Core.Compilation.CST.Tree.Declaration.Function;
+using Nebula.Core.Compilation.CST.Tree.Expressions;
+using Nebula.Core.Compilation.CST.Tree.Statements;
 using System.Linq;
 
 namespace Nebula.Core.Reporting
@@ -170,6 +173,12 @@ namespace Nebula.Core.Reporting
             string message = string.Format(template, functionName);
             r.PushCode(code, message, location);
         }
+        public static void ReportObjectFunctionDoesNotExist(this Report r, string objectType, TextLocation location, string functionName)
+        {
+            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorObjectFunctionDoesNotExists;
+            string message = string.Format(template, functionName, objectType);
+            r.PushCode(code, message, location);
+        }
         public static void ReportNotAFunction(this Report r, TextLocation location, string name)
         {
             (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorIdentifierIsNotAFunction;
@@ -188,12 +197,27 @@ namespace Nebula.Core.Reporting
             string message = string.Format(template, text);
             r.PushCode(code, message, location);
         }
+
+        public static void TooManyDecimalPointsInNumber(this Report r, TextLocation location)
+        {
+            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorFloatTooManyMarkers;
+            r.PushCode(code, template, location);
+        }
+
         public static void ReportUndefinedUnaryOperator(this Report r, TextLocation location, string text, TypeSymbol boundType)
         {
             (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorUnaryOperatorNotDefined;
             string message = string.Format(template, text, boundType);
             r.PushCode(code, message, location);
         }
+
+        public static void ReportAssignmentLeftHandSideNotValid(this Report r, TextLocation leftHandLocation)
+        {
+            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorAssignmentLeftHandSideNotValid;
+            string message = string.Format(template);
+            r.PushCode(code, message, leftHandLocation);
+        }
+
         public static void ReportUndefinedBinaryOperator(this Report r, TextLocation location, string operatorText, TypeSymbol leftType, TypeSymbol rightType)
         {
             (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorBinaryOperatorNotDefined;
@@ -218,11 +242,11 @@ namespace Nebula.Core.Reporting
             string message = string.Format(template, name);
             r.PushCode(code, message, location);
         }
-        public static void ReportWaitMustBeNumber(this Report r, AbstractExpression expr, TypeSymbol expectedType)
+        public static void ReportWaitMustBeNumber(this Report r, AbstractExpression expr)
         {
             string expression = expr.OriginalNode.SourceCode.ToString(expr.OriginalNode.Span);
-            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorCannotReassignReadonlyVariable;
-            string message = string.Format(template, expression.ToString(), expectedType.ToString());
+            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorWaitMustBeNumber;
+            string message = string.Format(template, expression.ToString());
             r.PushCode(code, message, expr.OriginalNode.Location);
         }
         public static void ReportCannotAssign(this Report r, TextLocation location, string name)
@@ -294,7 +318,10 @@ namespace Nebula.Core.Reporting
                     Statement? firstStatement = ((BlockStatement)node).Statements.FirstOrDefault();
                     // Report just for non empty blocks.
                     if (firstStatement != null)
+                    {
                         r.ReportUnreachableCode(firstStatement);
+                    }
+
                     return;
                 case NodeType.VariableDeclaration:
                     r.ReportUnreachableCode(((VariableDeclaration)node).Identifier.Location);
