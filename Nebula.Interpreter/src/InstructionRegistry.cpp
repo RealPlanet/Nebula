@@ -393,8 +393,9 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
     case VMInstruction::BrFalse:    // Contains index so we convert it like an i4 constant
     case VMInstruction::BrTrue:     // Contains index so we convert it like an i4 constant
     case VMInstruction::Br:         // Contains index so we convert it like an i4 constant
-    case VMInstruction::LdFld:         // Contains index so we convert it like an i4 constant
-    case VMInstruction::StFld:         // Contains index so we convert it like an i4 constant
+    case VMInstruction::LdFld:      // Contains index so we convert it like an i4 constant
+    case VMInstruction::StFld:      // Contains index so we convert it like an i4 constant
+    case VMInstruction::ConvType:   // Contains index so we convert it like an i4 constant
     case VMInstruction::Ldc_i4:
     {
         assert(args.size() == 1);
@@ -420,7 +421,6 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
         return { 1 };
     }
     case VMInstruction::Ldc_s:
-    case VMInstruction::ConvType:
     {
         assert(args.size() == 1);
         return { args[0] };
