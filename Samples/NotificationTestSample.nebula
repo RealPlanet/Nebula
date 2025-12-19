@@ -13,7 +13,7 @@ bundle WorkTask
 func void main() autoexec
 {
     WriteLine("The main thread will create a new bundle, pass it to an async function and wait until it's work is done!");
-    WorkTask taskResult = 0;
+    WorkTask taskResult = [];
     taskResult.id = 1;
     taskResult.status = "Pending";
     // This is the message to use

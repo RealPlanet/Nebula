@@ -12,7 +12,7 @@ bundle Message
 func void main() autoexec
 {
     WriteLine("Testing Bundles");
-    Message m = 0;
+    Message m = [];
 
     m.Data = "Hello, world";
     m.Id = 1;

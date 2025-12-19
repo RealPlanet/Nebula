@@ -727,7 +727,7 @@ int Bundle_GetFieldCount(nebula::Bundle* handle)
         return 0;
     }
 
-    return handle->FieldCount();
+    return (int)handle->FieldCount();
 }
 
 nebula::DataStackVariant* Bundle_GetField(nebula::Bundle* handle, int index)
@@ -753,7 +753,7 @@ int DataStackVariant_GetType(nebula::DataStackVariant* handle)
         return 0;
     }
 
-    return handle->index();
+    return (int)handle->index();
 }
 
 const char* DataStackVariant_GetStringValue(nebula::DataStackVariant* handle)

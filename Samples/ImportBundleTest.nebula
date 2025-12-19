@@ -14,7 +14,7 @@ func void main() autoexec
 {
     WriteLine("Importing bundle");
 
-    CommonBundles::Entity enemyEnt = 0;
+    CommonBundles::Entity enemyEnt = [];
     
     enemyEnt.IsAlive = true;
     enemyEnt.Name = "Zombie";
