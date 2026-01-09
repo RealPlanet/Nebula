@@ -1,0 +1,88 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Folder Name="/Backend/" />
+  <Folder Name="/Backend/Compiler/">
+    <Project Path="Nebula.CodeGeneration/Nebula.CodeGeneration.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="Nebula.Core/Nebula.Core.csproj">
+      <Platform Project="x64" />
+    </Project>
+  </Folder>
+  <Folder Name="/Backend/Interop/">
+    <Project Path="Nebula.Exports/Nebula.Exports.vcxproj" Id="c245adc0-462f-4448-a251-827a6cac0bd0">
+      <BuildDependency Project="Nebula.Interpreter/Nebula.Interpreter.vcxproj" />
+      <BuildDependency Project="Nebula.Shared/Nebula.Shared.vcxproj" />
+      <BuildDependency Project="Nebula.StandardLib/Nebula.StandardLib.vcxproj" />
+    </Project>
+    <Project Path="Nebula.Interop/Nebula.Interop.csproj">
+      <BuildDependency Project="Nebula.Exports/Nebula.Exports.vcxproj" />
+    </Project>
+  </Folder>
+  <Folder Name="/Backend/Interpreter/">
+    <Project Path="Nebula.Interpreter/Nebula.Interpreter.vcxproj" Id="0b6dbca9-7359-495d-8a40-9216130a5ad1">
+      <BuildDependency Project="Nebula.Shared/Nebula.Shared.vcxproj" />
+    </Project>
+  </Folder>
+  <Folder Name="/Backend/Servers/">
+    <Project Path="Nebula.DAP/Nebula.Debugger.csproj">
+      <BuildDependency Project="Nebula.Compiler/Nebula.Compiler.csproj" />
+    </Project>
+  </Folder>
+  <Folder Name="/Backend/Shared/">
+    <Project Path="Nebula.Commons/Nebula.Commons.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="Nebula.Shared/Nebula.Shared.vcxproj" Id="92209819-7c3e-4314-a0d3-2a06d6a80d5c" />
+    <Project Path="Nebula.SourceGeneration/Nebula.SourceGeneration.csproj" />
+  </Folder>
+  <Folder Name="/Frontend/">
+    <Project Path="Nebula.Compiler/Nebula.Compiler.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="Nebula.Executor/Nebula.Executor.vcxproj" Id="70370558-2ce7-4110-a4b1-f4bf8dcd338e">
+      <BuildDependency Project="Nebula.Interpreter/Nebula.Interpreter.vcxproj" />
+      <BuildDependency Project="Nebula.Shared/Nebula.Shared.vcxproj" />
+      <BuildDependency Project="Nebula.StandardLib/Nebula.StandardLib.vcxproj" />
+    </Project>
+    <Project Path="Nebula.StandardLib/Nebula.StandardLib.vcxproj" Id="f0df6f8c-bc21-4e66-858c-67609c791057">
+      <BuildDependency Project="Nebula.Interpreter/Nebula.Interpreter.vcxproj" />
+      <BuildDependency Project="Nebula.Shared/Nebula.Shared.vcxproj" />
+    </Project>
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/Solution Items/Samples/">
+    <File Path="Samples/BreakContinue.nebula" />
+    <File Path="Samples/CallstackErrorPrintTest.nebula" />
+    <File Path="Samples/CommonBundles.nebula" />
+    <File Path="Samples/CyclicReferenceTest.nebula" />
+    <File Path="Samples/Fibonacci.nebula" />
+    <File Path="Samples/FibonacciConLoop.nebula" />
+    <File Path="Samples/FizzBuzz.nebula" />
+    <File Path="Samples/FloatMath.nebula" />
+    <File Path="Samples/ForLoop.nebula" />
+    <File Path="Samples/HelloWorld.nebula" />
+    <File Path="Samples/ImportBundleTest.nebula" />
+    <File Path="Samples/InvertedHelloWorld.nebula" />
+    <File Path="Samples/MultipleVariables.nebula" />
+    <File Path="Samples/NotificationTestSample.nebula" />
+    <File Path="Samples/RandomTests.nebula" />
+    <File Path="Samples/StronglyTypedBundle.nebula" />
+    <File Path="Samples/TypedArray.nebula" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Nebula.Compiler.Tests/Nebula.Compiler.Tests.csproj">
+      <Platform Project="x64" />
+    </Project>
+    <Project Path="Nebula.Interop.Tests/Nebula.Interop.Tests.csproj">
+      <BuildDependency Project="Nebula.StandardLib/Nebula.StandardLib.vcxproj" />
+      <Platform Project="x64" />
+    </Project>
+  </Folder>
+</Solution>
