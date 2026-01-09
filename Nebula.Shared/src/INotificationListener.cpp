@@ -1,5 +1,3 @@
-#include <cassert>
-
 #include "interfaces/INotificationListener.h"
 #include "interfaces/IGCObject.h"
 

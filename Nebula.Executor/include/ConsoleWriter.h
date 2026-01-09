@@ -4,6 +4,7 @@
 #define _H_CONSOLE_WRITER_
 
 #include <iostream>
+#include <string>
 
 namespace nebula::frontend::writer
 {

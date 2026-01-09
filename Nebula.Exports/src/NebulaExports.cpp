@@ -1,13 +1,23 @@
 #pragma once
+#include <utility>
+#include <string>
+#include <variant>
+#include <memory>
+
 #include "NebulaExports.h"
 
 #include "interfaces/IStreamWrapper.h"
 
 #include "Interpreter.h"
-#include "CallStack.h"
 #include "Frame.h"
 #include "Script.h"
 #include "DebuggerDefinitions.h"
+#include "ThreadMap.h"
+#include "Function.h"
+#include "DiagnosticReport.h"
+#include "FrameMemory.h"
+#include "Bundle.h"
+#include "LanguageTypes.h"
 
 class StdRedirector
     : public nebula::IStreamWrapper {

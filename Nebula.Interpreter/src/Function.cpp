@@ -1,3 +1,5 @@
+#include <cassert>
+
 #include "Function.h"
 #include "Script.h"
 

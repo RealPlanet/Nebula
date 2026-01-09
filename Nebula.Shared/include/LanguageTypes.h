@@ -3,7 +3,8 @@
 #include <memory>
 #include <variant>
 #include <string>
-#include <vector>
+#include <cmath>
+#include <intrin.h>
 
 namespace nebula
 {

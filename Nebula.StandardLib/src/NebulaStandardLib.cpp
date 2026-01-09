@@ -1,7 +1,15 @@
-#include "NebulaStandardLib.h"
-
 #include <type_traits>
 #include <map>
+#include <chrono>
+#include <string>
+#include <string_view>
+
+#include "NebulaStandardLib.h"
+#include "DebuggerDefinitions.h"
+#include "Interpreter.h"
+#include "Frame.h"
+#include "Instruction.h"    
+#include "LanguageTypes.h"    
 
 using namespace nebula;
 

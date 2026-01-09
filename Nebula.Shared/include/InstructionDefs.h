@@ -3,8 +3,10 @@
 #ifndef _NEBULA_INST_NAMES_H_
 #define _NEBULA_INST_NAMES_H_
 
-#include "Utility.h"
 #include <map>
+#include <string>
+
+#include "Utility.h"
 
 namespace nebula {
 

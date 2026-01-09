@@ -1,7 +1,10 @@
 #pragma once
 
+#include <vector>
+#include <string>
+#include <format>
+
 #include "LanguageTypes.h"
-#include "InstructionDefs.h"
 
 namespace nebula
 {

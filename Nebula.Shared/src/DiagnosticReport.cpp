@@ -1,4 +1,5 @@
-#include <algorithm>
+#include <string>
+#include <vector>
 
 #include "DiagnosticReport.h"
 

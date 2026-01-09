@@ -1,28 +1,25 @@
 #define _CRTDBG_MAP_ALLOC
 #define _PL_ARGPARSER_IMPL_
 
-#include <stdlib.h>
 #include <crtdbg.h>
 
 #include <iostream>
 #include <memory>
 #include <vector>
-
+#include <string>
 #include <format>
-#include <variant>
 #include <chrono>
-#include <thread>
 
 #include "ArgParser.h"
 
 // Interpreter
+#include "Script.h"
 #include "Interpreter.h"
-#include "DataStack.h"
+#include "ErrorCallStack.h"
 
 #include "ConsoleWriter.h"
-
-#include "interfaces\IStreamWrapper.h"
-
+#include "DiagnosticReport.h"
+#include "DebuggerDefinitions.h"
 #include "NebulaStandardLib.h"
 
 using namespace nebula::frontend;

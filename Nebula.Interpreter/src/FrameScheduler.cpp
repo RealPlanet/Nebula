@@ -1,3 +1,5 @@
+#include <cassert>
+
 #include "Utility.h"
 #include "FrameScheduler.h"
 #include "interfaces/IGCObject.h"

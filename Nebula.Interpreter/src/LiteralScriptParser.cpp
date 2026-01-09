@@ -1,5 +1,6 @@
 #include "LiteralScriptParser.h"
 
+#include <cassert>
 #include <cwctype>
 #include <format>
 
