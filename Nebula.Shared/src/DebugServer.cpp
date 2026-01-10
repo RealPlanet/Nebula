@@ -4,8 +4,8 @@ using namespace nebula;
 
 DebugServer* DebugServer::m_pInstance{ nullptr };
 
-FunctionDebugInformation::FunctionDebugInformation(const std::string& funcName, size_t lineNumber, size_t endLineNumber, size_t instructionCount, std::map<std::string, size_t> lineIndicies)
-	: m_Name{ funcName }, m_LineNumber{ lineNumber }, m_EndLineNumber{ endLineNumber }, m_InstructionCount{ instructionCount }, m_LineStartingOpcodeIndex{lineIndicies}
+FunctionDebugInformation::FunctionDebugInformation(const std::string& funcName, size_t lineNumber, size_t endLineNumber, size_t instructionCount, std::vector<LineDebugInformation>& lines)
+	: m_Name{ funcName }, m_LineNumber{ lineNumber }, m_EndLineNumber{ endLineNumber }, m_InstructionCount{ instructionCount }, m_Lines{lines}
 {
 
 }
@@ -18,27 +18,23 @@ size_t FunctionDebugInformation::GetLineFromOpcode(size_t opcode) const
 	}
 
 	size_t lastPossibleLine = 0;
-	for (auto& kvp : m_LineStartingOpcodeIndex)
+	for (auto& kvp : m_Lines)
 	{
-		size_t lineNumber = stol(kvp.first);
-		size_t startingOpcodeOfLine = kvp.second;
+		size_t lineNumber = kvp.GetLineNumber() + 1;
+		size_t startingOpcodeOfLine = kvp.GetOpcode();
 
 		if (startingOpcodeOfLine == opcode) {
 			return lineNumber + 1;
 		}
 
-		if (startingOpcodeOfLine < opcode) {
-			lastPossibleLine = lineNumber;
-			continue;
-		}
-
-		if (startingOpcodeOfLine >= opcode)
-		{
+		if (startingOpcodeOfLine > opcode) {
 			return lastPossibleLine + 1;
 		}
+
+		lastPossibleLine = lineNumber;
 	}
 
-	return m_LineNumber + 1;
+	return NoLineInfo;
 }
 
 FunctionDebugInformation* ScriptDebugInformation::GetFunctionInformation(const std::string& funcName)
