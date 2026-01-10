@@ -39,6 +39,7 @@ namespace Nebula.CodeGeneration.Writer
             {
                 Namespace = assembly.Namespace,
                 OriginalFileName = fileName,
+                OriginalFileFullName = assembly.SourceCode.FileName,
                 MD5Hash = assemblyChecksum,
             };
 
@@ -119,7 +120,7 @@ namespace Nebula.CodeGeneration.Writer
 
                     if (lineNumber != lastLineNumber)
                     {
-                        dbgFunc.LineStartingOpcodeIndex.TryAdd(lineNumber, i);
+                        dbgFunc.Lines.Add(new(lineNumber, i));
                         lastLineNumber = lineNumber;
                     }
 

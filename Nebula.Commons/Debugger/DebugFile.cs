@@ -19,6 +19,9 @@ namespace Nebula.Commons.Debugger
         public string OriginalFileName { get; init; } = string.Empty;
 
         [JsonInclude]
+        public string OriginalFileFullName { get; init; } = string.Empty;
+
+        [JsonInclude]
         public string MD5Hash { get; init; } = string.Empty;
 
         [JsonInclude]

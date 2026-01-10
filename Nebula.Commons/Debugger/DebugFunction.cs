@@ -3,6 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace Nebula.Commons.Debugger
 {
+    public record DebugLine(int LineNumber, int StartOpcodeOfLine);
+
     public class DebugFunction
     {
         [JsonInclude]
@@ -29,7 +31,7 @@ namespace Nebula.Commons.Debugger
         public List<DebugVariable> LocalVariables { get; init; } = [];
 
         [JsonInclude]
-        public Dictionary<int, int> LineStartingOpcodeIndex { get; init; } = [];
+        public List<DebugLine> Lines { get; init; } = [];
 
         [JsonInclude]
         public List<int> Statements { get; init; } = [];
