@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClInclude Include="include\Bundle.h" />
     <ClInclude Include="include\DataStack.h" />
+    <ClInclude Include="include\DefaultDebugServer.h" />
     <ClInclude Include="include\FrameMemory.h" />
     <ClInclude Include="include\Function.h" />
     <ClInclude Include="include\FrameScheduler.h" />
@@ -26,8 +27,10 @@
     <ClInclude Include="src\LiteralScriptParser.h" />
     <ClInclude Include="include\Interpreter.h" />
     <ClInclude Include="include\InterpreterStandardOutput.h" />
+    <ClInclude Include="thirdparty\json.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\DefaultDebugServer.cpp" />
     <ClCompile Include="src\VariantArray.cpp" />
     <ClCompile Include="src\InterpreterMemory.cpp" />
     <ClCompile Include="src\InterpreterStandardOutput.cpp" />
@@ -83,7 +86,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>src\;include\;..\Nebula.Shared\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\;include\;thirdparty/;..\Nebula.Shared\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <TreatWarningAsError>true</TreatWarningAsError>
