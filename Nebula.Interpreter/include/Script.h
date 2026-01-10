@@ -25,7 +25,7 @@ namespace nebula
     struct ScriptLoadResult
     {
         shared::DiagnosticReport ParsingReport;
-        Script* Script;
+        Script* Script{ nullptr };
     };
 
     // A in-memory rapresentation of a compiled 'Nebula' script
@@ -34,15 +34,19 @@ namespace nebula
         friend class ScriptBuilder;
     public:
         static ScriptLoadResult FromFile(const std::string& filePath);
-        static ScriptLoadResult FromMemory(const std::string_view& data);
+        static ScriptLoadResult FromMemory(const std::string_view& data, const std::string& sourcePath = "");
 
     public:
+        ~Script();
+
         inline const std::string& Namespace() const { return m_Namespace; }
         inline const FunctionMap& Functions() const { return m_Functions; }
         inline const BundleMap& Bundles() const { return m_Bundles; }
+        inline const std::string& GetSourcePath() const { return m_SourcePath; }
 
     private:
         Script();
+        std::string m_SourcePath;
         std::string m_Namespace;
         FunctionMap m_Functions;
         BundleMap   m_Bundles;
@@ -64,6 +68,7 @@ namespace nebula
 
         bool AddFunction(Function&& func);
         bool AddBundle(BundleDefinition&& bundle);
+
     private:
         Script* m_InternalScript{ nullptr };
     };

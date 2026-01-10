@@ -23,6 +23,7 @@ namespace nebula
     public:
         Function(const Script* parentScript, DataStackVariantIndex returnType, const std::string& name);
 
+		const Script* GetScript() const { return m_ParentScript; }
         const std::string& Namespace() const;
         const std::string& Name() const { return m_Name; }
         const FunctionBody& Instructions() const { return m_Body; }
