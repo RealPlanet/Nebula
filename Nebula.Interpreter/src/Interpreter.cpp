@@ -305,14 +305,14 @@ void Interpreter::BuildErrorStack(Frame* fatalFrame)
 
         //callstackLine.insert(0, spaceCount++, ' ');
         const std::string& sourcePath = current->GetFunction()->GetScript()->GetSourcePath();
-        m_LastErrorCallstack->Append({ sourcePath , funcName, labelIndex, callstackLine});
+        m_LastErrorCallstack->Append(nebula::shared::ErrorCallStackLine{ sourcePath , funcName, labelIndex, callstackLine});
         current = current->Parent();
     }
 }
 
 std::string Interpreter::BuildGuiltyInstructionLineForCallStack(Frame* f)
 {
-    size_t labelIndex = f->NextInstructionIndex();
+    size_t labelIndex = f->NextInstructionIndex() - 1;
 
     auto& currInstruction = f->GetFunction()->Instructions()[labelIndex];
     VMInstruction currentOpcode = currInstruction.first;
