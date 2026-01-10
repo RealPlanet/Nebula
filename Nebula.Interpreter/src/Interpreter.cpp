@@ -6,8 +6,7 @@
 
 #include <chrono>
 #include <cassert>
-#include <stack>
-#include <iostream>
+#include <format>
 
 using namespace nebula;
 
@@ -299,18 +298,19 @@ void Interpreter::BuildErrorStack(Frame* fatalFrame)
     //size_t spaceCount = 0;
     while (current)
     {
-        const std::string ns = current->GetFunction()->Namespace();
-        const std::string funcName = current->GetFunction()->Name();
-        std::string callstackLine = std::format("{}::{}(...) -> ", ns, funcName) + BuildInstructionLineForCallStack(current);
-        size_t labelIndex = current->NextInstructionIndex();
+        const std::string& ns = current->GetFunction()->Namespace();
+        const std::string& funcName = current->GetFunction()->Name();
+        std::string callstackLine = std::format("{}::{}(...) -> ", ns, funcName) + BuildGuiltyInstructionLineForCallStack(current);
+        size_t labelIndex = current->NextInstructionIndex() - 1;
 
         //callstackLine.insert(0, spaceCount++, ' ');
-        m_LastErrorCallstack->Append({ labelIndex, callstackLine });
+        const std::string& sourcePath = current->GetFunction()->GetScript()->GetSourcePath();
+        m_LastErrorCallstack->Append({ sourcePath , funcName, labelIndex, callstackLine});
         current = current->Parent();
     }
 }
 
-std::string Interpreter::BuildInstructionLineForCallStack(Frame* f)
+std::string Interpreter::BuildGuiltyInstructionLineForCallStack(Frame* f)
 {
     size_t labelIndex = f->NextInstructionIndex();
 

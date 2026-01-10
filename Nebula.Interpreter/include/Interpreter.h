@@ -77,7 +77,7 @@ namespace nebula
         void SwapExecutingThread();
         void CreateFrameOnStack(const Function*, bool);
         void BuildErrorStack(Frame*);
-        std::string BuildInstructionLineForCallStack(Frame*);
+        std::string BuildGuiltyInstructionLineForCallStack(Frame*);
 
         const Function* GetFunction(const std::string&, const std::string&) const;
         const BundleDefinition* GetBundleDefinition(const std::string&, const std::string&) const;
