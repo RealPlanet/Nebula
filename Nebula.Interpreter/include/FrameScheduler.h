@@ -5,30 +5,38 @@
 
 namespace nebula
 {
-    class Frame;
-    class IGCObject;
+	class Frame;
+	class IGCObject;
 
-    // Enables control of a Frame state (messaging and waiting)
-    class FrameScheduler
-        : public INotificationListener
-    {
-    public:
-        FrameScheduler(Frame* parent);
+	// Enables control of a Frame state (messaging and waiting)
+	class FrameScheduler
+		: public INotificationListener
+	{
+	public:
+		FrameScheduler(Frame* parent);
 
-        // Freeze the owned thread for X milliseconds
-        void Sleep(size_t amount);
+		// Freeze the owned thread for X milliseconds
+		void Sleep(size_t amount);
+		void Kill();
 
-        //void WaitForNotification(IGCObject* notifier, size_t hash);
-        void WaitForNotification(IGCObject* notifier, const std::string& str);
+		void WaitForNotification(IGCObject* notifier, const std::string& str);
 
-        // Returns true if the frame is sleeping, will also check time passed and clear flag
-        bool IsSleeping();
+		void EndOnNotification(IGCObject* notifier, const std::string& str);
 
-        virtual bool OnNotification(IGCObject* sender, const size_t notification) override;
-    private:
-        Frame* m_Parent;
-        size_t m_SleepAmount{ 0 };
-        std::map<IGCObject*, std::unordered_set<size_t>> m_WaitingHashes;
-    };
+		// Returns true if the frame is sleeping, will also check time passed and clear flag
+		bool IsSleeping();
+		bool HasBeenKilled() const { return m_Killed; }
+
+		virtual bool OnNotification(IGCObject* sender, const size_t notification) override;
+	private:
+		Frame* m_Parent;
+		size_t m_SleepAmount{ 0 };
+		bool m_Killed{ false };
+		std::map<IGCObject*, std::unordered_set<size_t>> m_WaitingHashes;
+		std::map<IGCObject*, std::unordered_set<size_t>> m_WaitingEndonHashes;
+
+		bool FindAndRemoveWaitingHash(IGCObject* sender, const size_t notification);
+		bool FindAndRemoveEndonHash(IGCObject* sender, const size_t notification);
+	};
 }
 

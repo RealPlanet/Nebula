@@ -33,7 +33,6 @@ namespace nebula
         _TypeBundle,
         _TypeArray,
         _TypeVoid, // Does not exist in the stack but is used while compiling code
-        //_TypeBool, // Does not exist in the stack but is used while compiling code
         _UnknownType,
         _TypeLast,
     };

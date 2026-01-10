@@ -31,11 +31,35 @@ Frame::Frame(Frame* parent, const Function* f, bool discardParent)
     }
 
     if (discardParent)
+    {
         m_ParentFrame = nullptr;
+    }
+    else
+    {
+        m_ParentFrame->m_ChildFrame = this;
+    }
 }
 
 Frame::Status Frame::Tick(Interpreter* interpreter)
 {
+    // If this frame has received a kill notification we need to halt all child frames
+    if (m_Scheduler.HasBeenKilled())
+    {
+        m_ChildFrame->Kill();
+
+        if (m_ParentFrame != nullptr)
+        {
+            // TODO :: Figure if this is what we actually want! Ideally we'd return null and let the user handle it
+            if (m_FunctionDefinition->ReturnType() != DataStackVariantIndex::_TypeVoid)
+            {
+                m_LastErrorCode = InstructionErrorCode::EndonKilledUnthreadedFunctionWithReturnValue;
+                return Status::FatalError;
+            }
+        }
+
+        return Frame::Status::Finished;
+    }
+
     if (m_Scheduler.IsSleeping())
         return Frame::Status::Paused;
 
@@ -90,3 +114,18 @@ void Frame::WaitForNotification(IGCObject* notifier, const std::string& notifica
 {
     m_Scheduler.WaitForNotification(notifier, notification);
 }
+
+void Frame::EndOnNotification(IGCObject* notifier, const std::string& notification)
+{
+    m_Scheduler.EndOnNotification(notifier, notification);
+}
+
+void nebula::Frame::Kill()
+{
+    m_Scheduler.Kill();
+    if (m_ChildFrame != nullptr)
+    {
+        m_ChildFrame->Kill();
+    }
+}
+

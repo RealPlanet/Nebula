@@ -20,6 +20,7 @@ namespace nebula
         NativeFunctionNotFound,
         BundleNotFound,
         DivideByZero,
+        EndonKilledUnthreadedFunctionWithReturnValue,
     };
 
     inline std::string InstructionErrorCodeToString(InstructionErrorCode c)
@@ -40,6 +41,8 @@ namespace nebula
             return "BundleNotFound";
         case InstructionErrorCode::DivideByZero:
             return "DivideByZero";
+        case InstructionErrorCode::EndonKilledUnthreadedFunctionWithReturnValue:
+            return "EndonKilledUnthreadedFunctionWithReturnValue";
         }
 
         return std::format("Unknown error code: {}", (int)c);
