@@ -10,10 +10,12 @@ namespace nebula {
 	class DefaultDebugServer
 		: public DebugServer {
 	private:
-		std::map<const Script*, ScriptDebugInformation*> m_DebugCache;
+		std::map<std::string, ScriptDebugInformation*> m_DebugCache;
 
 	public:
-		void NotifyScriptUnloaded(const Script* script);
-		ScriptDebugInformation* GetDebugInformationForScript(const Script* script);
+		void NotifyScriptUnloaded(const std::string& scriptSource);
+		ScriptDebugInformation* GetDebugInformationForScript(const std::string& scriptSource);
 	};
+
+
 }
