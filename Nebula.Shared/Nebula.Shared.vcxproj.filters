@@ -18,6 +18,7 @@
     <ClInclude Include="include\interfaces\IStreamWrapper.h" />
     <ClInclude Include="include\interfaces\IGCObject.h" />
     <ClInclude Include="include\interfaces\INotificationListener.h" />
+    <ClInclude Include="include\DebugServer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DiagnosticReport.cpp" />
@@ -25,5 +26,6 @@
     <ClCompile Include="src\ErrorCallStack.cpp" />
     <ClCompile Include="src\INotificationListener.cpp" />
     <ClCompile Include="src\IGCObject.cpp" />
+    <ClCompile Include="src\DebugServer.cpp" />
   </ItemGroup>
 </Project>
