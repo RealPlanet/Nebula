@@ -328,18 +328,18 @@ namespace Nebula.Debugger.Debugger
 
             int lastOpcode = -1;
             int count = 0;
-            foreach (KeyValuePair<int, int> d in targetFunc.LineStartingOpcodeIndex)
+            foreach (var (lineNumber, opcodeOfLine) in targetFunc.Lines)
             {
-                if (d.Key == line)
+                if (lineNumber == line)
                 {
-                    instructionIndex = d.Value;
+                    instructionIndex = opcodeOfLine;
                     return true;
                 }
 
                 count++;
-                if (d.Key <= line)
+                if (lineNumber <= line)
                 {
-                    lastOpcode = d.Value;
+                    lastOpcode = opcodeOfLine;
                     continue;
                 }
 

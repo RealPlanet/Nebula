@@ -60,20 +60,20 @@ namespace Nebula.Debugger.Debugger.Data
             if (currentOpcode >= 0)
             {
                 int lastLine = -1;
-                foreach (KeyValuePair<int, int> kvp in debugFunc.LineStartingOpcodeIndex)
+                foreach (var (lineNumber, opcodeOfLine) in debugFunc.Lines)
                 {
-                    if (kvp.Value == currentOpcode)
+                    if (opcodeOfLine == currentOpcode)
                     {
-                        return kvp.Key;
+                        return lineNumber;
                     }
 
-                    if (kvp.Value < currentOpcode)
+                    if (opcodeOfLine < currentOpcode)
                     {
-                        lastLine = kvp.Key;
+                        lastLine = lineNumber;
                         continue;
                     }
 
-                    if (kvp.Value >= currentOpcode)
+                    if (opcodeOfLine >= currentOpcode)
                     {
                         return lastLine;
                     }
