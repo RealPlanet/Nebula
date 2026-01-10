@@ -20,6 +20,9 @@
 #include "ConsoleWriter.h"
 #include "DiagnosticReport.h"
 #include "DebuggerDefinitions.h"
+#include "DebugServer.h"
+#include "DefaultDebugServer.h"
+// Is marked as unused but is actually used for the declartion of some global functions
 #include "NebulaStandardLib.h"
 
 using namespace nebula::frontend;
@@ -110,23 +113,9 @@ static int PrintVMLastError(nebula::Interpreter& vm)
 	return 0;
 }
 
-static int ExecuteVM() {
+static int LoadInputScripts(std::vector< std::shared_ptr<Script>>& loadedScripts) {
 
-	// Setup interpreter and bind native functions
-	// Might be useful to have them available even if we haven't started the VM (Load time caching ecc..)
-	Interpreter vm;
-	BindStandardLibFunctions(vm);
-
-	std::vector<std::shared_ptr<Script>> loadedScripts;
-	loadedScripts.reserve(g_inputScripts.size());
-
-	bool anyLoadError = false;
-
-	for (auto& file : g_inputBindings)
-	{
-		BindNativeFunctions(vm, file);
-	}
-
+	bool foundError = false;
 	for (auto& file : g_inputScripts)
 	{
 		if (file.ends_with(".neb"))
@@ -138,7 +127,7 @@ static int ExecuteVM() {
 				std::string errMessage = std::format("Errors while loading script {}", file.data());
 				writer::ConsoleWrite(errMessage, writer::Code::FG_RED);
 				PrintReport(scriptLoadResult.ParsingReport);
-				anyLoadError = true;
+				foundError = true;
 			}
 			else
 			{
@@ -151,45 +140,78 @@ static int ExecuteVM() {
 		}
 	}
 
-	if (anyLoadError)
-	{
-		return -2;
-	}
+	return !foundError;
+}
 
-	auto start = std::chrono::high_resolution_clock::now();
+static int ExecuteVM() {
 
-	for (auto& ptr : loadedScripts)
+	int executionResult = -1;
+
 	{
-		bool scriptLoaded = vm.AddScript(ptr);
-		[[unlikely]]
-		if (!scriptLoaded)
+		// Setup interpreter and bind native functions
+		// Might be useful to have them available even if we haven't started the VM (Load time caching ecc..)
+		Interpreter vm;
+		DebugServer::RegisterDebugServer(new DefaultDebugServer());
+		BindStandardLibFunctions(vm);
+
+		for (auto& file : g_inputBindings)
 		{
-			std::string errMessage = std::format("Error while adding script '{}' to VM", ptr->Namespace().data());
-			writer::ConsoleWrite(errMessage, writer::Code::FG_RED);
-			return -99999;
+			BindNativeFunctions(vm, file);
 		}
+
+		std::vector<std::shared_ptr<Script>> loadedScripts;
+		loadedScripts.reserve(g_inputScripts.size());
+		if (LoadInputScripts(loadedScripts))
+		{
+			auto start = std::chrono::high_resolution_clock::now();
+
+			bool allScriptsLoaded = true;
+			for (auto& ptr : loadedScripts)
+			{
+				bool scriptLoaded = vm.AddScript(ptr);
+
+				[[unlikely]]
+				if (!scriptLoaded)
+				{
+					std::string errMessage = std::format("Error while adding script '{}' to VM", ptr->Namespace().data());
+					writer::ConsoleWrite(errMessage, writer::Code::FG_RED);
+					allScriptsLoaded = false;
+				}
+			}
+
+			if (allScriptsLoaded)
+			{
+				auto startNoScriptLoading = std::chrono::high_resolution_clock::now();
+
+				std::cout << ">------- Begin execution ---------\n";
+
+				vm.InitAndRun();
+				vm.Wait();
+
+				auto finish = std::chrono::high_resolution_clock::now();
+				auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start);
+				auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
+
+				auto millisecondsNoLoading = std::chrono::duration_cast<std::chrono::milliseconds>(finish - startNoScriptLoading);
+				auto microsecondsNoLoading = std::chrono::duration_cast<std::chrono::microseconds>(finish - startNoScriptLoading);
+
+				std::cout << ">---------------------------------\n";
+				std::cout << "Execution terminated with time:" << std::endl;
+				std::cout << "  (With script loading) ->   " << milliseconds.count() << "ms; " << microseconds.count() << "us\n";
+				std::cout << "  (No script loading) ->   " << millisecondsNoLoading.count() << "ms; " << microsecondsNoLoading.count() << "us\n";
+
+				executionResult = PrintVMLastError(vm);
+			}
+			else
+			{
+				executionResult = -99999;
+			}
+		}
+
 	}
 
-	auto startNoScriptLoading = std::chrono::high_resolution_clock::now();
-
-	std::cout << ">------- Begin execution ---------\n";
-
-	vm.InitAndRun();
-	vm.Wait();
-
-	auto finish = std::chrono::high_resolution_clock::now();
-	auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start);
-	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
-
-	auto millisecondsNoLoading = std::chrono::duration_cast<std::chrono::milliseconds>(finish - startNoScriptLoading);
-	auto microsecondsNoLoading = std::chrono::duration_cast<std::chrono::microseconds>(finish - startNoScriptLoading);
-
-	std::cout << ">---------------------------------\n";
-	std::cout << "Execution terminated with time:" << std::endl;
-	std::cout << "  (With script loading) ->   " << milliseconds.count() << "ms; " << microseconds.count() << "us\n";
-	std::cout << "  (No script loading) ->   " << millisecondsNoLoading.count() << "ms; " << microsecondsNoLoading.count() << "us\n";
-
-	return PrintVMLastError(vm);
+	DebugServer::RegisterDebugServer(nullptr);
+	return executionResult;
 }
 
 int main(int argc, char* argv[]) {
@@ -212,5 +234,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	/* DO NOT DUMP MEMORY HERE OTHERWISE STATIC STUFF WILL BE REPORTED */
-	return ExecuteVM();
+
+	int result = ExecuteVM();
+	return result;
 }
