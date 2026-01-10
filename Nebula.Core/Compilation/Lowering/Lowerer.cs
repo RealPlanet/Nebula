@@ -5,6 +5,7 @@ using Nebula.Core.Compilation.AST.Tree.Expression;
 using Nebula.Core.Compilation.AST.Tree.Statements;
 using Nebula.Core.Compilation.AST.Tree.Statements.ControlFlow;
 using Nebula.Core.Compilation.AST.Tree.Statements.Loop;
+using Nebula.Core.Compilation.CST.Tree.Statements;
 using Nebula.Core.Graph;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -21,14 +22,14 @@ namespace Nebula.Core.Compilation.Lowering
         public AbstractBlockStatement Lower(FunctionSymbol function, AbstractStatement body)
         {
             // Rewrite the body of a function to always be a block statement
-            AbstractStatement result = RewriteStatement(body);
+            AbstractBlockStatement result = (AbstractBlockStatement)RewriteStatement(body);
             return RemoveDeadCode(Flatten(function, result));
         }
 
         /// <summary>
         /// Break complex statement trees into a flat linear statement chain
         /// </summary>
-        private static AbstractBlockStatement Flatten(FunctionSymbol function, AbstractStatement statement)
+        private static AbstractBlockStatement Flatten(FunctionSymbol function, AbstractBlockStatement statement)
         {
             ImmutableArray<AbstractStatement>.Builder builder = ImmutableArray.CreateBuilder<AbstractStatement>();
             Stack<AbstractStatement> stack = new();
@@ -58,7 +59,9 @@ namespace Nebula.Core.Compilation.Lowering
             {
                 if (builder.Count == 0 || CanFallThrough(builder.Last()))
                 {
-                    builder.Add(new AbstractReturnStatement(statement.OriginalNode, null));
+                    var originalNode = (BlockStatement)statement.OriginalNode;
+                    // We use the bracket as original node for the debugger or similar
+                    builder.Add(new AbstractReturnStatement(originalNode.CloseBracket, null));
                 }
             }
 
