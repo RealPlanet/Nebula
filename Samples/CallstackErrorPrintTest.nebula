@@ -1,4 +1,4 @@
-namespace "StronglyTypedBundle";
+namespace "CallStackErrorPrintTest";
 
 native void WrongFunc(string s);
 
@@ -12,8 +12,7 @@ func void first(){
 }
 
 func void second(){
-    third();
-}
+    third();}
 
 func void third(){
     forth();

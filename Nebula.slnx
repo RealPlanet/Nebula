@@ -76,6 +76,7 @@
     <File Path="Samples/StronglyTypedBundle.nebula" />
     <File Path="Samples/TypedArray.nebula" />
   </Folder>
+  <Folder Name="/Submodules/" />
   <Folder Name="/Tests/">
     <Project Path="Nebula.Compiler.Tests/Nebula.Compiler.Tests.csproj">
       <Platform Project="x64" />
