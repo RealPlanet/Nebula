@@ -45,7 +45,8 @@ Frame::Status Frame::Tick(Interpreter* interpreter)
     // If this frame has received a kill notification we need to halt all child frames
     if (m_Scheduler.HasBeenKilled())
     {
-        m_ChildFrame->Kill();
+        if(m_ChildFrame != nullptr)
+            m_ChildFrame->Kill();
 
         if (m_ParentFrame != nullptr)
         {
