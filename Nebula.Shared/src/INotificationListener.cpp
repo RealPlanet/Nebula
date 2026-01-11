@@ -10,9 +10,10 @@ INotificationListener::~INotificationListener()
 
 void INotificationListener::UnsubscribeFromAll()
 {
-    for (IGCObject* notifier : m_ConnectedNotifiers)
+    std::unordered_set<IGCObject*> notifiers = { m_ConnectedNotifiers };
+    for (IGCObject* obj : notifiers)
     {
-        notifier->Unsubscribe(this);
+        obj->Unsubscribe(this);
     }
 
     m_ConnectedNotifiers.clear();
