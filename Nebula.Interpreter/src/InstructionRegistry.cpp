@@ -574,7 +574,17 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
     }
     case VMInstruction::Wait:
     {
-        TFloat& seconds = std::get<TFloat>(stack.Peek());
+        TFloat seconds;
+        auto ptr = std::get_if<TFloat>(&stack.Peek());
+        if (ptr == nullptr)
+        {
+            seconds = (TFloat)std::get<DataStackVariantIndex::_TypeInt32>(stack.Peek());
+        }
+        else
+        {
+            seconds = *ptr;
+        }
+
         context->SetScheduledSleep((size_t)(seconds * 1000));
         stack.Pop();
 
