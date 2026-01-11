@@ -70,6 +70,7 @@
         ReturnKeyword,
         WaitKeyword,
         WaitNotificationKeyword,
+        EndOnNotificationKeyword,
         NotifyKeyword,
         NativeKeyword,
 

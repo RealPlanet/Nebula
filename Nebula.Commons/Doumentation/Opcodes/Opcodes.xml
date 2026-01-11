@@ -60,6 +60,9 @@
     <Opcode Type="Wait">
         <Description></Description>
     </Opcode>
+    <Opcode Type="EndOn">
+        <Description></Description>
+    </Opcode>
     <Opcode Type="Wait_n">
         <Description></Description>
     </Opcode>
