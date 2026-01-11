@@ -149,6 +149,9 @@ namespace Nebula.Core.Compilation.AST.Binding
                 foreach (FunctionSymbol declaration in _currentProgram.Functions.Keys)
                 {
                     _currentFunction = declaration;
+                    // Use the function scope to correctly retrieve parameters
+                    _currentScope = declaration.FunctionScope;
+
                     AbstractStatement body = BindStatement(declaration.Declaration!.Body);
                     AbstractBlockStatement loweredBody = lowerer.Lower(declaration, body);
                     if (declaration.ReturnType != TypeSymbol.Void && !ControlFlowGraph.AllPathsReturn(loweredBody))
@@ -520,6 +523,8 @@ namespace Nebula.Core.Compilation.AST.Binding
             ImmutableArray<AttributeSymbol>.Builder attributes = ImmutableArray.CreateBuilder<AttributeSymbol>();
             HashSet<string> seenNames = new();
 
+            Scope functionScope = new Scope(_currentScope);
+
             foreach (Parameter parameter in function.Parameters)
             {
                 string name = parameter.Identifier.Text;
@@ -532,7 +537,7 @@ namespace Nebula.Core.Compilation.AST.Binding
                 TypeSymbol parameterType = BindTypeClause(parameter.ParameterType);
                 ParameterSymbol paramSymbol = new(name, parameterType, parameters.Count);
                 parameters.Add(paramSymbol);
-                if (!_currentScope.TryDeclareVariable(paramSymbol))
+                if (!functionScope.TryDeclareVariable(paramSymbol))
                 {
                     // Fatal error
                     _binderReport.ReportCannotDeclareParameterVariable(parameter);
@@ -559,7 +564,7 @@ namespace Nebula.Core.Compilation.AST.Binding
                 }
             }
 
-            FunctionSymbol funcSymbol = new(function.Name.Text, parameters.ToImmutableArray(), attributes.ToImmutableArray(), returnType, function);
+            FunctionSymbol funcSymbol = new(function.Name.Text, parameters.ToImmutableArray(), attributes.ToImmutableArray(), returnType, functionScope, function);
             if (function.Name.Text != null && !_currentScope.TryDeclareFunction(funcSymbol))
             {
                 _binderReport.ReportBinderFunctionAlreadyExists(function);
@@ -588,7 +593,7 @@ namespace Nebula.Core.Compilation.AST.Binding
             }
 
             TypeSymbol type = BindTypeClause(function.ReturnType) ?? TypeSymbol.Void;
-            FunctionSymbol funcSymbol = new(function.Name.Text, parameters.ToImmutableArray(), [], type, function);
+            FunctionSymbol funcSymbol = new(function.Name.Text, parameters.ToImmutableArray(), [], type, null, function);
             if (function.Name.Text != null && !_currentScope.TryDeclareNativeFunction(funcSymbol))
             {
                 _binderReport.ReportBinderFunctionAlreadyExists(function);
