@@ -1,0 +1,37 @@
+namespace "EndonMessage";
+
+native void WriteLine(string s);
+
+bundle dummy {}
+
+func void main() autoexec
+{
+    WriteLine("I start a printing loop, sleep for 5 seconds and then kill it!");
+    dummy main_bus = [];
+
+    async BeginLoop(main_bus);
+
+    WriteLine("I notify something random, nothing should happen");
+    main_bus notify "KEEP_GOING";
+
+    wait 5;
+
+    main_bus notify "END";
+    WriteLine("I notify end, wait a few seconds and print again!");
+
+    wait 5;
+    WriteLine("No loop prints should be present!");
+}
+
+func void BeginLoop(dummy bus)
+{
+    bus endon "END";
+
+    int count = 0;
+    while(true)
+    {
+        WriteLine("Loop -> " + string(count));
+        wait 0.25f;
+        count = count + 1;
+    }
+}

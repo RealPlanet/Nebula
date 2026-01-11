@@ -1,0 +1,38 @@
+namespace "EndonMessageOnNonThreadedCallError";
+
+native void WriteLine(string s);
+
+bundle dummy {}
+
+func void main() autoexec
+{
+    WriteLine("I start an async call that will kill the bundle in 5 seconds.");
+    WriteLine("I then call a function that will return something something, the called function will have an endon within");
+    WriteLine("This will result in a fatal vm error!");
+
+    dummy main_bus = [];
+
+    async CountDownNotification(main_bus);
+
+    int result = DoWork(main_bus);
+
+    WriteLine("The result is " + string(result));
+}
+
+func int DoWork(dummy bus)
+{
+    bus endon "END";
+
+    wait 5;
+
+    return 10;
+}
+
+func void CountDownNotification(dummy bus)
+{
+    // Just to show that this pattern is supported
+    bus endon "END";
+
+    wait 2.5f;
+    bus notify "END";
+}
