@@ -41,6 +41,7 @@ namespace nebula {
 		Call_t,
 		Wait,
 		Wait_n,
+		Endon,
 		Notify,
 
 		// Math
@@ -167,6 +168,8 @@ namespace nebula {
 			return "wait";
 		case VMInstruction::Wait_n:
 			return "wait_n";
+		case VMInstruction::Endon:
+			return "endon";
 		case VMInstruction::Notify:
 			return "notify";
 		case VMInstruction::Add:
@@ -224,6 +227,7 @@ namespace nebula {
 			{"call_t",		VMInstruction::Call_t		},
 			{"wait",		VMInstruction::Wait			},
 			{"wait_n",		VMInstruction::Wait_n		},
+			{"endon",		VMInstruction::Endon		},
 			{"notify",		VMInstruction::Notify		},
 			{"add",			VMInstruction::Add			},
 			{"sub",			VMInstruction::Sub			},

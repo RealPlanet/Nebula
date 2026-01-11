@@ -328,6 +328,7 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
     case VMInstruction::Not:
     case VMInstruction::Xor:
     case VMInstruction::Wait_n: // String on stack
+    case VMInstruction::Endon: // String on stack
     case VMInstruction::Notify: // String on stack
     {
         return { /* No arguments */ };
@@ -594,6 +595,22 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
         context->WaitForNotification(bundle.get(), stringToNotify);
         stack.Pop();
 
+        return InstructionErrorCode::None;
+    }
+    case VMInstruction::Endon:
+    {
+        assert(args.size() == 0);
+        assert(std::holds_alternative<TString>(stack.Peek()));
+
+        // Load the string to end on
+        TString stringToNotify = std::get<TString>(stack.Peek());
+        stack.Pop();
+
+        // Load the bundle that will notify this message
+        assert(std::holds_alternative<TBundle>(stack.Peek()));
+        TBundle& bundle = std::get<TBundle>(stack.Peek());
+        context->EndOnNotification(bundle.get(), stringToNotify);
+        stack.Pop();
         return InstructionErrorCode::None;
     }
     case VMInstruction::Notify:
