@@ -33,7 +33,10 @@ ScriptLoadResult nebula::Script::FromMemory(const std::string_view& data, const 
 
 	ScriptLoadResult result;
 	result.Script = parser->ParseScript(data);
-	result.Script->m_SourcePath = sourcePath;
+	if (result.Script != nullptr)
+	{
+		result.Script->m_SourcePath = sourcePath;
+	}
 	result.ParsingReport = parser->GetLastParsingReport();
 	return result;
 }
