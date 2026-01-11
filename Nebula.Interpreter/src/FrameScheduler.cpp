@@ -74,16 +74,20 @@ bool FrameScheduler::IsSleeping()
 bool FrameScheduler::OnNotification(IGCObject* sender, const size_t notification)
 {
 	// We are either waiting to unlock sleep or kill the frame, cant have both (doesn't make sense so wait always wins)
-	bool removeWaitingListener = FindAndRemoveWaitingHash(sender, notification);
-	bool removeEndonListener = FindAndRemoveEndonHash(sender, notification);
-	return removeWaitingListener || removeEndonListener;
+	bool foundListener = FindAndRemoveWaitingHash(sender, notification);
+	bool foundEndon = FindAndRemoveEndonHash(sender, notification);
+
+	// If we don't find neither we need to unsubscribe as we have no use for it
+	return !foundListener && !foundEndon;
 }
 
 bool FrameScheduler::FindAndRemoveWaitingHash(IGCObject* sender, const size_t notification)
 {
 	auto it = m_WaitingHashes.find(sender);
 	if (it == m_WaitingHashes.end())
-		return true;
+	{
+		return false;
+	}
 
 	it->second.erase(notification);
 	if (it->second.empty())
@@ -99,7 +103,7 @@ bool FrameScheduler::FindAndRemoveEndonHash(IGCObject* sender, const size_t noti
 {
 	auto it = m_WaitingEndonHashes.find(sender);
 	if (it == m_WaitingEndonHashes.end())
-		return true;
+		return false;
 
 	it->second.erase(notification);
 	m_WaitingEndonHashes.clear(); // Clear all, we are about to deallocate anyways because the frame is about to die
