@@ -350,6 +350,8 @@ bool ParserDebug::ParseBundleDefinitions()
         return false;
     }
 
+    SkipWhitespace(true);
+
     BundleDefinition newBundle(bundleName);
     // Parse all fields
     while (Current() != ')')
