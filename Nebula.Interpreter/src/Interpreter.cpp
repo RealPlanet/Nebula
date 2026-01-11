@@ -178,6 +178,12 @@ bool Interpreter::Step()
 
 bool Interpreter::CheckAndSetExitState()
 {
+    if (GetState() == State::Abort)
+    {
+        m_Threads.Clear();
+        return true;
+    }
+
     if (!m_Threads.HasCallStacks())
     {
         SetState(State::Exited);
