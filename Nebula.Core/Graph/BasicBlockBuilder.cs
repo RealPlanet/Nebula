@@ -27,6 +27,7 @@ namespace Nebula.Core.Graph
                     case AbstractNodeType.VariableDeclarationCollection:
                     case AbstractNodeType.WaitStatement:
                     case AbstractNodeType.WaitNotificationStatement:
+                    case AbstractNodeType.EndOnNotificationStatement:
                     case AbstractNodeType.NotifyStatement:
                         StatementList.Add(statement);
                         break;

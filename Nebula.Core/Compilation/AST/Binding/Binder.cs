@@ -977,6 +977,7 @@ namespace Nebula.Core.Compilation.AST.Binding
             NodeType.ExpressionStatement => BindExpressionStatement((ExpressionStatement)syntax),
             NodeType.WaitStatement => BindWaitStatement((WaitStatement)syntax),
             NodeType.WaitNotificationStatement => BindWaitNotificationStatement((WaitNotificationStatement)syntax),
+            NodeType.EndOnNotificationKeyword => BindEndOnNotificationStatement((EndOnNotificationStatement)syntax),
             NodeType.NotifyStatement => BindNotifyStatement((NotifyStatement)syntax),
             NodeType.IfStatement => BindIfStatement((IfStatement)syntax),
             NodeType.WhileStatement => BindWhileStatement((WhileStatement)syntax),
@@ -1123,6 +1124,24 @@ namespace Nebula.Core.Compilation.AST.Binding
             }
 
             return new AbstractWaitNotificationStatement(syntax, nameExpression, notifyExpr);
+        }
+
+        private AbstractEndOnNotificationStatement BindEndOnNotificationStatement(EndOnNotificationStatement syntax)
+        {
+            AbstractExpression nameExpression = BindNameExpression(syntax.Identifier);
+            if (nameExpression is AbstractVariableExpression ave && !ave.Variable.Type.IsObject)
+            {
+                _binderReport.ReportIdentifierNotOfType(syntax.Identifier.Location, ave.Variable.Name, TypeSymbol.BaseObject);
+            }
+
+            AbstractExpression notifyExpr = BindExpression(syntax.Expression, canBeVoid: false);
+            if (notifyExpr is not AbstractErrorExpression && notifyExpr.ResultType != TypeSymbol.String)
+            {
+                _binderReport.ReportCannotConvertType(notifyExpr.OriginalNode.Location, notifyExpr.ResultType, TypeSymbol.String);
+                notifyExpr = new AbstractErrorExpression(notifyExpr.OriginalNode);
+            }
+
+            return new AbstractEndOnNotificationStatement(syntax, nameExpression, notifyExpr);
         }
 
         private AbstractIfStatement BindIfStatement(IfStatement syntax)

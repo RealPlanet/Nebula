@@ -17,5 +17,4 @@ namespace Nebula.Core.Compilation.AST.Tree.Statements
             NotifyExpression = notifyExpr;
         }
     }
-
 }

@@ -412,6 +412,12 @@ namespace Nebula.Core.Compilation.CST.Parsing
                         }
 
                         if (Current.Type == NodeType.IdentifierToken &&
+                            Peek(1).Type == NodeType.EndOnNotificationKeyword)
+                        {
+                            return ParseEndOnNotificationStatement();
+                        }
+
+                        if (Current.Type == NodeType.IdentifierToken &&
                             Peek(1).Type == NodeType.NotifyKeyword)
                         {
                             return ParseNotifyStatement();
@@ -449,6 +455,16 @@ namespace Nebula.Core.Compilation.CST.Parsing
             Token semicolon = MatchToken(NodeType.SemicolonToken);
 
             return new WaitNotificationStatement(_currentSource, identifier, keyword, expression, semicolon);
+        }
+
+        private EndOnNotificationStatement ParseEndOnNotificationStatement()
+        {
+            NameExpression identifier = ParseNameExpression();
+            Token keyword = MatchToken(NodeType.EndOnNotificationKeyword);
+            Expression expression = ParseExpression();
+            Token semicolon = MatchToken(NodeType.SemicolonToken);
+
+            return new EndOnNotificationStatement(_currentSource, identifier, keyword, expression, semicolon);
         }
 
         private WaitStatement ParseWaitStatement()

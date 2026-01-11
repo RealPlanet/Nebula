@@ -54,6 +54,7 @@ namespace Nebula.Core.Graph
                         //case BoundNodeType.SEQUENCE_POINT_STATEMENT:
                         case AbstractNodeType.WaitStatement:
                         case AbstractNodeType.WaitNotificationStatement:
+                        case AbstractNodeType.EndOnNotificationStatement:
                         case AbstractNodeType.NotifyStatement:
                         case AbstractNodeType.LabelStatement:
                             {

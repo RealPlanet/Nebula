@@ -247,6 +247,9 @@ namespace Nebula.Core.Compilation.Emitting
                 case AbstractNodeType.WaitNotificationStatement:
                     EmitWaitNotificationStatement(processor, (AbstractWaitNotificationStatement)node);
                     break;
+                case AbstractNodeType.EndOnNotificationStatement:
+                    EmitEndOnNotificationStatement(processor, (AbstractEndOnNotificationStatement)node);
+                    break;
                 case AbstractNodeType.NotifyStatement:
                     EmitNotifyStatement(processor, (AbstractNotifyStatement)node);
                     break;
@@ -266,6 +269,13 @@ namespace Nebula.Core.Compilation.Emitting
             EmitExpression(processor, node.BundleToWaitOn, node.OriginalNode);
             EmitExpression(processor, node.NotifyExpression, node.OriginalNode);
             processor.Emit(InstructionOpcode.Wait_n, node.OriginalNode);
+        }
+
+        private void EmitEndOnNotificationStatement(NILProcessor processor, AbstractEndOnNotificationStatement node)
+        {
+            EmitExpression(processor, node.BundleToEndOn, node.OriginalNode);
+            EmitExpression(processor, node.NotifyExpression, node.OriginalNode);
+            processor.Emit(InstructionOpcode.EndOn, node.OriginalNode);
         }
 
         private void EmitNotifyStatement(NILProcessor processor, AbstractNotifyStatement node)

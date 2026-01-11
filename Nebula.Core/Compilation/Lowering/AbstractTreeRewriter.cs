@@ -27,6 +27,7 @@ namespace Nebula.Core.Compilation.Lowering
             AbstractNodeType.ReturnStatement => RewriteReturnStatement((AbstractReturnStatement)node),
             AbstractNodeType.WaitStatement => RewriteWaitStatement((AbstractWaitStatement)node),
             AbstractNodeType.WaitNotificationStatement => RewriteWaitNotificationStatement((AbstractWaitNotificationStatement)node),
+            AbstractNodeType.EndOnNotificationStatement => RewriteEndOnNotificationStatement((AbstractEndOnNotificationStatement)node),
             AbstractNodeType.NotifyStatement => RewriteNotifyStatement((AbstractNotifyStatement)node),
             _ => throw new Exception($"Unexpected node: {node.Type}"),
         };
@@ -422,6 +423,17 @@ namespace Nebula.Core.Compilation.Lowering
             }
 
             return new AbstractWaitNotificationStatement(node.OriginalNode, node.BundleToWaitOn, rewrittenExpression);
+        }
+
+        private AbstractEndOnNotificationStatement RewriteEndOnNotificationStatement(AbstractEndOnNotificationStatement node)
+        {
+            AbstractExpression rewrittenExpression = RewriteExpression(node.NotifyExpression);
+            if (rewrittenExpression == node.NotifyExpression)
+            {
+                return node;
+            }
+
+            return new AbstractEndOnNotificationStatement(node.OriginalNode, node.BundleToEndOn, rewrittenExpression);
         }
     }
 }

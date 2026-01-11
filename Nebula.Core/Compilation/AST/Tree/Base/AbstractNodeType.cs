@@ -12,6 +12,7 @@
         NamespaceDeclaration,
         WaitStatement,
         WaitNotificationStatement,
+        EndOnNotificationStatement,
         NotifyStatement,
         IfStatement,
         WhileStatement,
