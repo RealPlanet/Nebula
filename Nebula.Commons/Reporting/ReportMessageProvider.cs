@@ -214,7 +214,7 @@ namespace Nebula.Commons.Reporting
         public static ReportMessageTemplate ErrorWaitMustBeNumber =>
     (ReportMessageCodes.E002B, ErrorMessages.WaitMustBeNumber);
         public static ReportMessageTemplate ErrorAssignmentLeftHandSideNotValid =>
-    (ReportMessageCodes.E002B, ErrorMessages.AssignmentLeftHandSideNotValid);
+    (ReportMessageCodes.E002C, ErrorMessages.AssignmentLeftHandSideNotValid);
 
         #endregion
     }
