@@ -51,7 +51,8 @@ namespace Nebula.Compiler.Tests
             Assert.IsTrue(compileOk);
             Assert.IsFalse(result.Report.HasErrors);
 
-            Assert.AreEqual(md.AbortCode, LaunchExecutor(md, compiledPath, compiledReferencesPath));
+            var errorCode = LaunchExecutor(md, compiledPath, compiledReferencesPath);
+            Assert.AreEqual(md.AbortCode, errorCode);
             File.Delete(compiledPath);
         }
 
@@ -83,19 +84,20 @@ namespace Nebula.Compiler.Tests
         private static int LaunchExecutor(TestMetadata md, string scriptFile, string[] dependencies)
         {
             Process p = new();
-            p.StartInfo.FileName = ExecutorPath;
+            p.StartInfo.FileName = Path.GetFullPath(ExecutorPath);
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = true;
             p.OutputDataReceived += P_OutputDataReceived;
+            p.StartInfo.ArgumentList.Add($"-s");
             p.StartInfo.ArgumentList.Add(Path.GetFullPath(scriptFile));
-
             foreach (string d in dependencies)
             {
+                p.StartInfo.ArgumentList.Add($"-s");
                 p.StartInfo.ArgumentList.Add(Path.GetFullPath(d));
             }
 
 
-            p.Start();
+            Assert.IsTrue(p.Start());
             p.BeginOutputReadLine();
 
             bool exitedOk = p.WaitForExit(md.MaxVMExecutionTime);
