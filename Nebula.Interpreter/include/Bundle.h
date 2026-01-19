@@ -66,7 +66,7 @@ namespace nebula
         void ClearFields() { m_Fields.clear(); }
 
     private:
-        Bundle() = default;
+        Bundle();
         std::string m_Name;
         std::vector<BundleField> m_Fields;
     };

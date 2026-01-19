@@ -21,6 +21,12 @@ namespace nebula
         BundleNotFound,
         DivideByZero,
         EndonKilledUnthreadedFunctionWithReturnValue,
+        NotAPrimitive,
+
+        // GC Objects
+        UndefinedObject,
+        NotABundle,
+        NotAnArray,
     };
 
     inline std::string InstructionErrorCodeToString(InstructionErrorCode c)

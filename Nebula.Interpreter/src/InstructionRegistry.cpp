@@ -508,10 +508,12 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
         assert(std::holds_alternative<TString>(args[1]));
 
         int localIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
-        FrameVariable& var = context->Memory().LocalAt(localIndex);
-
-        RefCounted<IGCObject> ptr = *var.AsGCObject();
         const TString& funcName = std::get<DataStackVariantIndex::_TypeString>(args[1]);
+
+		FrameVariable& var = context->Memory().LocalAt(localIndex);
+		const TGCObject& ptr = var.AsGCObject();
+		if (ptr.get() != nullptr)
+		{
         InstructionErrorCode result = ptr->CallVirtual(funcName, interpreter, context);
         assert(result == InstructionErrorCode::None);
         return result;
@@ -600,8 +602,8 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
         stack.Pop();
 
         // Load the bundle that will notify this message
-        assert(std::holds_alternative<TBundle>(stack.Peek()));
-        TBundle& bundle = std::get<TBundle>(stack.Peek());
+		assert(std::holds_alternative<TGCObject>(stack.Peek()));
+		TGCObject& bundle = std::get<TGCObject>(stack.Peek());
         context->WaitForNotification(bundle.get(), stringToNotify);
         stack.Pop();
 
@@ -617,9 +619,9 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
         stack.Pop();
 
         // Load the bundle that will notify this message
-        assert(std::holds_alternative<TBundle>(stack.Peek()));
-        TBundle& bundle = std::get<TBundle>(stack.Peek());
-        context->EndOnNotification(bundle.get(), stringToNotify);
+		assert(std::holds_alternative<TGCObject>(stack.Peek()));
+		TGCObject& obj = std::get<TGCObject>(stack.Peek());
+		context->EndOnNotification(obj.get(), stringToNotify);
         stack.Pop();
         return InstructionErrorCode::None;
     }
@@ -633,11 +635,10 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
         stack.Pop();
 
         // Load the bundle that will notify this message
-        assert(std::holds_alternative<TBundle>(stack.Peek()));
-        TBundle& bundle = std::get<TBundle>(stack.Peek());
-        bundle->Notify(stringToNotify);
+		assert(std::holds_alternative<TGCObject>(stack.Peek()));
+		TGCObject& obj = std::get<TGCObject>(stack.Peek());
+		obj->Notify(stringToNotify);
         stack.Pop();
-
         return InstructionErrorCode::None;
     }
     case VMInstruction::Ret:
@@ -743,9 +744,15 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
         DataStackVariant variant = context->Stack().Peek();
         context->Stack().Pop();
 
-        TBundle bundle = std::get<DataStackVariantIndex::_TypeBundle>(variant);
+		assert(std::holds_alternative<TGCObject>(variant));
+
+		TGCObject obj = std::get<DataStackVariantIndex::_TypeObject>(variant);
+		CHECK_GC_OBJECT_IS_BUNDLE(obj);
+
+		Bundle* bundle = static_cast<Bundle*>(obj.get());
         DataStackVariant& dataStackVariant = bundle->Get(fieldIndex);
         stack.Push(dataStackVariant);
+
         return InstructionErrorCode::None;
     }
     case VMInstruction::Ldloc:
@@ -808,7 +815,10 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
         context->Stack().Pop();
 
         TInt32 fieldIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
-        TBundle bundle = std::get<DataStackVariantIndex::_TypeBundle>(variant);
+		TGCObject obj = std::get<DataStackVariantIndex::_TypeObject>(variant);
+		CHECK_GC_OBJECT_IS_BUNDLE(obj);
+
+		Bundle* bundle = (Bundle*)obj.get();
         bundle->SetAt(fieldIndex, value);
         return InstructionErrorCode::None;
     }
@@ -1082,9 +1092,13 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
         context->Stack().Pop();
 
         const TInt32 index = std::get<DataStackVariantIndex::_TypeInt32>(indexVariant);
-        TArray array = std::get<DataStackVariantIndex::_TypeArray>(context->Stack().Peek());
-        context->Stack().Pop();
+		TGCObject& obj = std::get<_TypeObject>(context->Stack().Peek());
+
+		CHECK_GC_OBJECT_IS_ARRAY(obj);
+		VariantArray* array = (VariantArray*)obj.get();
         DataStackVariant& value = (*array)[index];
+
+		context->Stack().Pop();
         context->Stack().Push(value);
         return InstructionErrorCode::None;
     }

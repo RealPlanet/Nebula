@@ -33,9 +33,9 @@ static void GatherStackRoots(Interpreter* vm, std::vector<AllocableObjectPtr>& f
             for (int j{ 0 }; j < localCount; j++)
             {
                 const FrameVariable& fv = memory.LocalAt(j);
-                if (const TBundle* bundle = std::get_if<TBundle>(&fv.Value()))
+                if (const TGCObject* obj = std::get_if<TGCObject>(&fv.Value()))
                 {
-                    foundRoots.push_back(std::dynamic_pointer_cast<IGCObject>(*bundle));
+                    foundRoots.push_back(*obj);
                 }
             }
 
@@ -44,9 +44,9 @@ static void GatherStackRoots(Interpreter* vm, std::vector<AllocableObjectPtr>& f
             while (it != stack.end())
             {
                 const DataStackVariant& variant = *it;
-                if (const TBundle* bundle = std::get_if<TBundle>(&variant))
+                if (const TGCObject* obj = std::get_if<TGCObject>(&variant))
                 {
-                    foundRoots.push_back(std::dynamic_pointer_cast<IGCObject>(*bundle));
+                    foundRoots.push_back(*obj);
                 }
 
                 it++;
@@ -111,9 +111,9 @@ void InterpreterMemory::Collect(bool force)
                 for (int f{ 0 }; f < bundle->FieldCount(); f++)
                 {
                     auto& variant = bundle->Get(f);
-                    if (variant.index() == DataStackVariantIndex::_TypeBundle)
+                    if (variant.index() == DataStackVariantIndex::_TypeObject)
                     {
-                        AllocableObjectPtr childPtr = std::dynamic_pointer_cast<IGCObject>(std::get<TBundle>(variant));
+                        AllocableObjectPtr childPtr = std::get<TGCObject>(variant);
                         if (childPtr->m_bIsMarked)
                             continue;
 

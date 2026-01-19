@@ -17,9 +17,7 @@ namespace nebula
         TInt32					AsInt32() const { return std::get<DataStackVariantIndex::_TypeInt32>(_value); }
         TFloat					AsFloat() const { return std::get<DataStackVariantIndex::_TypeFloat>(_value); }
         const TString&          AsString() const { return std::get<DataStackVariantIndex::_TypeString>(_value); }
-        const TBundle*          AsBundle() const { return std::get_if<TBundle>(&_value); }
-        const TArray*           AsArray() const { return std::get_if<TArray>(&_value); }
-        const TGCObject*        AsGCObject() const;
+        const TGCObject&        AsGCObject() const { return std::get<DataStackVariantIndex::_TypeObject>(_value); }
 
     private:
         DataStackVariantIndex _type{ DataStackVariantIndex::_UnknownType };

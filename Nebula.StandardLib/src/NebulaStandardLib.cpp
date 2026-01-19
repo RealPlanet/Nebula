@@ -10,6 +10,7 @@
 #include "Frame.h"
 #include "Instruction.h"    
 #include "LanguageTypes.h"    
+#include "interfaces/IStreamWrapper.h"
 
 using namespace nebula;
 

@@ -2,7 +2,7 @@
 #include <map>
 
 #include "LanguageTypes.h"
-
+#include "interfaces/IGCObject.h"
 
 using namespace nebula;
 
@@ -15,8 +15,9 @@ DataStackVariantIndex nebula::StringToStackValue(const std::string& str)
         { "float",	DataStackVariantIndex::_TypeFloat   },
         { "string", DataStackVariantIndex::_TypeString  },
         { "void",	DataStackVariantIndex::_TypeVoid    },
-        { "bundle", DataStackVariantIndex::_TypeBundle  },
-        { "array",  DataStackVariantIndex::_TypeArray   },
+        { "object", DataStackVariantIndex::_TypeObject  },
+        { "bundle", DataStackVariantIndex::_TypeObject  },
+        { "array", DataStackVariantIndex::_TypeObject  },
     };
 
     auto it = valMap.find(str);

@@ -30,17 +30,29 @@ namespace nebula
         _TypeInt32 = 0,
         _TypeFloat,
         _TypeString,
-        _TypeBundle,
-        _TypeArray,
+        _TypeObject,
         _TypeVoid, // Does not exist in the stack but is used while compiling code
         _UnknownType,
         _TypeLast,
     };
 
     //using DataStackVariant = std::variant<TByte, TInt32, TFloat, TString, TBundle>;
-    using DataStackVariant = std::variant<TInt32, TFloat, TString, TBundle, TArray>;
+    using DataStackVariant = std::variant<TInt32, TFloat, TString, TGCObject>;
 
     DataStackVariantIndex StringToStackValue(const std::string& str);
+
+    inline bool IsDefined(const DataStackVariant& v)
+    {
+        const TGCObject* obj = std::get_if<TGCObject>(&v);
+        if (obj != nullptr)
+        {
+            return obj->get() != nullptr;
+        }
+
+        return true;
+    }
+
+    TBundle* GetBundle(const DataStackVariant& v);
 
     inline std::string ToString(const DataStackVariant& var)
     {

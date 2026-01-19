@@ -12,9 +12,20 @@ namespace nebula
     class Interpreter;
     class Frame;
 
+    enum class ObjectType
+    {
+        Undefined,
+        Bundle,
+        Array,
+    };
+
     class __declspec(novtable) IGCObject {
         friend class InterpreterMemory;
     public:
+        IGCObject(ObjectType type);
+
+        inline ObjectType GetType() { return m_ContainedType; }
+
         void Subscribe(INotificationListener*);
         void Unsubscribe(INotificationListener*);
 
@@ -27,9 +38,8 @@ namespace nebula
 
         /// <summary> Used by the GC to mark reachable objects </summary>
         bool m_bIsMarked{ false };
-
+        ObjectType m_ContainedType;
     public:
-        IGCObject() = default;
         virtual ~IGCObject();
     };
 }

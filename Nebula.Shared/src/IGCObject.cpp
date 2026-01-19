@@ -9,6 +9,11 @@
 
 using namespace nebula;
 
+IGCObject::IGCObject(ObjectType type)
+	: m_ContainedType{ type }
+{
+}
+
 IGCObject::~IGCObject()
 {
 	assert(m_Listeners.empty());
@@ -30,9 +35,9 @@ void IGCObject::Unsubscribe(INotificationListener* listener)
 
 void IGCObject::Unsubscribe(std::unordered_set<INotificationListener*>::iterator& it)
 {
-    INotificationListener* listener = *it;
-    listener->m_ConnectedNotifiers.erase(this);
-    it = m_Listeners.erase(it);
+	INotificationListener* listener = *it;
+	listener->m_ConnectedNotifiers.erase(this);
+	it = m_Listeners.erase(it);
 }
 
 void IGCObject::Notify(const std::string& notification)

@@ -5,7 +5,7 @@
 using namespace nebula;
 
 nebula::VariantArray::VariantArray(const DataStackVariantIndex& type)
-    : m_eVariantType{ type }
+    : IGCObject(ObjectType::Array), m_eVariantType{ type }
 {
 }
 

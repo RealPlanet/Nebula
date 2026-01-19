@@ -19,16 +19,9 @@ BundleField::BundleField(const std::string& name, DataStackVariantIndex fieldTyp
 		m_Value = { "" };
 		break;
 	}
-	case DataStackVariantIndex::_TypeBundle:
+	case DataStackVariantIndex::_TypeObject:
 	{
-		TBundle ptr = nullptr;
-		m_Value = { ptr };
-		break;
-	}
-	case DataStackVariantIndex::_TypeArray:
-	{
-		TArray ptr = nullptr;
-		m_Value = { ptr };
+		m_Value = { TGCObject{nullptr} };
 		break;
 	}
 	}
@@ -99,4 +92,9 @@ DataStackVariant& Bundle::GetByName(const std::string& name)
 bool Bundle::SetAt(int index, DataStackVariant& data)
 {
 	return m_Fields[index].SetValue(data);
+}
+
+nebula::Bundle::Bundle()
+	: IGCObject(ObjectType::Bundle)
+{
 }
