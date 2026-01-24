@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.2" />
+	  <PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.9" />
+	  <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
+	  <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Nebula.Commons\Nebula.Commons.csproj" />
+		<ProjectReference Include="..\Nebula.Core\Nebula.Core.csproj" />
+	</ItemGroup>
+
+</Project>

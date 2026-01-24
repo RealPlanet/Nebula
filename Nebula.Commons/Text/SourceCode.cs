@@ -9,8 +9,8 @@ namespace Nebula.Commons.Text
 {
     public sealed class SourceCode
     {
-        public ImmutableArray<TextLine> Lines { get; }
-        public string Text { get; }
+        public ImmutableArray<TextLine> Lines { get; private set; }
+        public string Text { get; private set; }
         public string FileName { get; }
 
         private SourceCode(string text, string fileName)
@@ -122,6 +122,26 @@ namespace Nebula.Commons.Text
         public string ToMD5Hash()
         {
             return BitConverter.ToString(MD5.HashData(Encoding.UTF8.GetBytes(Text))).Replace("-", "").ToLowerInvariant();
+        }
+
+        public void Replace(DocumentPosition start, DocumentPosition end, string text)
+        {
+            var startLine = Lines[start.Line];
+            var startIndex = startLine.Start + start.Character;
+
+            var endLine = Lines[end.Line];
+            var endIndex = endLine.Start + end.Character;
+
+            int replaceAmount = endIndex - startIndex;
+            var newText = Text.Remove(startIndex, replaceAmount);
+            Text = newText.Insert(startIndex, text);
+            Lines = ParseLines(this, Text);
+        }
+
+        public void Replace(string text)
+        {
+            Text = text;
+            Lines = ParseLines(this, Text);
         }
     }
 }

@@ -31,6 +31,7 @@
     <Project Path="Nebula.DAP/Nebula.Debugger.csproj">
       <BuildDependency Project="Nebula.Compiler/Nebula.Compiler.csproj" />
     </Project>
+    <Project Path="Nebula.LSP/Nebula.LSP.csproj" Id="0d409a78-836c-4e55-a559-f02472224093" />
   </Folder>
   <Folder Name="/Backend/Shared/">
     <Project Path="Nebula.Commons/Nebula.Commons.csproj">
@@ -62,6 +63,8 @@
     <File Path="Samples/CallstackErrorPrintTest.nebula" />
     <File Path="Samples/CommonBundles.nebula" />
     <File Path="Samples/CyclicReferenceTest.nebula" />
+    <File Path="Samples/EndonMessage.nebula" />
+    <File Path="Samples/EndonMessageOnNonThreadedCallError.nebula" />
     <File Path="Samples/Fibonacci.nebula" />
     <File Path="Samples/FibonacciConLoop.nebula" />
     <File Path="Samples/FizzBuzz.nebula" />
