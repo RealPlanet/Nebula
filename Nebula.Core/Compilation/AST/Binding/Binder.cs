@@ -126,7 +126,7 @@ namespace Nebula.Core.Compilation.AST.Binding
                 }
 
                 // Now that all types have been declared we can bind the function declarations
-                foreach (NativeFunctionDeclaration function in _currentUnit.NativeFunction)
+                foreach (NativeFunctionDeclaration function in _currentUnit.NativeFunctions)
                 {
                     FunctionSymbol nativeFunction = BindNativeFunctionDeclaration(function);
                     _currentProgram.NativeFunctions.Add(nativeFunction);

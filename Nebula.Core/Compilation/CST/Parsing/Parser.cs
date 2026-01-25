@@ -216,7 +216,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
 
             Token closedParenthesis = MatchToken(NodeType.ClosedParenthesisToken);
             Token semicolon = MatchToken(NodeType.SemicolonToken);
-            _currentUnit.NativeFunction.Add(new(_currentSource, keyword, type, funcName, openParenthesis, parameters, closedParenthesis, semicolon));
+            _currentUnit.NativeFunctions.Add(new(_currentSource, keyword, type, funcName, openParenthesis, parameters, closedParenthesis, semicolon));
             return true;
         }
 

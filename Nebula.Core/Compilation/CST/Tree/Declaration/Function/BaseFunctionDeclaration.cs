@@ -3,6 +3,7 @@ using Nebula.Commons.Text;
 using Nebula.Core.Compilation.CST.Tree.Base;
 using Nebula.Core.Compilation.CST.Tree.Types;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
 {
@@ -32,6 +33,17 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
             OpenParenthesis = openParenthesis;
             Parameters = parameters;
             ClosedParenthesis = closedParenthesis;
+        }
+
+        public TextLocation SignatureLocation
+        {
+            get
+            {
+                TextSpan first = GetChildren().First().Span;
+                TextSpan last = GetChildren().Last().Span;
+                var span = TextSpan.FromBounds(first.Start, last.End);
+                return new TextLocation(SourceCode, span);
+            }
         }
 
         public override IEnumerable<Node> GetChildren()
