@@ -38,6 +38,18 @@ namespace Nebula.Core.Compilation.AST.Binding
 
         public IReadOnlyCollection<FunctionSymbol> GetDeclaredFunctions() => GetDeclaredSymbols<FunctionSymbol>();
 
+        public IEnumerable<VariableSymbol> GetDeclaredVariablesWithParent()
+        {
+            foreach (var v in GetDeclaredVariables())
+                yield return v;
+
+            if(Parent != null)
+            {
+                foreach (var v in Parent.GetDeclaredVariablesWithParent())
+                    yield return v;
+            }
+        }
+
         private IReadOnlyCollection<TSymbol> GetDeclaredSymbols<TSymbol>()
             where TSymbol : Symbol
         {
