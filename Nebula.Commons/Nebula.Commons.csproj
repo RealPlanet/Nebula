@@ -1,44 +1,48 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-      <Nullable>enable</Nullable>
-      <Platforms>x64</Platforms>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<Platforms>x64</Platforms>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="Doumentation\Opcodes\Opcodes.xml" />
-  </ItemGroup>
+	<ItemGroup>
+		<Resource Include="Doumentation\Opcodes.xml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Resource>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Resource Include="Doumentation\Opcodes\Opcodes.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Nebula.SourceGeneration\Nebula.SourceGeneration.csproj" OutputItemType="Analyzer"	ReferenceOutputAssembly="false" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Compile Update="Reporting\Strings\ErrorMessages.Designer.cs">
-      <DependentUpon>ErrorMessages.resx</DependentUpon>
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-    </Compile>
-    <Compile Update="Reporting\Strings\WarningMessages.Designer.cs">
-      <DependentUpon>WarningMessages.resx</DependentUpon>
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-    </Compile>
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Update="Reporting\Strings\ErrorMessages.Designer.cs">
+			<DependentUpon>ErrorMessages.resx</DependentUpon>
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+		</Compile>
+		<Compile Update="Reporting\Strings\WarningMessages.Designer.cs">
+			<DependentUpon>WarningMessages.resx</DependentUpon>
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+		</Compile>
+	</ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Update="Reporting\Strings\ErrorMessages.resx">
-      <SubType>Designer</SubType>
-      <LastGenOutput>ErrorMessages.Designer.cs</LastGenOutput>
-      <Generator>ResXFileCodeGenerator</Generator>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Reporting\Strings\WarningMessages.resx">
-      <LastGenOutput>WarningMessages.Designer.cs</LastGenOutput>
-      <Generator>ResXFileCodeGenerator</Generator>
-    </EmbeddedResource>
-  </ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Update="Reporting\Strings\ErrorMessages.resx">
+			<SubType>Designer</SubType>
+			<LastGenOutput>ErrorMessages.Designer.cs</LastGenOutput>
+			<Generator>ResXFileCodeGenerator</Generator>
+		</EmbeddedResource>
+		<EmbeddedResource Update="Reporting\Strings\WarningMessages.resx">
+			<LastGenOutput>WarningMessages.Designer.cs</LastGenOutput>
+			<Generator>ResXFileCodeGenerator</Generator>
+		</EmbeddedResource>
+	</ItemGroup>
+
+	<ItemGroup>
+		<AdditionalFiles Include="Doumentation/Opcodes.xml" />
+	</ItemGroup>
 
 </Project>

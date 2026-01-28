@@ -14,6 +14,7 @@ using Nebula.Core.Compilation.AST.Tree.Statements;
 using Nebula.Core.Compilation.AST.Tree.Statements.ControlFlow;
 using Nebula.Core.Compilation.CST.Tree.Statements;
 using Nebula.Interop.Enumerators;
+using Nebula.Shared.Enumerators;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;

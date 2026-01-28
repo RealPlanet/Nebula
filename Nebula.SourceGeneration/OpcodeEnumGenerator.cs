@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
-using Nebula.SourceGeneration.Properties;
 using System;
 using System.CodeDom.Compiler;
 using System.IO;
@@ -14,36 +13,41 @@ namespace Nebula.SourceGeneration
     public class OpcodeEnumGenerator
         : IIncrementalGenerator
     {
-        private static readonly Assembly s_sourceAssembly = Assembly.GetAssembly(typeof(OpcodeEnumGenerator));
-
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            context.RegisterSourceOutput(context.CompilationProvider, (spc, compilation) =>
+            var opcodeSourceFile = context.AdditionalTextsProvider.Where(file => Path.GetFileName(file.Path) == "Opcodes.xml");
+            var fileContents = opcodeSourceFile.Select((text, cancellationToken) => text.GetText(cancellationToken)?.ToString());
+            var provider = fileContents.Collect();
+
+            context.RegisterSourceOutput(provider, (spc, opcodeDefinitionFiles) =>
             {
-                XDocument opcodeSource = XDocument.Parse(Resources.Opcodes);
+                int counter = 0;
+                foreach(var content in opcodeDefinitionFiles)
+                {
+                    XDocument opcodeSource = XDocument.Parse(content);
+                    StringWriter streamWriter = new StringWriter();
+                    IndentedTextWriter writer = new IndentedTextWriter(streamWriter);
 
-                StringWriter fileContents = new StringWriter();
-                IndentedTextWriter writer = new IndentedTextWriter(fileContents);
+                    writer.WriteLine("namespace Nebula.Shared.Enumerators");
+                    writer.WriteLine('{');
+                    writer.Indent++;
 
-                writer.WriteLine("namespace Nebula.Interop.Enumerators");
-                writer.WriteLine('{');
-                writer.Indent++;
+                    writer.WriteLine("public enum InstructionOpcode");
+                    writer.WriteLine("{");
+                    writer.Indent++;
 
-                writer.WriteLine("public enum InstructionOpcode");
-                writer.WriteLine("{");
-                writer.Indent++;
+                    WriteOpcodeValues(opcodeSource, writer);
 
-                WriteOpcodeValues(opcodeSource, writer);
-
-                writer.Indent--;
-                writer.WriteLine("}");
-                writer.Indent--;
-                writer.WriteLine("}");
+                    writer.Indent--;
+                    writer.WriteLine("}");
+                    writer.Indent--;
+                    writer.WriteLine("}");
 
 
-                string contents = fileContents.ToString();
-                var sourceText = SourceText.From(contents, Encoding.UTF8);
-                spc.AddSource("InstructionOpcode.g.cs", sourceText);
+                    string contents = streamWriter.ToString();
+                    var sourceText = SourceText.From(contents, Encoding.UTF8);
+                    spc.AddSource($"InstructionOpcode_{counter++}.g.cs", sourceText);
+                }
             });
         }
 
