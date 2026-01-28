@@ -22,6 +22,7 @@ namespace nebula {
 
 		// Conversion
 		ConvType,
+		ChkDef,
 
 		// Control flow 
 		Ret,
