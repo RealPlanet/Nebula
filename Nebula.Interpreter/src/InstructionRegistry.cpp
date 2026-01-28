@@ -332,6 +332,7 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
 	case VMInstruction::Neg:
 	case VMInstruction::Not:
 	case VMInstruction::Xor:
+	case VMInstruction::ChkDef:
 	case VMInstruction::Wait_n: // String on stack
 	case VMInstruction::Endon: // String on stack
 	case VMInstruction::Notify: // String on stack
@@ -610,6 +611,15 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 		context->SetScheduledSleep((size_t)(seconds * 1000));
 		stack.Pop();
 
+		return InstructionErrorCode::None;
+	}
+	case VMInstruction::ChkDef:
+	{
+		assert(args.size() == 0);
+		assert(std::holds_alternative<TGCObject>(stack.Peek()));
+		bool isDefined = std::get<TGCObject>(stack.Peek()).get() != nullptr;
+		stack.Pop();
+		stack.Push(isDefined);
 		return InstructionErrorCode::None;
 	}
 	case VMInstruction::Wait_n:
