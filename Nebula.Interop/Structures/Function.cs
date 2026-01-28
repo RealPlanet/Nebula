@@ -1,4 +1,5 @@
 ﻿using Nebula.Interop.Enumerators;
+using Nebula.Shared.Enumerators;
 using Nebula.Interop.Interfaces;
 using System;
 using System.Collections.Generic;

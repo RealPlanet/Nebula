@@ -1,5 +1,5 @@
 ﻿using Nebula.Commons.Syntax;
-using Nebula.Interop.Enumerators;
+using Nebula.Shared.Enumerators;
 using System.Collections.Generic;
 
 namespace Nebula.CodeGeneration

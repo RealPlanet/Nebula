@@ -1,4 +1,4 @@
-﻿using Nebula.Interop.Enumerators;
+﻿using Nebula.Shared.Enumerators;
 
 namespace Nebula.Interop.Structures
 {

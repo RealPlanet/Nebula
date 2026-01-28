@@ -53,11 +53,12 @@
       <BuildDependency Project="Nebula.Shared/Nebula.Shared.vcxproj" />
     </Project>
   </Folder>
-  <Folder Name="/Solution Items/">
+  <Folder Name="/Submodules/" />
+  <Folder Name="/Submodules/Solution Items/">
     <File Path=".editorconfig" />
     <File Path="README.md" />
   </Folder>
-  <Folder Name="/Solution Items/Samples/">
+  <Folder Name="/Submodules/Solution Items/Samples/">
     <File Path="Samples/BreakContinue.nebula" />
     <File Path="Samples/CallstackErrorPrintTest.nebula" />
     <File Path="Samples/CommonBundles.nebula" />
@@ -76,7 +77,6 @@
     <File Path="Samples/StronglyTypedBundle.nebula" />
     <File Path="Samples/TypedArray.nebula" />
   </Folder>
-  <Folder Name="/Submodules/" />
   <Folder Name="/Tests/">
     <Project Path="Nebula.Compiler.Tests/Nebula.Compiler.Tests.csproj">
       <Platform Project="x64" />
