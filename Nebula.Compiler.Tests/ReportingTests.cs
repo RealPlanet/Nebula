@@ -1,59 +1,15 @@
 ﻿using Nebula.Commons.Reporting;
+using Nebula.Commons.Reporting.Strings;
 using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
 using Nebula.Compiler.Tests.Utility;
+using Nebula.Shared.Enumerators;
 
 namespace Nebula.Compiler.Tests
 {
     [TestClass]
     public class ReportingTests
     {
-        [TestMethod]
-        public void AllMessagesFromProviderAreUnique()
-        {
-            System.Reflection.PropertyInfo[] allProperties = typeof(ReportMessageProvider).GetProperties();
-
-            IEnumerable<System.Reflection.PropertyInfo> allErrors = allProperties.Where(p => p.Name.StartsWith("Error"));
-            IEnumerable<System.Reflection.PropertyInfo> allWarning = allProperties.Where(p => p.Name.StartsWith("Warning"));
-            IEnumerable<System.Reflection.PropertyInfo> allInfo = allProperties.Where(p => p.Name.StartsWith("Info"));
-
-            Assert.AreEqual(allProperties.Length, allErrors.Count() + allWarning.Count() + allInfo.Count());
-
-            HashSet<int> encounteredErrors = [];
-            foreach (System.Reflection.PropertyInfo? tuple in allInfo)
-            {
-                object? value = tuple.GetValue(null);
-                Assert.IsNotNull(value);
-
-                (ReportMessageCodes Code, string MessageTemplate) = ((ReportMessageCodes Code, string MessageTemplate))value;
-                Assert.IsFalse(encounteredErrors.TryGetValue((int)Code, out int other), $"Duplicate code detected: {Code}");
-
-                encounteredErrors.Add((int)Code);
-            }
-
-            foreach (System.Reflection.PropertyInfo? tuple in allErrors)
-            {
-                object? value = tuple.GetValue(null);
-                Assert.IsNotNull(value);
-
-                (ReportMessageCodes Code, string MessageTemplate) = ((ReportMessageCodes Code, string MessageTemplate))value;
-                Assert.IsFalse(encounteredErrors.TryGetValue((int)Code, out int other), $"Duplicate code detected: {Code}");
-
-                encounteredErrors.Add((int)Code);
-            }
-
-            foreach (System.Reflection.PropertyInfo? tuple in allWarning)
-            {
-                object? value = tuple.GetValue(null);
-                Assert.IsNotNull(value);
-
-                (ReportMessageCodes Code, string MessageTemplate) = ((ReportMessageCodes Code, string MessageTemplate))value;
-                Assert.IsFalse(encounteredErrors.TryGetValue((int)Code, out int other), $"Duplicate code detected: {Code}");
-
-                encounteredErrors.Add((int)Code);
-            }
-        }
-
         [TestMethod]
         public void VoidFunctionCantReturnValue()
         {
@@ -64,7 +20,7 @@ namespace Nebula.Compiler.Tests
                 }
             ";
 
-            string template = ReportMessageProvider.ErrorVoidFunctionCannotReturnValue.MessageTemplate;
+            string template = BinderMessagesProvider.VoidFunctionCannotReturnValue.MessageTemplate;
             string diagnostics = string.Format(template, "test");
 
             AssertDiagnostics(text, diagnostics);
@@ -80,7 +36,7 @@ namespace Nebula.Compiler.Tests
                 }
             ";
 
-            string diagnostics = string.Format(ReportMessageProvider.ErrorFunctionExpectsReturn.MessageTemplate,
+            string diagnostics = string.Format(BinderMessagesProvider.FunctionExpectsReturn.MessageTemplate,
                 "test",
                 "int");
 
@@ -98,15 +54,15 @@ namespace Nebula.Compiler.Tests
                 }
             ";
 
-            string diagnostic = string.Format(ReportMessageProvider.ErrorNotAllPathsReturn.MessageTemplate, "test");
+            string diagnostic = string.Format(BinderMessagesProvider.NotAllPathsReturn.MessageTemplate, "test");
             AssertDiagnostics(text, diagnostic);
         }
 
         [TestMethod]
         public void AllReportMessagesHaveUniqueCode()
         {
-            ReportMessageCodes[] codes = Enum.GetValues<ReportMessageCodes>();
-            IEnumerable<ReportMessageCodes> distinctCodes = codes.Distinct();
+            EBinderMessages[] codes = Enum.GetValues<EBinderMessages>();
+            IEnumerable<EBinderMessages> distinctCodes = codes.Distinct();
             Assert.AreEqual(codes.Length, distinctCodes.Count());
         }
 
@@ -125,7 +81,7 @@ namespace Nebula.Compiler.Tests
                 }
             ";
 
-            string diagnostics = ReportMessageProvider.ErrorExpressionMustHaveValue.MessageTemplate;
+            string diagnostics = BinderMessagesProvider.ExpressionMustHaveValue.MessageTemplate;
             AssertDiagnostics(text, diagnostics);
         }
 
@@ -148,7 +104,7 @@ namespace Nebula.Compiler.Tests
                 }
             ";
 
-            string diagnostics = ReportMessageProvider.WarningUnreachableCodeDetected.MessageTemplate;
+            string diagnostics = BinderMessagesProvider.UnreachableCodeDetected.MessageTemplate;
             AssertDiagnostics(text, diagnostics);
         }
 
@@ -218,7 +174,7 @@ namespace Nebula.Compiler.Tests
                 }
             ";
 
-            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorParameterAlreadyDeclared;
+            (EBinderMessages code, string template) = BinderMessagesProvider.ParameterAlreadyDeclared;
             string diagnostics = string.Format(template, "a");
             AssertDiagnostics(text, diagnostics);
         }
@@ -239,7 +195,7 @@ namespace Nebula.Compiler.Tests
                 }
             ";
 
-            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorCannotConvertTypeImplicity;
+            (EBinderMessages code, string template) = BinderMessagesProvider.CannotConvertTypeImplicity;
             string diagnostics = string.Format(template, "string", "int");
             AssertDiagnostics(text, diagnostics);
         }
@@ -253,7 +209,7 @@ namespace Nebula.Compiler.Tests
                 }
             ";
 
-            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorTypeDoesNotExist;
+            (EParserMessages code, string template) = ParserMessagesProvider.TypeDoesNotExist;
             string diagnostics = string.Format(template, "invalidtype");
             AssertDiagnostics(text, diagnostics);
         }
@@ -272,7 +228,7 @@ namespace Nebula.Compiler.Tests
                     int [x] = 5;
                 }
                 ";
-            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorVariableAlreadyDeclared;
+            (EParserMessages code, string template) = ParserMessagesProvider.VariableAlreadyDeclared;
             string diagnostics = string.Format(template, "x");
             AssertDiagnostics(text, diagnostics);
         }
@@ -363,7 +319,7 @@ namespace Nebula.Compiler.Tests
         {
             const string text = "func void main() { 1 + [;] }";
 
-            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorUnexpectedToken;
+            (EBinderMessages code, string template) = BinderMessagesProvider.UnexpectedToken;
             string diagnostics = string.Format(template, NodeType.SemicolonToken.ToString(), NodeType.IdentifierToken.ToString());
             AssertDiagnostics(text, diagnostics);
         }
@@ -372,7 +328,7 @@ namespace Nebula.Compiler.Tests
         public void Evaluator_Name_Reports_Undefined()
         {
             const string text = "func void main() { int y = [x] * 10;}";
-            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorVariableDoesNotExists;
+            (EBinderMessages code, string template) = BinderMessagesProvider.VariableDoesNotExists;
             string diagnostics = string.Format(template, "x");
             AssertDiagnostics(text, diagnostics);
         }
@@ -502,7 +458,7 @@ namespace Nebula.Compiler.Tests
                         }
                         ";
 
-            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorCannotConvertType;
+            (EBinderMessages code, string template) = BinderMessagesProvider.CannotConvertType;
             string diagnostics = string.Format(template, "int", "bool");
             AssertDiagnostics(text, diagnostics);
         }
@@ -582,7 +538,7 @@ namespace Nebula.Compiler.Tests
                 }
             ";
 
-            (ReportMessageCodes code, string template) = ReportMessageProvider.ErrorIdentifierIsNotAFunction;
+            (EBinderMessages code, string template) = BinderMessagesProvider.IdentifierIsNotAFunction;
 
             string diagnostics = string.Format(template, "print");
 
@@ -635,8 +591,6 @@ namespace Nebula.Compiler.Tests
             {
                 throw new Exception("ERROR :: Must mark as many spans as there are expected reports");
             }
-
-            finalReport.Warnings.RemoveAll(m => m.Code == ReportMessageCodes.W0000);
 
             Assert.AreEqual(expectedReport.Length, finalReport.Count);
 

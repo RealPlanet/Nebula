@@ -1,4 +1,5 @@
 ﻿using Nebula.Commons.Reporting;
+using Nebula.Commons.Reporting.Strings;
 using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
 using Nebula.Compiler.Tests.Utility;
@@ -37,7 +38,7 @@ namespace Nebula.Compiler.Tests
             ReportMessage error = parseReport.Errors.First();
             Assert.AreEqual(new TextSpan(0, 1), error.Location.Span, "Message error location does not match!");
 
-            string reportMessage = string.Format(ReportMessageProvider.ErrorUnterminatedStringLiteral.MessageTemplate, unterminatedString);
+            string reportMessage = string.Format(ParserMessagesProvider.UnterminatedStringLiteral.MessageTemplate, unterminatedString);
 
             Assert.AreEqual(reportMessage, error.Message);
         }
