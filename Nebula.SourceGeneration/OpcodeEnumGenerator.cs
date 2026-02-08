@@ -46,7 +46,7 @@ namespace Nebula.SourceGeneration
 
 
                     string contents = streamWriter.ToString();
-                    var sourceText = SourceText.From(contents, Encoding.UTF8);
+                    SourceText sourceText = SourceText.From(contents, Encoding.UTF8);
                     spc.AddSource($"InstructionOpcode_{counter++}.g.cs", sourceText);
                 }
             });
@@ -104,7 +104,7 @@ namespace Nebula.SourceGeneration
             if (string.IsNullOrWhiteSpace(description))
                 return Array.Empty<string>();
 
-            var result = new List<string>();
+            List<string> result = new List<string>();
 
             // Split into sentences (keeps punctuation)
             var sentences = Regex.Split(description, @"(?<=[.!?])\s+");
