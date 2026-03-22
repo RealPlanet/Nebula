@@ -18,8 +18,11 @@ namespace Nebula.Interop.SafeHandles
         public IReadOnlyDictionary<string, BundleDefinition> Bundles => _bundles;
         public IReadOnlyDictionary<string, Function> Functions => _functions;
 
+        public IReadOnlyDictionary<string, VariableDefinition> Globals => _globals;
+
         private readonly Dictionary<string, BundleDefinition> _bundles = new Dictionary<string, BundleDefinition>();
         private readonly Dictionary<string, Function> _functions = new Dictionary<string, Function>();
+        private readonly Dictionary<string, VariableDefinition> _globals = new Dictionary<string, VariableDefinition>();
 
         private Script(IntPtr handle)
             : base(true)
