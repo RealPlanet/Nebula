@@ -74,6 +74,7 @@
         NotifyKeyword,
         NativeKeyword,
         IsDefinedKeyword,
+        UndefinedKeyword,
 
         BlockStatement,         // Generic sequence of nodes surrounded by an open and close { }
         ExpressionStatement,
