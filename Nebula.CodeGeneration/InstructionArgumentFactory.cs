@@ -18,9 +18,11 @@ namespace Nebula.CodeGeneration
             Register(InstructionOpcode.Ldc_i4, RequireInt32);
             Register(InstructionOpcode.Ldc_r4, RequireFloat);
 
+            Register(InstructionOpcode.Ldsfld, RequireVariableIndex);
             Register(InstructionOpcode.Ldarg, RequireVariableIndex);
             Register(InstructionOpcode.Ldloc, RequireVariableIndex);
 
+            Register(InstructionOpcode.Stsfld, RequireVariableIndex);
             Register(InstructionOpcode.Stloc, RequireVariableIndex);
             Register(InstructionOpcode.StArg, RequireVariableIndex);
 
