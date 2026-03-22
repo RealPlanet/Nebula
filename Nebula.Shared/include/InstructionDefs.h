@@ -56,6 +56,7 @@ namespace nebula {
 		AddStr,
 
 		// Load
+		LdNull,
 		Ldc_i4_0,
 		Ldc_i4_1,
 		Ldc_i4,
@@ -209,6 +210,10 @@ namespace nebula {
 			return "stfld";
 		case VMInstruction::StsFld:
 			return "stsfld";
+		case VMInstruction::ChkDef:
+			return "chkdef";
+		case VMInstruction::LdNull:
+			return "ldnull";
 		}
 
 		return nullptr;
@@ -244,6 +249,7 @@ namespace nebula {
 			{"div",			VMInstruction::Div			},
 			{"rem",			VMInstruction::Rem			},
 			{"addstr",		VMInstruction::AddStr		},
+			{"ldnull",		VMInstruction::LdNull		},
 			{"ldc_i4_0",	VMInstruction::Ldc_i4_0		},
 			{"ldc_i4_1",	VMInstruction::Ldc_i4_1		},
 			{"ldc_i4",		VMInstruction::Ldc_i4		},
@@ -261,6 +267,7 @@ namespace nebula {
 			{"stelem",		VMInstruction::StElem		},
 			{"newobj",		VMInstruction::Newobj		},
 			{"newarr",		VMInstruction::NewArr		},
+			{"chkdef",		VMInstruction::ChkDef		},
 		};
 
 		auto instPair = instructionMap.find(s);
