@@ -22,6 +22,7 @@ namespace nebula
         DivideByZero,
         EndonKilledUnthreadedFunctionWithReturnValue,
         NotAPrimitive,
+        GlobalVariableNotFound,
 
         // GC Objects
         UndefinedObject,

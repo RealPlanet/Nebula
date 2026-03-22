@@ -69,12 +69,14 @@ namespace nebula {
 		Ldloc,
 		LdElem,
 		LdFld,
+		LdSfld,
 
 		// Store
 		Stloc,
 		StArg,
 		StElem,
 		StFld,
+		StsFld,
 
 		LastInstruction
 	};
@@ -102,6 +104,7 @@ namespace nebula {
 		Function,	// Function data
 		Bundle,		// Bundle definition
 		Locals,		// Variables defined in scope
+		Globals,	// Variables defined in the script
 	};
 
 	static inline constexpr const char* ReadableScriptSection(ScriptSection s)
@@ -116,6 +119,8 @@ namespace nebula {
 			return "bundle";
 		case ScriptSection::Locals:
 			return "locals";
+		case ScriptSection::Globals:
+			return "globals";
 		}
 		return nullptr;
 	}
@@ -201,6 +206,12 @@ namespace nebula {
 			return "newarr";
 		case VMInstruction::LdElem:
 			return "ldelem";
+		case VMInstruction::LdSfld:
+			return "ldsfld";
+		case VMInstruction::StFld:
+			return "stfld";
+		case VMInstruction::StsFld:
+			return "stsfld";
 		}
 
 		return nullptr;
@@ -244,10 +255,12 @@ namespace nebula {
 			{"ldarg",		VMInstruction::Ldarg		},
 			{"ldloc",		VMInstruction::Ldloc		},
 			{"ldfld",		VMInstruction::LdFld		},
+			{"ldsfld",		VMInstruction::LdSfld		},
 			{"ldelem",		VMInstruction::LdElem		},
 			{"starg",		VMInstruction::StArg		},
 			{"stloc",		VMInstruction::Stloc		},
 			{"stfld",		VMInstruction::StFld		},
+			{"stsfld",		VMInstruction::StsFld		},
 			{"stelem",		VMInstruction::StElem		},
 			{"newobj",		VMInstruction::Newobj		},
 			{"newarr",		VMInstruction::NewArr		},
