@@ -40,3 +40,14 @@ bool nebula::Function::AppendInstruction(const FunctionInstruction& instruction)
     m_Body.emplace_back(instruction);
     return true;
 }
+
+bool nebula::Function::HasAttribute(VMAttribute attr) const
+{
+    for (int i{ 0 }; i < m_Attributes.size(); i++)
+    {
+        if (m_Attributes[i] == attr)
+            return true;
+    }
+
+    return false;
+}
