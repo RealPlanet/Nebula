@@ -7,7 +7,7 @@ namespace Nebula.Core.Compilation.AST.Symbols
     {
         public override SymbolType SymbolType => SymbolType.LocalVariable;
         internal LocalVariableSymbol(string name, bool isReadOnly, TypeSymbol variableType, AbstractConstant? constant)
-            : base(name, isReadOnly, variableType, constant)
+            : base(string.Empty, name, isReadOnly, variableType, constant)
         {
         }
     }

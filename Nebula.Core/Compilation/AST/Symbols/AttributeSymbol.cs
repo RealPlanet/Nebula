@@ -15,7 +15,7 @@ namespace Nebula.Core.Compilation.AST.Symbols
         public bool CanHaveParameters { get; } = true;
 
         private AttributeSymbol(string name, bool canHaveReturnType, bool canHaveParameters)
-            : base(name)
+            : base(string.Empty, name)
         {
             CanHaveReturnType = canHaveReturnType;
             CanHaveParameters = canHaveParameters;

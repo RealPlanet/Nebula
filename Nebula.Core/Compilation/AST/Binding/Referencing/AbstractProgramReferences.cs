@@ -19,8 +19,8 @@ namespace Nebula.Core.Compilation.AST.Binding.Referencing
     {
         public AbstractProgram Program { get; }
 
-        private Dictionary<string, AbstractProgram> AllPrograms { get; } = new();
-        private Dictionary<string, Script> AllReferences { get; } = new();
+        public Dictionary<string, AbstractProgram> AllPrograms { get; } = new();
+        public Dictionary<string, Script> AllReferences { get; } = new();
 
         private readonly Dictionary<string, BundleSymbol> _cachedCompiledBundles = new();
         private readonly Dictionary<string, FunctionSymbol> _cachedCompiledFunctions = new();
@@ -112,7 +112,8 @@ namespace Nebula.Core.Compilation.AST.Binding.Referencing
                 constants = new AbstractConstant(compiledVariable.ConstantValue);
             }
 
-            variable = new GlobalVariableSymbol(compiledVariable.Name,
+            variable = new GlobalVariableSymbol(compiledVariable.Namespace,
+                                                compiledVariable.Name,
                                                 compiledVariable.IsConstant,
                                                 TypeSymbol.TypeFromEnum(compiledVariable.Type),
                                                 constants);
