@@ -39,5 +39,6 @@
         ArrayAccessExpression,
         CallExpression,
         ConversionExpression,
+        IsDefinedExpression,
     }
 }

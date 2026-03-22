@@ -17,6 +17,7 @@ namespace Nebula.Core.Compilation.AST.Symbols
         public static readonly TypeSymbol Void = new(string.Empty, "void");
         public static readonly TypeSymbol BaseObject = new(string.Empty, "object");
         public static readonly TypeSymbol BaseArray = new(string.Empty, "array");
+        public static readonly TypeSymbol Undefined = new(string.Empty, "undefined");
 
         public bool IsError => this == Error;
         public bool IsBool => this == Bool;

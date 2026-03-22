@@ -2,6 +2,7 @@
 using Nebula.Commons.Reporting;
 using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
+using Nebula.Core.Compilation.AST.Tree.Expression;
 using Nebula.Core.Compilation.CST.Lexing;
 using Nebula.Core.Compilation.CST.Tree;
 using Nebula.Core.Compilation.CST.Tree.Base;
@@ -12,6 +13,7 @@ using Nebula.Core.Compilation.CST.Tree.Expressions;
 using Nebula.Core.Compilation.CST.Tree.Statements;
 using Nebula.Core.Compilation.CST.Tree.Types;
 using Nebula.Core.Reporting;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -732,9 +734,33 @@ namespace Nebula.Core.Compilation.CST.Parsing
                     {
                         return ParseInitializationExpression();
                     }
+                case NodeType.IsDefinedKeyword:
+                    {
+                        return ParseIsDefinedExpression();
+                    }
+                case NodeType.UndefinedKeyword:
+                    {
+                        return ParseUndefinedLiteral();
+                    }
             }
 
             return ParseNameOrFunctionCallExpression();
+        }
+
+        private Expression ParseUndefinedLiteral()
+        {
+            var keyword = MatchToken(NodeType.UndefinedKeyword);
+            return new LiteralExpression(_currentSource, keyword, null);
+        }
+
+        private Expression ParseIsDefinedExpression()
+        {
+            var isDefined = MatchToken(NodeType.IsDefinedKeyword);
+            var openParenthesis = MatchToken(NodeType.OpenParenthesisToken);
+            var expressionToCheck = ParseExpression();
+            var closeParenthesis = MatchToken(NodeType.ClosedParenthesisToken);
+
+            return new IsDefinedExpression(_currentSource, isDefined, openParenthesis, expressionToCheck, closeParenthesis);
         }
 
         private InitializationExpression ParseInitializationExpression()

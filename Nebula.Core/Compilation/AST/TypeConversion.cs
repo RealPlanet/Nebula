@@ -28,6 +28,11 @@ namespace Nebula.Core.Compilation.AST
                 return Identity;
             }
 
+            if (from == TypeSymbol.Undefined && (to.IsArray || to.IsObject))
+            {
+                return Implict;
+            }
+
             //if (from != TypeSymbol.Void && to == TypeSymbol.Any)
             //    return Implict;
 

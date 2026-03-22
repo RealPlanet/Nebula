@@ -393,7 +393,15 @@ namespace Nebula.Core.Compilation.Emitting
             // Emit an instruction to allocate bundle
             if (typeReference == TypeReference.Bundle && node.Variable.Type is ObjectTypeSymbol objTypeSymbol)
             {
+                if (node.Initializer.ConstantValue == null)
+                {
+                    processor.Emit(InstructionOpcode.LdNull, originalStatement);
+                }
+                else
+            {
                 EmitBundleAllocation(processor, originalStatement, objTypeSymbol);
+                }
+
                 processor.Emit(InstructionOpcode.Stloc, variableDefinition, originalStatement);
                 return;
             }
@@ -402,8 +410,15 @@ namespace Nebula.Core.Compilation.Emitting
             {
                 ArrayTypeSymbol arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
                 TypeReference arrayValueType = _knownTypes[arraySymbol.ValueType.BaseType];
-
+                if (node.Initializer.ConstantValue == null)
+                {
+                    processor.Emit(InstructionOpcode.LdNull, originalStatement);
+                    processor.Emit(InstructionOpcode.Stloc, variableDefinition, originalStatement);
+                }
+                else
+                {
                 StoreNewArrIntoLocal(processor, variableDefinition, arraySymbol, arrayValueType, originalStatement);
+                }
                 return;
             }
 
@@ -430,6 +445,7 @@ namespace Nebula.Core.Compilation.Emitting
                                           TypeReference baseValueType,
                                           Node originalNode)
         {
+
             object arguments = ExtractNewArrArguments(arraySymbol, baseValueType);
 
             processor.Emit(InstructionOpcode.Newarr, arguments, originalNode);
@@ -555,14 +571,12 @@ namespace Nebula.Core.Compilation.Emitting
                 case AbstractNodeType.InitializationExpression:
                     EmitInitializationExpression(processor, (AbstractInitializationExpression)node, originalStatement);
                     break;
+                case AbstractNodeType.IsDefinedExpression:
+                    EmitIsDefinedExpression(processor, (AbstractIsDefinedExpression)node, originalStatement);
+                    break;
                 default:
                     throw new Exception($"Unexpected node type {node.Type}");
             }
-        }
-
-        private void EmitInitializationExpression(NILProcessor processor, AbstractInitializationExpression node, Node originalStatement)
-        {
-            EmitBundleAllocation(processor, originalStatement, (ObjectTypeSymbol)node.ResultType);
         }
 
         private void EmitConversionExpression(NILProcessor processor, AbstractConversionExpression node, Node originalStatement)
@@ -614,6 +628,23 @@ namespace Nebula.Core.Compilation.Emitting
         {
             EmitExpression(processor, node.Target, originalStatement);
             processor.Emit(InstructionOpcode.Ldfld, node.Field.OrdinalPosition, originalStatement);
+        }
+
+        private void EmitIsDefinedExpression(NILProcessor processor, AbstractIsDefinedExpression node, Node originalStatement)
+        {
+            if (node.ConstantValue != null)
+            {
+                EmitConstantExpression(processor, node, originalStatement);
+                return;
+            }
+
+            EmitExpression(processor, node.Expression, originalStatement);
+            processor.Emit(InstructionOpcode.ChkDef, originalStatement);
+        }
+
+        private void EmitInitializationExpression(NILProcessor processor, AbstractInitializationExpression node, Node originalStatement)
+        {
+            EmitBundleAllocation(processor, originalStatement, (ObjectTypeSymbol)node.ResultType);
         }
 
         private void EmitCallExpression(NILProcessor processor, AbstractCallExpression node, Node originalStatement)

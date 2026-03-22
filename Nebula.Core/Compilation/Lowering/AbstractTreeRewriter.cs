@@ -51,6 +51,7 @@ namespace Nebula.Core.Compilation.Lowering
             AbstractNodeType.ObjectCallExpression => RewriteObjectCallExpression((AbstractObjectCallExpression)node),
             AbstractNodeType.ObjectFieldAccessExpression => RewriteObjectFieldAccessExpression((AbstractObjectFieldAccessExpression)node),
             AbstractNodeType.ArrayAccessExpression => RewriteArrayAccessExpression((AbstractArrayAccessExpression)node),
+            AbstractNodeType.IsDefinedExpression => RewriteIsDefinedExpression((AbstractIsDefinedExpression)node),
             _ => throw new Exception($"Unexpected node: {node.Type}"),
         };
 
@@ -114,6 +115,17 @@ namespace Nebula.Core.Compilation.Lowering
             }
 
             return new AbstractArrayAccessExpression(node.OriginalNode, node.Variable, indexExpression);
+        }
+
+        protected virtual AbstractIsDefinedExpression RewriteIsDefinedExpression(AbstractIsDefinedExpression node)
+        {
+            var evalExpression = RewriteExpression(node.Expression);
+            if(evalExpression == node.Expression)
+            {
+                return node;
+            }
+
+            return new AbstractIsDefinedExpression(node.OriginalNode, node.Expression);
         }
 
         protected virtual AbstractInitializationExpression RewriteInitializationExpression(AbstractInitializationExpression node)
