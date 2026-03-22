@@ -14,8 +14,8 @@ namespace Nebula.Core.Compilation.CST.Tree.Expressions
         public Token AccessToken { get; }
         public Token FieldName { get; }
 
-        public ObjectVariableAccessExpression(SourceCode sourceCode, Token identifier, Token accessToken, Token fieldName)
-            : base(sourceCode, identifier)
+        public ObjectVariableAccessExpression(SourceCode sourceCode, Token? @namespace, Token? separator, Token identifier, Token accessToken, Token fieldName)
+            : base(sourceCode, @namespace, separator, identifier)
         {
             AccessToken = accessToken;
             FieldName = fieldName;

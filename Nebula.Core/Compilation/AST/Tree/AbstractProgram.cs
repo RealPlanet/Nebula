@@ -12,6 +12,7 @@ namespace Nebula.Core.Compilation.AST.Tree
     {
         public SourceCode SourceCode { get; }
         public AbstractNamespace Namespace { get; private set; }
+        public Dictionary<VariableSymbol, AbstractVariableDeclaration> Globals { get; } = new();
         public Dictionary<FunctionSymbol, AbstractBlockStatement> Functions { get; } = new();
 
         /// <summary> Native functions don't have bodies as they're bound at runtime </summary>

@@ -1,4 +1,5 @@
-﻿using Nebula.Commons.Syntax;
+﻿using Nebula.Commons.Collections;
+using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
 using Nebula.Core.Compilation.CST.Tree.Base;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration
         : Statement
     {
         public override NodeType Type => NodeType.VariableDeclarationCollection;
+
         public Token? ConstKeyword { get; }
 
         public TokenSeparatedList<VariableDeclaration> Declarations { get; }

@@ -13,8 +13,8 @@ namespace Nebula.Core.Compilation.CST.Tree.Expressions
         public Expression AccessExpression { get; }
         public Token CloseSquare { get; }
 
-        public ArrayAccessExpression(SourceCode sourceCode, Token identifier, Token openSquare, Expression accessExpression, Token closeSquare)
-            : base(sourceCode, identifier)
+        public ArrayAccessExpression(SourceCode sourceCode, Token? @namespace, Token? separator, Token identifier, Token openSquare, Expression accessExpression, Token closeSquare)
+            : base(sourceCode, @namespace, separator, identifier)
         {
             OpenSquare = openSquare;
             AccessExpression = accessExpression;

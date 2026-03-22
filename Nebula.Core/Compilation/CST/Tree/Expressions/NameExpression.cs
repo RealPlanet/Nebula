@@ -9,16 +9,25 @@ namespace Nebula.Core.Compilation.CST.Tree.Expressions
         : Expression
     {
         public override NodeType Type => NodeType.NameExpression;
+
+        public Token? Namespace { get; }
+        public Token? Separator { get; }
         public Token Identifier { get; }
 
-        internal NameExpression(SourceCode sourceCode, Token identifier)
+        internal NameExpression(SourceCode sourceCode, Token? @namespace, Token? separator, Token identifier)
             : base(sourceCode)
         {
+            Namespace = @namespace;
+            Separator = separator;
             Identifier = identifier;
         }
 
         public override IEnumerable<Node> GetChildren()
         {
+            if (Namespace != null)
+                yield return Namespace;
+            if (Separator != null)
+                yield return Separator;
             yield return Identifier;
         }
     }
