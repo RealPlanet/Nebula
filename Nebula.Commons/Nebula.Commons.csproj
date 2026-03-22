@@ -13,16 +13,15 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<EmbeddedResource Remove="Reporting\Strings\BinderMessages.resx" />
 		<EmbeddedResource Remove="Reporting\Strings\ErrorMessages.resx" />
-		<EmbeddedResource Remove="Reporting\Strings\ParserMessages.resx" />
 		<EmbeddedResource Remove="Reporting\Strings\WarningMessages.resx" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<Resource Include="Doumentation\Opcodes.xml">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Resource>
+		<AdditionalFiles Include="Doumentation/Opcodes.xml" />
+		<AdditionalFiles Include="Reporting\Strings\ParserMessages.resx"/>
+		<AdditionalFiles Include="Reporting\Strings\BinderMessages.resx"/>
+		<AdditionalFiles Include="Reporting\Strings\LexerMessages.resx" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -31,15 +30,6 @@
 
 	<ItemGroup>
 		<AdditionalFiles Include="Doumentation/Opcodes.xml" />
-		<AdditionalFiles Include="Reporting\Strings\ParserMessages.resx">
-		  <LastGenOutput>ParserMessages.Designer.cs</LastGenOutput>
-		  <Generator>PublicResXFileCodeGenerator</Generator>
-		</AdditionalFiles>
-		<AdditionalFiles Include="Reporting\Strings\BinderMessages.resx">
-		  <Generator>PublicResXFileCodeGenerator</Generator>
-		  <LastGenOutput>BinderMessages.Designer.cs</LastGenOutput>
-		</AdditionalFiles>
-		<AdditionalFiles Include="Reporting\Strings\LexerMessages.resx" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -48,19 +38,18 @@
 			<AutoGen>True</AutoGen>
 			<DependentUpon>LexerMessages.resx</DependentUpon>
 		</Compile>
-		<Compile Update="Reporting\Strings\BinderMessages.Designer.cs">
-		  <DesignTime>True</DesignTime>
-		  <AutoGen>True</AutoGen>
-		  <DependentUpon>BinderMessages.resx</DependentUpon>
-		</Compile>
 		<Compile Update="Reporting\Strings\ParserMessages.Designer.cs">
-		  <DesignTime>True</DesignTime>
-		  <AutoGen>True</AutoGen>
-		  <DependentUpon>ParserMessages.resx</DependentUpon>
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>ParserMessages.resx</DependentUpon>
 		</Compile>
 	</ItemGroup>
 
 	<ItemGroup>
+		<EmbeddedResource Update="Reporting\Strings\BinderMessages.resx">
+			<Generator>PublicResXFileCodeGenerator</Generator>
+			<LastGenOutput>BinderMessages.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
 		<EmbeddedResource Update="Reporting\Strings\LexerMessages.resx">
 			<Generator>PublicResXFileCodeGenerator</Generator>
 			<LastGenOutput>LexerMessages.Designer.cs</LastGenOutput>
@@ -68,6 +57,10 @@
 		<EmbeddedResource Update="Reporting\Strings\ParserErrorMessages.resx">
 			<Generator>PublicResXFileCodeGenerator</Generator>
 			<LastGenOutput>ParserErrorMessages.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+		<EmbeddedResource Update="Reporting\Strings\ParserMessages.resx">
+			<LastGenOutput>ParserMessages.Designer.cs</LastGenOutput>
+			<Generator>PublicResXFileCodeGenerator</Generator>
 		</EmbeddedResource>
 	</ItemGroup>
 

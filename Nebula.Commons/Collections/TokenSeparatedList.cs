@@ -75,7 +75,10 @@ namespace Nebula.Commons.Collections
             }
         }
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        internal Token GetSeparator(int index)
+
+        public ICollection<Node> GetWithSeparators() => _nodes;
+
+        public Token GetSeparator(int index)
         {
             if (index < 0 || index >= Count - 1)
             {

@@ -108,6 +108,9 @@
 	<Opcode Type="Newarr">
 		<Description Text="Creates a new array with elements of type"/>
 	</Opcode>
+	<Opcod Type="Ldsfld">
+		<Description Text="Pushes the value of a static field onto the evaluation stack"/>
+	</Opcod>
 	<Opcode Type="Ldarg">
 		<Description Text=""/>
 	</Opcode>
@@ -117,6 +120,9 @@
 	<Opcode Type="Ldfld">
 		<Description Text="Read data in local bundle and put it on top of stack"/>
 	</Opcode>
+	<Opcod Type="Stsfld">
+		<Description Text="Replaces the value of a static field with a value from the evaluation stack."/>
+	</Opcod>
 	<Opcode Type="Stloc">
 		<Description Text="Store local variable"/>
 	</Opcode>
