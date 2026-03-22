@@ -4,6 +4,7 @@ using Nebula.Commons.Text;
 using Nebula.Core.Compilation.CST.Tree.Statements;
 using Nebula.Core.Compilation.CST.Tree.Types;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
 {
@@ -12,7 +13,20 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
     {
         public override NodeType Type => NodeType.FunctionDeclaration;
 
+        public TextLocation SignatureLocation => new(SourceCode, SignatureSpan);
+
+        public TextSpan SignatureSpan
+        {
+            get
+            {
+                TextSpan first = GetChildrenWithoutBody().First().Span;
+                TextSpan last = GetChildrenWithoutBody().Last().Span;
+                return TextSpan.FromBounds(first.Start, last.End);
+            }
+        }
+
         public TokenSeparatedList<Token> Attributes { get; }
+
         public BlockStatement Body { get; }
 
         public FunctionDeclaration(
@@ -29,6 +43,19 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
         {
             Attributes = attributes;
             Body = body;
+        }
+
+        public IEnumerable<Node> GetChildrenWithoutBody()
+        {
+            foreach (Node n in base.GetChildren())
+            {
+                yield return n;
+            }
+
+            foreach (Node child in Attributes.GetWithSeparators())
+            {
+                yield return child;
+            }
         }
 
         public override IEnumerable<Node> GetChildren()

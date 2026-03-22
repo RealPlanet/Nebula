@@ -173,7 +173,7 @@ namespace Nebula.Core.Compilation.AST.Binding
                     {
                         if (declaration.Declaration != null)
                         {
-                            _binderReport.ReportAllPathsMustReturn(declaration.Declaration.Name.Text, declaration.Declaration.Location);
+                            _binderReport.ReportAllPathsMustReturn(declaration.Declaration.Name.Text, declaration.Declaration.SignatureLocation);
                         }
                         else
                         {
