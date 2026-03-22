@@ -333,6 +333,7 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
 	case VMInstruction::Not:
 	case VMInstruction::Xor:
 	case VMInstruction::ChkDef:
+	case VMInstruction::LdNull:
 	case VMInstruction::Wait_n: // String on stack
 	case VMInstruction::Endon: // String on stack
 	case VMInstruction::Notify: // String on stack
@@ -717,6 +718,12 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 			stack.Pop();
 		}
 
+		return InstructionErrorCode::None;
+	}
+	case VMInstruction::LdNull:
+	{
+		TGCObject gcObject{ nullptr };
+		stack.Push(gcObject);
 		return InstructionErrorCode::None;
 	}
 	case VMInstruction::Ldc_i4_0:
