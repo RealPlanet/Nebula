@@ -87,6 +87,9 @@
 	<Opcode Type="AddStr">
 		<Description Text=""/>
 	</Opcode>
+	<Opcode Type="LdNull">
+		<Description Text="Load null onto the stack"/>
+	</Opcode>
 	<Opcode Type="Ldc_i4_0">
 		<Description Text="Load constant i32 0"/>
 	</Opcode>
