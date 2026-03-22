@@ -51,7 +51,7 @@ namespace Nebula.Debugger.Debugger.Data
             _bundleRef = bundleVariable;
             if (debugInfo != null)
             {
-                _bundleDebugInfo = parent.GetObjectDebugInfo(debugInfo.SourceNamespace ?? string.Empty, debugInfo.SourceType);
+                _bundleDebugInfo = parent.GetObjectDebugInfo(debugInfo.SourceNamespace ?? string.Empty, debugInfo.SourceType ?? string.Empty);
             }
         }
 
