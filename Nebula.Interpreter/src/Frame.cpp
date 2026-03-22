@@ -17,7 +17,7 @@ Frame::Frame(Frame* parent, const Function* f, bool discardParent)
     // Stack values are in the opposite order!
     for (long i = paramCount - 1; i >= 0; i--)
     {
-        FrameVariable& param = m_Memory.ParamAt(i);
+        Variable& param = m_Memory.ParamAt(i);
         param._type = params[i];
         param._value = dataStack.Peek();
         dataStack.Pop();
@@ -89,6 +89,17 @@ Frame::Status Frame::Tick(Interpreter* interpreter)
     }
 
     return Status::Running;
+}
+
+Frame::Status nebula::Frame::RunToCompletion(Interpreter* interpreter)
+{
+    Status status = Tick(interpreter);
+    while (status == Status::Running)
+    {
+        status = Tick(interpreter);
+    }
+
+    return status;
 }
 
 const std::string& Frame::Namespace()

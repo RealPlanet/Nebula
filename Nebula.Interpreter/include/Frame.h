@@ -37,6 +37,7 @@ namespace nebula
 
 		// Execute the next instruction
 		Status Tick(Interpreter*);
+		Status RunToCompletion(Interpreter*);
 
 		inline DataStack& Stack() { return m_Stack; }
 		inline const DataStack& Stack() const { return m_Stack; }

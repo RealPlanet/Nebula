@@ -40,6 +40,7 @@ namespace nebula
         ~Script();
 
         inline const std::string& Namespace() const { return m_Namespace; }
+        inline const VariableList& Globals() const { return m_Globals; }
         inline const FunctionMap& Functions() const { return m_Functions; }
         inline const BundleMap& Bundles() const { return m_Bundles; }
         inline const std::string& GetSourcePath() const { return m_SourcePath; }
@@ -48,6 +49,7 @@ namespace nebula
         Script();
         std::string m_SourcePath;
         std::string m_Namespace;
+        VariableList m_Globals;
         FunctionMap m_Functions;
         BundleMap   m_Bundles;
     };
@@ -68,6 +70,7 @@ namespace nebula
 
         bool AddFunction(Function&& func);
         bool AddBundle(BundleDefinition&& bundle);
+        bool AddGlobal(DataStackVariantIndex type);
 
     private:
         Script* m_InternalScript{ nullptr };

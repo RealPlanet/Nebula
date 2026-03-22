@@ -105,3 +105,9 @@ bool ScriptBuilder::AddBundle(BundleDefinition&& bundle)
 	m_InternalScript->m_Bundles.emplace(bundle.Name(), bundle);
 	return true;
 }
+
+bool ScriptBuilder::AddGlobal(DataStackVariantIndex type)
+{
+	m_InternalScript->m_Globals.emplace_back(type);
+	return true;
+}

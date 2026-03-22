@@ -5,7 +5,7 @@ using namespace nebula;
 FrameMemory::FrameMemory(size_t paramCount, size_t localCount)
     : m_ParamCount{ paramCount }, m_LocalCount{ localCount }
 {
-    m_Variables = new FrameVariable[localCount + paramCount];
+    m_Variables = new Variable[localCount + paramCount];
 }
 
 FrameMemory::~FrameMemory()
@@ -17,7 +17,7 @@ FrameMemory::~FrameMemory()
     }
 }
 
-FrameVariable& FrameMemory::LocalAt(size_t i)
+Variable& FrameMemory::LocalAt(size_t i)
 {
     if (i > m_ParamCount + i)
     {
@@ -27,7 +27,7 @@ FrameVariable& FrameMemory::LocalAt(size_t i)
     return m_Variables[m_ParamCount + i];
 }
 
-FrameVariable& FrameMemory::ParamAt(size_t i)
+Variable& FrameMemory::ParamAt(size_t i)
 {
     if (i > m_ParamCount)
     {
@@ -37,7 +37,7 @@ FrameVariable& FrameMemory::ParamAt(size_t i)
     return m_Variables[i];
 }
 
-const FrameVariable& FrameMemory::LocalAt(size_t i) const
+const Variable& FrameMemory::LocalAt(size_t i) const
 {
     if (i > m_ParamCount + i)
     {
@@ -47,7 +47,7 @@ const FrameVariable& FrameMemory::LocalAt(size_t i) const
     return m_Variables[m_ParamCount + i];
 }
 
-const FrameVariable& FrameMemory::ParamAt(size_t i) const
+const Variable& FrameMemory::ParamAt(size_t i) const
 {
     if (i > m_ParamCount)
     {
@@ -57,7 +57,7 @@ const FrameVariable& FrameMemory::ParamAt(size_t i) const
     return m_Variables[i];
 }
 
-bool FrameVariable::SetValue(DataStackVariant& val)
+bool Variable::SetValue(DataStackVariant& val)
 {
     if (Type() != val.index())
         return false;

@@ -432,6 +432,30 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
 		assert(args.size() == 1);
 		return { args[0] };
 	}
+	case VMInstruction::StsFld:
+	case VMInstruction::LdSfld:
+	{
+		assert(args.size() == 1 || args.size() == 2);
+
+		char* p{ nullptr };
+		TInt32 globalIndex = strtol(args[0].data(), &p, 10);
+		assert(p != nullptr);
+
+		switch (args.size())
+		{
+		case 1:
+		{
+			// Global index
+			return { globalIndex };
+		}
+		case 2:
+		{
+			// Global index - Namespace
+			return { globalIndex, args[1] };
+		}
+		}
+
+	}
 	case VMInstruction::LastInstruction:
 		__debugbreak(); //  should Not happen
 	}
@@ -516,7 +540,7 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 		int localIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
 		const TString& funcName = std::get<DataStackVariantIndex::_TypeString>(args[1]);
 
-		FrameVariable& var = context->Memory().LocalAt(localIndex);
+		Variable& var = context->Memory().LocalAt(localIndex);
 		const TGCObject& ptr = var.AsGCObject();
 		if (ptr.get() != nullptr)
 		{
@@ -791,7 +815,7 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 		assert(std::holds_alternative<TInt32>(args[0]));
 
 		TInt32 localIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
-		FrameVariable& var = context->Memory().LocalAt(localIndex);
+		Variable& var = context->Memory().LocalAt(localIndex);
 
 		stack.Push(var.Value());
 		return InstructionErrorCode::None;
@@ -802,7 +826,7 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 		assert(std::holds_alternative<TInt32>(args[0]));
 
 		TInt32 argIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
-		FrameVariable& var = context->Memory().ParamAt(argIndex);
+		Variable& var = context->Memory().ParamAt(argIndex);
 
 		stack.Push(var.Value());
 		return InstructionErrorCode::None;
@@ -855,7 +879,7 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 	case VMInstruction::Stloc:
 	{
 		TInt32 localIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
-		FrameVariable& var = context->Memory().LocalAt(localIndex);
+		Variable& var = context->Memory().LocalAt(localIndex);
 		DataStackVariant value = stack.Peek();
 
 		if (var.SetValue(value))
@@ -871,7 +895,7 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 	case VMInstruction::StArg:
 	{
 		TInt32 argIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
-		FrameVariable& var = context->Memory().ParamAt(argIndex);
+		Variable& var = context->Memory().ParamAt(argIndex);
 		DataStackVariant value = stack.Peek();
 		stack.Pop();
 
@@ -881,6 +905,34 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 		}
 		// Types don't match
 		return InstructionErrorCode::Fatal;
+	}
+	case VMInstruction::StsFld:
+	{
+		TInt32 staticIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
+		TString namespaceStr;
+		if (args.size() > 1)
+		{
+			namespaceStr = std::get<DataStackVariantIndex::_TypeString>(args[1]);
+		}
+		else
+		{
+			namespaceStr = context->Namespace();
+		}
+
+		Variable* variant = interpreter->m_Memory.GetGlobal(namespaceStr, staticIndex);
+		if (variant == nullptr)
+		{
+			return InstructionErrorCode::GlobalVariableNotFound;
+		}
+
+		DataStackVariant data = context->Stack().Peek();
+		context->Stack().Pop();
+		if (!variant->SetValue(data))
+		{
+			return InstructionErrorCode::Fatal;
+		}
+
+		return InstructionErrorCode::None;
 	}
 	case VMInstruction::Xor:
 	{

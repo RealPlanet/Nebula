@@ -27,6 +27,7 @@ namespace nebula::parsing
 
     private:
         bool ParseNamespace();
+        bool ParseGlobals();
         bool ParseFunction();
         bool ParseType(DataStackVariantIndex& result, char stopAt = ' ');
         bool ParseFunctionParameters(Function*);
