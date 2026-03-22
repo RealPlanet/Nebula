@@ -14,7 +14,7 @@ namespace nebula {
     class Bundle;
     class VariantArray;
     class Function;
-    class FrameVariable;
+    class Variable;
     class Frame;
 
     using CallStack = std::vector<nebula::Frame*>;
@@ -76,8 +76,8 @@ extern "C"
     __declspec(dllexport) int Frame_GetLocalCount(nebula::Frame* handle);
     __declspec(dllexport) int Frame_GetParameterCount(nebula::Frame* handle);
     __declspec(dllexport) int Frame_GetInstructionCount(nebula::Frame* handle);
-    __declspec(dllexport) nebula::FrameVariable* Frame_GetLocalVariableAt(nebula::Frame* handle, int index);
-    __declspec(dllexport) nebula::FrameVariable* Frame_GetParameterVariableAt(nebula::Frame* handle, int index);
+    __declspec(dllexport) nebula::Variable* Frame_GetLocalVariableAt(nebula::Frame* handle, int index);
+    __declspec(dllexport) nebula::Variable* Frame_GetParameterVariableAt(nebula::Frame* handle, int index);
 
     // Callstack
     __declspec(dllexport) int CallStack_GetFrameCount(nebula::CallStack* handle);
@@ -126,13 +126,13 @@ extern "C"
     __declspec(dllexport) void Function_Destroy(nebula::Function* handle);
 
     // Variable
-    __declspec(dllexport) int FrameVariable_GetType(nebula::FrameVariable* handle);
-    __declspec(dllexport) const char* FrameVariable_GetStringValue(nebula::FrameVariable* handle);
-    __declspec(dllexport) bool FrameVariable_SetStringValue(nebula::FrameVariable* handle, const char* value);
-    __declspec(dllexport) int FrameVariable_GetIntValue(nebula::FrameVariable* handle);
-    __declspec(dllexport) bool FrameVariable_SetIntValue(nebula::FrameVariable* handle, int value);
-    __declspec(dllexport) float FrameVariable_GetFloatValue(nebula::FrameVariable* handle);
-    __declspec(dllexport) bool FrameVariable_SetFloatValue(nebula::FrameVariable* handle, float value);
-    __declspec(dllexport) nebula::Bundle* FrameVariable_GetBundleValue(nebula::FrameVariable* handle);
-    __declspec(dllexport) nebula::VariantArray* FrameVariable_GetArrayValue(nebula::FrameVariable* handle);
+    __declspec(dllexport) int FrameVariable_GetType(nebula::Variable* handle);
+    __declspec(dllexport) const char* FrameVariable_GetStringValue(nebula::Variable* handle);
+    __declspec(dllexport) bool FrameVariable_SetStringValue(nebula::Variable* handle, const char* value);
+    __declspec(dllexport) int FrameVariable_GetIntValue(nebula::Variable* handle);
+    __declspec(dllexport) bool FrameVariable_SetIntValue(nebula::Variable* handle, int value);
+    __declspec(dllexport) float FrameVariable_GetFloatValue(nebula::Variable* handle);
+    __declspec(dllexport) bool FrameVariable_SetFloatValue(nebula::Variable* handle, float value);
+    __declspec(dllexport) nebula::Bundle* FrameVariable_GetBundleValue(nebula::Variable* handle);
+    __declspec(dllexport) nebula::VariantArray* FrameVariable_GetArrayValue(nebula::Variable* handle);
 }
