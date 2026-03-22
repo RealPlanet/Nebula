@@ -176,6 +176,11 @@ static int ExecuteVM() {
 					std::string errMessage = std::format("Error while adding script '{}' to VM", ptr->Namespace().data());
 					writer::ConsoleWrite(errMessage, writer::Code::FG_RED);
 					allScriptsLoaded = false;
+
+					shared::ErrorCallStack* errCallstack = vm.GetFatalErrorCallstack();
+					if (errCallstack != nullptr) {
+						writer::ConsoleWrite(errCallstack->GetAsText(), writer::Code::FG_RED);
+					}
 				}
 			}
 
