@@ -199,7 +199,7 @@ namespace Nebula.Core.Compilation.AST.Binding
         {
             foreach (var global in _currentUnit.Globals)
             {
-                var globalDefinition = BindVariableDeclarations(global, isGlobal: true);
+                var globalDefinition = BindVariableDeclarations(global, _currentProgram.Namespace.Text);
                 foreach (var variable in globalDefinition.AllVariables)
                 {
                     _currentProgram.Globals.Add(variable.Variable, variable);
@@ -282,21 +282,21 @@ namespace Nebula.Core.Compilation.AST.Binding
         /// <summary>
         /// Bind an CST Variable declaration
         /// </summary>
-        private AbstractVariableDeclarationCollection BindVariableDeclarations(VariableDeclarationCollection node, bool isGlobal)
+        private AbstractVariableDeclarationCollection BindVariableDeclarations(VariableDeclarationCollection node, string @namespace)
         {
             bool isReadOnly = node.IsConst;
 
             ImmutableArray<AbstractVariableDeclaration>.Builder boundVariables = ImmutableArray.CreateBuilder<AbstractVariableDeclaration>();
             foreach (VariableDeclaration declaration in node.Declarations)
             {
-                AbstractVariableDeclaration abstractDeclaration = BindVariableDeclaration(isGlobal, isReadOnly, declaration);
+                AbstractVariableDeclaration abstractDeclaration = BindVariableDeclaration(@namespace, isReadOnly, declaration);
                 boundVariables.Add(abstractDeclaration);
             }
 
             return new AbstractVariableDeclarationCollection(node, boundVariables.ToImmutableArray());
         }
 
-        private AbstractVariableDeclaration BindVariableDeclaration(bool isGlobal, bool isReadOnly, VariableDeclaration declaration)
+        private AbstractVariableDeclaration BindVariableDeclaration(string @namespace, bool isReadOnly, VariableDeclaration declaration)
         {
             TypeSymbol type = BindTypeClause(declaration.VarType);
             AbstractExpression initializer = BindExpression(declaration.Initializer);
@@ -306,7 +306,7 @@ namespace Nebula.Core.Compilation.AST.Binding
                 initExpr.SetAllocationResult(type);
             }
 
-            VariableSymbol variable = BindVariableDeclaration(declaration.Identifier, isGlobal, isReadOnly, type, initializer.ConstantValue);
+            VariableSymbol variable = BindVariableDeclaration(@namespace, declaration.Identifier, isReadOnly, type, initializer.ConstantValue);
             AbstractExpression? convertedInitializer = BindConversion(declaration.Location, initializer, type);
             return new(declaration, variable, convertedInitializer);
         }
@@ -314,12 +314,12 @@ namespace Nebula.Core.Compilation.AST.Binding
         /// <summary>
         /// Try to declare this variable within the scope
         /// </summary>
-        private VariableSymbol BindVariableDeclaration(Token identifier, bool isGlobal, bool isReadOnly, TypeSymbol type, AbstractConstant? constant = null)
+        private VariableSymbol BindVariableDeclaration(string @namespace, Token identifier, bool isReadOnly, TypeSymbol type, AbstractConstant? constant = null)
         {
             string? name = identifier.Text ?? "?";
-
+            bool isGlobal = !string.IsNullOrEmpty(@namespace);
             VariableSymbol variable = isGlobal ?
-                new GlobalVariableSymbol(name, isReadOnly, type, constant) :
+                new GlobalVariableSymbol(@namespace, name, isReadOnly, type, constant) :
                 new LocalVariableSymbol(name, isReadOnly, type, constant);
 
             // Should never happen as shadowing is allowed and we created a new scope
@@ -342,8 +342,12 @@ namespace Nebula.Core.Compilation.AST.Binding
         {
             if (!string.IsNullOrEmpty(@namespace))
             {
-                _currentProgram.References.TryGetGlobalVariable(@namespace, name, out var symbol);
-                return symbol;
+                if (_currentProgram.References.TryGetGlobalVariable(@namespace, name, out var symbol))
+                {
+                    return symbol;
+                }
+
+                throw new NotImplementedException("Report this error");
             }
 
             switch (_currentScope.TryLookupSymbol(name))
@@ -1076,7 +1080,7 @@ namespace Nebula.Core.Compilation.AST.Binding
             NodeType.BreakStatement => BindBreakStatement((BreakStatement)syntax),
             NodeType.ContinueStatement => BindContinueStatement((ContinueStatement)syntax),
             NodeType.ReturnStatement => BindReturnStatement((ReturnStatement)syntax),
-            NodeType.VariableDeclarationCollection => BindVariableDeclarations((VariableDeclarationCollection)syntax, isGlobal: false),
+            NodeType.VariableDeclarationCollection => BindVariableDeclarations((VariableDeclarationCollection)syntax, string.Empty),
             _ => throw new Exception($"Unexpected syntax '{syntax.Type}'"),
         };
 

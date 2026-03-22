@@ -8,15 +8,15 @@ namespace Nebula.Core.Compilation.AST.Symbols
         : Symbol
     {
         #region Static
-        public static readonly TypeSymbol Error = new("?");
+        public static readonly TypeSymbol Error = new(string.Empty, "?");
         //public static readonly TypeSymbol Any = new("any");
-        public static readonly TypeSymbol Bool = new("bool");
-        public static readonly TypeSymbol Int = new("int");
-        public static readonly TypeSymbol Float = new("float");
-        public static readonly TypeSymbol String = new("string");
-        public static readonly TypeSymbol Void = new("void");
-        public static readonly TypeSymbol BaseObject = new("object");
-        public static readonly TypeSymbol BaseArray = new("array");
+        public static readonly TypeSymbol Bool = new(string.Empty, "bool");
+        public static readonly TypeSymbol Int = new(string.Empty, "int");
+        public static readonly TypeSymbol Float = new(string.Empty, "float");
+        public static readonly TypeSymbol String = new(string.Empty, "string");
+        public static readonly TypeSymbol Void = new(string.Empty, "void");
+        public static readonly TypeSymbol BaseObject = new(string.Empty, "object");
+        public static readonly TypeSymbol BaseArray = new(string.Empty, "array");
 
         public bool IsError => this == Error;
         public bool IsBool => this == Bool;
@@ -29,17 +29,16 @@ namespace Nebula.Core.Compilation.AST.Symbols
 
         public static TypeSymbol TypeFromEnum(TypeIdentifier identifier)
         {
-            switch (identifier)
+            return identifier switch
             {
-                case TypeIdentifier.Void:
-                    return Void;
-                case TypeIdentifier.Int32:
-                    return Int;
-                case TypeIdentifier.String:
-                    return String;
-                default:
-                    throw new System.Exception($"Unknown type: {identifier}");
-            }
+                TypeIdentifier.Void => Void,
+                TypeIdentifier.Int32 => Int,
+                TypeIdentifier.String => String,
+                TypeIdentifier.Float => Float,
+                TypeIdentifier.Bundle => BaseObject,
+                TypeIdentifier.Array => BaseArray,
+                _ => throw new System.Exception($"Unknown type: {identifier}"),
+            };
         }
 
         #endregion
@@ -52,8 +51,8 @@ namespace Nebula.Core.Compilation.AST.Symbols
 
         public virtual TypeSymbol BaseType => this;
 
-        protected TypeSymbol(string name)
-            : base(name)
+        protected TypeSymbol(string @namespace, string name)
+            : base(@namespace, name)
         {
         }
 

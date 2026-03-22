@@ -7,6 +7,8 @@
         /// <summary> The base type of this variable </summary>
         public TypeReference VariableType { get; }
 
+        public string Namespace { get; set; }
+
         /// <summary> The name of this variable </summary>
         public string Name { get; }
 
@@ -16,9 +18,10 @@
         /// <summary> If this is an object variable, this contains the object definition type name </summary>
         public string? SourceTypeName { get; set; }
 
-        public VariableDefinition(TypeReference type, string name, int index)
+        public VariableDefinition(TypeReference type, string @namespace, string name, int index)
         {
             VariableType = type;
+            Namespace = @namespace;
             Name = name;
             Index = index;
         }

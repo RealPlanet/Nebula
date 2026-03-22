@@ -8,8 +8,8 @@ namespace Nebula.Core.Compilation.AST.Symbols
     {
         public override SymbolType SymbolType => SymbolType.GlobalVariable;
 
-        public GlobalVariableSymbol(string name, bool isReadOnly, TypeSymbol variableType, AbstractConstant? constant)
-            : base(name, isReadOnly, variableType, constant)
+        public GlobalVariableSymbol(string @namespace, string name, bool isReadOnly, TypeSymbol variableType, AbstractConstant? constant)
+            : base(@namespace, name, isReadOnly, variableType, constant)
         {
         }
     }

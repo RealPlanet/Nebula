@@ -7,7 +7,7 @@
         public int Rank { get; }
 
         public ArrayTypeSymbol(TypeSymbol valueType, int rank)
-            : base(BaseArray.Name)
+            : base(string.Empty, BaseArray.Name)
         {
             ValueType = valueType;
             Rank = rank;

@@ -13,7 +13,7 @@ namespace Nebula.Core.Compilation.AST.Bundle
         public ImmutableArray<AbstractBundleField> Fields { get; }
 
         public BundleSymbol(string name, BundleDeclaration declaration, ImmutableArray<AbstractBundleField> fields)
-            : base(name)
+            : base(string.Empty, name)
         {
             Declaration = declaration;
             Fields = fields;

@@ -95,8 +95,6 @@ namespace Nebula.Core.Compilation
 
                 foreach (var program in programs)
                 {
-                    emitOptions.AllPrograms = allPrograms.Except(program).ToList();
-
                     string moduleName = Path.GetFileNameWithoutExtension(program.SourceCode.FileName);
                     emitter.Emit(moduleName, program, out var report);
                     result.Report.Append(report);

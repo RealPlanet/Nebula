@@ -33,7 +33,6 @@ namespace Nebula.Core.Compilation.Emitting
             public string OutputFolder { get; set; } = "";
             public bool OutputToSourceLocation { get; set; } = false;
             public bool ReadableBytecode { get; set; } = true;
-            public IReadOnlyList<AbstractProgram> AllPrograms { get; set; } = [];
         }
 
         /// <summary>Context used by the emitter to keep track of all the code being emitted</summary>
@@ -41,8 +40,8 @@ namespace Nebula.Core.Compilation.Emitting
         {
             public Assembly Assembly { get; } = new(moduleName, @namespace, moduleVersion, sourceCode);
             public Report Report { get; } = new();
-            public Dictionary<VariableSymbol, VariableDefinition> Globals { get; } = [];
             public Dictionary<VariableSymbol, VariableDefinition> Locals { get; } = [];
+            public Dictionary<VariableSymbol, VariableDefinition> Globals { get; } = [];
             public Dictionary<VariableSymbol, ParameterDefinition> Parameters { get; } = [];
             public Dictionary<AbstractLabel, int> Labels { get; } = [];
             public List<(int InstructionIndex, AbstractLabel Target)> LabelReferences { get; } = [];
@@ -50,6 +49,7 @@ namespace Nebula.Core.Compilation.Emitting
 
         private readonly Options _options;
         private Context _currentContext = null!;
+        private AbstractProgram _currentProgram = null!;
 
         public Emitter(Options options)
         {
@@ -58,7 +58,8 @@ namespace Nebula.Core.Compilation.Emitting
 
         public void Emit(string moduleName, AbstractProgram program, out Report emitReport)
         {
-            NamespaceStatement nsToken = (NamespaceStatement)program.Namespace.OriginalNode;
+            _currentProgram = program;
+            NamespaceStatement nsToken = (NamespaceStatement)_currentProgram.Namespace.OriginalNode;
             _currentContext = new(moduleName, program.Namespace.Text, new(1, 0, 0), program.SourceCode);
 
             EmitGlobals(program);
@@ -138,20 +139,48 @@ namespace Nebula.Core.Compilation.Emitting
 
         private void EmitGlobals(AbstractProgram program)
         {
-            int globalCount = 0;
-            foreach (var global in program.Globals)
+
+            // Declare the referenced global variables, I don't really like this solution but what w
+            foreach (var reference in program.References.AllReferences.Values)
             {
-                var variable = global.Key;
+                foreach (var globalReference in reference.Globals.Values)
+                {
+                    // TODO
+                }
+            }
+
+            foreach (var otherProgram in program.References.AllPrograms.Values)
+            {
+                int tmpGlobalCount = 0;
+                foreach (var globalReference in otherProgram.Globals.Keys)
+                {
+                    VariableDefinition variableDefinition = GenerateVariableDefinition(ref tmpGlobalCount, globalReference);
+                    _currentContext.Globals[globalReference] = variableDefinition;
+                }
+            }
+
+            int localGlobalCount = 0;
+            // Define our local scope globals
+            foreach (var variable in program.Globals.Keys)
+            {
+                VariableDefinition variableDefinition = GenerateVariableDefinition(ref localGlobalCount, variable);
+                variableDefinition.Namespace = string.Empty;
+
+                _currentContext.Globals[variable] = variableDefinition;
+                _currentContext.Assembly.TypeDefinition.Globals.Add(variableDefinition);
+            }
+
+            VariableDefinition GenerateVariableDefinition(ref int globalCount, VariableSymbol variable)
+            {
                 TypeReference typeReference = _knownTypes[variable.Type.BaseType];
-                VariableDefinition variableDefinition = new(typeReference, variable.Name, globalCount++);
+                VariableDefinition variableDefinition = new(typeReference, variable.Namespace, variable.Name, globalCount++);
                 if (variable.Type is ObjectTypeSymbol objSymbol)
                 {
                     variableDefinition.SourceNamespace = objSymbol.Namespace;
                     variableDefinition.SourceTypeName = objSymbol.Name;
                 }
 
-                _currentContext.Globals[variable] = variableDefinition;
-                _currentContext.Assembly.TypeDefinition.Globals.Add(variableDefinition);
+                return variableDefinition;
             }
         }
 
@@ -210,7 +239,6 @@ namespace Nebula.Core.Compilation.Emitting
 
             _currentContext.Assembly.TypeDefinition.Bundles.Add(bundle);
         }
-
 
         private void EmitFunctionBody(MethodDefinition method, AbstractBlockStatement body)
         {
@@ -351,7 +379,7 @@ namespace Nebula.Core.Compilation.Emitting
         {
             TypeReference typeReference = _knownTypes[node.Variable.Type.BaseType];
 
-            VariableDefinition variableDefinition = new(typeReference, node.Variable.Name, processor.Body.Variables.Count);
+            VariableDefinition variableDefinition = new(typeReference, node.Variable.Namespace, node.Variable.Name, processor.Body.Variables.Count);
 
             if (node.Variable.Type is ObjectTypeSymbol objSymbol)
             {
@@ -674,7 +702,7 @@ namespace Nebula.Core.Compilation.Emitting
             processor.Emit(InstructionOpcode.Dup, originalStatement); // Takes current value on stack and pushes it again
             if (isGlobal)
             {
-                processor.Emit(InstructionOpcode.Stsfld, variableDefinition, originalStatement); // Writes value into local
+                processor.Emit(InstructionOpcode.Stsfld, variableDefinition, originalStatement); // Writes value into global
             }
             else
             {
