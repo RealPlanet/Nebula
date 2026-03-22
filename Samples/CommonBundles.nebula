@@ -2,6 +2,9 @@ namespace "CommonBundles";
 
 native void WriteLine(string m);
 
+int EntityCount = 0;
+const int MAX_ENT_COUNT = 1024;
+
 func void PrintEntity(CommonBundles::Entity ent)
 {
     WriteLine("Printing bundle Entity information");
