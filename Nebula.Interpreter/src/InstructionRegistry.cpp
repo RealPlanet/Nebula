@@ -832,6 +832,32 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 		return InstructionErrorCode::None;
 
 	}
+	case VMInstruction::LdSfld:
+	{
+		assert(args.size() == 1 || args.size() == 2);
+		assert(std::holds_alternative<TInt32>(args[0]));
+		assert(args.size() == 1 || std::holds_alternative<TString>(args[1]));
+
+		TInt32 staticIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
+		TString namespaceStr;
+		if (args.size() > 1)
+		{
+			namespaceStr = std::get<DataStackVariantIndex::_TypeString>(args[1]);
+		}
+		else
+		{
+			namespaceStr = context->Namespace();
+		}
+
+		Variable* variant = interpreter->m_Memory.GetGlobal(namespaceStr, staticIndex);
+		if (variant == nullptr)
+		{
+			return InstructionErrorCode::GlobalVariableNotFound;
+		}
+
+		context->Stack().Push(variant->Value());
+		return InstructionErrorCode::None;
+	}
 	case VMInstruction::AddStr:
 	{
 		TInt32 numOfStrings = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
