@@ -53,7 +53,16 @@ namespace Nebula.Commons.Text.Printers
                                     .ThenBy(d => d.Location.Span.Start)
                                     .ThenBy(d => d.Location.Span.Length))
             {
-                WriteMessage(writer, msg);
+                try
+                {
+                    WriteMessage(writer, msg);
+                }
+                catch (Exception e)
+                {
+                    writer.SetForeground(ConsoleColor.DarkRed);
+                    writer.Write(e.ToString());
+                    writer.ResetColor();
+                }
             }
         }
 

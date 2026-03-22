@@ -73,6 +73,7 @@
         EndOnNotificationKeyword,
         NotifyKeyword,
         NativeKeyword,
+        IsDefinedKeyword,
 
         BlockStatement,         // Generic sequence of nodes surrounded by an open and close { }
         ExpressionStatement,
@@ -107,7 +108,7 @@
         ObjectCallExpression,
         LiteralExpression,
         InitializationExpression,
-
+        IsDefinedExpression,
 
         EndOfFileToken,
         TypeClause,
