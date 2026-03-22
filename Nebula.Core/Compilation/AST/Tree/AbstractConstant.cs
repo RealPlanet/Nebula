@@ -2,8 +2,9 @@
 {
     public sealed class AbstractConstant
     {
-        public object Value { get; }
-        public AbstractConstant(object value)
+        public object? Value { get; }
+
+        public AbstractConstant(object? value)
         {
             Value = value;
         }

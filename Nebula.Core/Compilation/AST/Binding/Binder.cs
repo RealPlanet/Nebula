@@ -711,9 +711,9 @@ namespace Nebula.Core.Compilation.AST.Binding
             NodeType.CallExpression => BindCallExpression((CallExpression)expr),
             NodeType.ObjectCallExpression => BindObjectCallExpression((ObjectCallExpression)expr),
             NodeType.InitializationExpression => BindInitializationExpression((InitializationExpression)expr),
+            NodeType.IsDefinedExpression => BindIsDefinedExpression((IsDefinedExpression)expr),
             _ => throw new Exception($"Unexpected syntax '{expr.Type}'"),
         };
-
 
         private AbstractExpression BindParanthesizedExpression(ParenthesizedExpression syntax) => BindExpression(syntax.Expression);
 
@@ -724,10 +724,15 @@ namespace Nebula.Core.Compilation.AST.Binding
                 return BindArrayAssignmentExpression(expr, arrayExpr);
             }
 
+
             AbstractExpression identifierExpression = BindExpression(expr.Identifier);
             AbstractExpression boundExpression = BindExpression(expr.RightExpr);
 
-            if (identifierExpression is AbstractObjectFieldAccessExpression fieldAccess)
+            if (boundExpression is AbstractInitializationExpression initExpression)
+            {
+                initExpression.SetAllocationResult(identifierExpression.ResultType);
+            }
+            else if (identifierExpression is AbstractObjectFieldAccessExpression fieldAccess)
             {
                 if (boundExpression is AbstractInitializationExpression initExpr)
                 {
@@ -789,7 +794,7 @@ namespace Nebula.Core.Compilation.AST.Binding
 
         private static AbstractLiteralExpression BindLiteralExpression(LiteralExpression syntax)
         {
-            object value = syntax.Value ?? 0;
+            object? value = syntax.Value;
             return new AbstractLiteralExpression(syntax, value);
         }
 
@@ -903,7 +908,7 @@ namespace Nebula.Core.Compilation.AST.Binding
 
             if (expr.IsAsyncCall)
             {
-                if (function.ReturnType != TypeSymbol.Void || function.ReturnType != TypeSymbol.BaseObject)
+                if (function.ReturnType != TypeSymbol.Void && function.ReturnType != TypeSymbol.BaseObject)
                 {
                     // TODO :: Report
                     return new AbstractErrorExpression(expr);
@@ -958,6 +963,12 @@ namespace Nebula.Core.Compilation.AST.Binding
         private static AbstractInitializationExpression BindInitializationExpression(InitializationExpression expr)
         {
             return new AbstractInitializationExpression(expr);
+        }
+
+        private AbstractIsDefinedExpression BindIsDefinedExpression(IsDefinedExpression expr)
+        {
+            var evalExpression = BindExpression(expr.Expression, false);
+            return new AbstractIsDefinedExpression(expr, evalExpression);
         }
 
         private FunctionSymbol? TryLookupFunctionSymbol(CallExpression callExpression)

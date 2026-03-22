@@ -12,7 +12,7 @@ namespace Nebula.Core.Compilation.CST.Tree.Expressions
 
         public Token Literal { get; }
 
-        public object Value { get; }
+        public object? Value { get; }
 
         internal LiteralExpression(SourceCode soureCode, Token literalToken, object value)
             : base(soureCode)
