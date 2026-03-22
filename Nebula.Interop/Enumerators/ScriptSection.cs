@@ -6,5 +6,6 @@
         Function,
         Bundle,
         Locals,
+        Globals,
     }
 }
