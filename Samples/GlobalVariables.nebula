@@ -1,0 +1,17 @@
+namespace "GlobalVariables";
+import "CommonBundles";
+
+native void WriteLine(string m);
+
+int EntityCount = 0;
+
+func void main() autoexec
+{
+    WriteLine("What is the max ent count?");
+    WriteLine(string(CommonBundles::MAX_ENT_COUNT));
+
+    CommonBundles::EntityCount += 1;
+
+    WriteLine("Current entity count:" + string(CommonBundles::EntityCount));
+    WriteLine("Current LOCAL entity count:" + string(EntityCount));
+}

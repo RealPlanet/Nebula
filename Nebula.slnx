@@ -68,6 +68,7 @@
     <File Path="Samples/FizzBuzz.nebula" />
     <File Path="Samples/FloatMath.nebula" />
     <File Path="Samples/ForLoop.nebula" />
+    <File Path="Samples/GlobalVariables.nebula" />
     <File Path="Samples/HelloWorld.nebula" />
     <File Path="Samples/ImportBundleTest.nebula" />
     <File Path="Samples/InvertedHelloWorld.nebula" />
