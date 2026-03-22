@@ -1,4 +1,5 @@
-﻿using Nebula.Commons.Reporting;
+﻿using Nebula.Commons.Collections;
+using Nebula.Commons.Reporting;
 using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
 using Nebula.Core.Compilation.CST.Lexing;
@@ -99,8 +100,18 @@ namespace Nebula.Core.Compilation.CST.Parsing
                         break;
                     default:
                         {
-                            _parseReport.ReportUnknownGlobalStatement(Current);
-                            return;
+                            if (Current.Type == NodeType.ConstKeyword || Current.Type == NodeType.IdentifierToken)
+                            {
+                                var declarations = ParseVariableDeclarations();
+                                _currentUnit.Globals.Add(declarations);
+                            }
+                            else
+                            {
+                                _parseReport.ReportUnknownGlobalStatement(Current);
+                                continueParsing = false;
+                            }
+
+                            break;
                         }
                 }
             }
@@ -398,7 +409,8 @@ namespace Nebula.Core.Compilation.CST.Parsing
                         bool isVariableDefinitionWithNamespace = Current.Type == NodeType.IdentifierToken &&
                             Peek(1).Type == NodeType.DoubleColonToken &&
                             Peek(2).Type == NodeType.IdentifierToken &&
-                            Peek(3).Type != NodeType.OpenParenthesisToken;
+                            Peek(3).Type == NodeType.IdentifierToken; 
+
                         // Variable declaration with type from another namespace
                         if (isVariableDefinitionWithNamespace)
                         {
@@ -777,12 +789,21 @@ namespace Nebula.Core.Compilation.CST.Parsing
 
         private NameExpression ParseNameExpression()
         {
+            Token? nsToken = null;
+            Token? dcToken = null;
             Token name = MatchToken(NodeType.IdentifierToken);
+            if (Current.Type == NodeType.DoubleColonToken)
+            {
+                nsToken = name;
+                dcToken = MatchToken(NodeType.DoubleColonToken);
+                name = MatchToken(NodeType.IdentifierToken);
+            }
+
             if (Current.Type == NodeType.DotToken)
             {
                 Token accessToken = MatchToken(NodeType.DotToken);
                 Token fieldName = MatchToken(NodeType.IdentifierToken);
-                return new ObjectVariableAccessExpression(_currentSource, name, accessToken, fieldName);
+                return new ObjectVariableAccessExpression(_currentSource, nsToken, dcToken, name, accessToken, fieldName);
             }
 
             if (Current.Type == NodeType.OpenSquareBracketToken)
@@ -790,10 +811,10 @@ namespace Nebula.Core.Compilation.CST.Parsing
                 Token openSquare = MatchToken(NodeType.OpenSquareBracketToken);
                 Expression accessExpression = ParseExpression();
                 Token closeSquare = MatchToken(NodeType.ClosedSquareBracketToken);
-                return new ArrayAccessExpression(_currentSource, name, openSquare, accessExpression, closeSquare);
+                return new ArrayAccessExpression(_currentSource, nsToken, dcToken, name, openSquare, accessExpression, closeSquare);
             }
 
-            return new NameExpression(_currentSource, name);
+            return new NameExpression(_currentSource, nsToken, dcToken, name);
         }
 
         private Expression? ParseFunctionCall()

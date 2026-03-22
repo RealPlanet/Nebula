@@ -1,9 +1,4 @@
-﻿using Nebula.Commons.Reporting;
-using Nebula.Commons.Text;
-using Nebula.Core.Compilation.AST.Symbols;
-using Nebula.Core.Compilation.AST.Tree.Base;
-
-namespace Nebula.Core.Reporting
+﻿namespace Nebula.Core.Reporting
 {
 
 

@@ -25,11 +25,11 @@ namespace Nebula.Core.Reporting
             r.PushError(message, func.Name.Location, code.ToString());
         }
 
-        public static void ReportAllPathsMustReturn(this Report r, FunctionDeclaration func)
+        public static void ReportAllPathsMustReturn(this Report r, string functionName, TextLocation location)
         {
             (EBinderMessages code, string template) = BinderMessagesProvider.NotAllPathsReturn;
-            string message = string.Format(template, func.Name.Text);
-            r.PushError(message, func.Name.Location, code.ToString());
+            string message = string.Format(template, functionName);
+            r.PushError(message, location, code.ToString());
         }
 
         public static void ReportParameterAlreadyDeclared(this Report r, Parameter parameter)

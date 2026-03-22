@@ -3,7 +3,7 @@
     public enum SymbolType
     {
         Function,
-        //GLOBAL_VARIABLE,
+        GlobalVariable,
         LocalVariable,
         Parameter,
         Type,

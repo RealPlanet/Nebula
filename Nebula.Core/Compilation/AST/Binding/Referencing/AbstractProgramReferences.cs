@@ -24,6 +24,7 @@ namespace Nebula.Core.Compilation.AST.Binding.Referencing
 
         private readonly Dictionary<string, BundleSymbol> _cachedCompiledBundles = new();
         private readonly Dictionary<string, FunctionSymbol> _cachedCompiledFunctions = new();
+        private readonly Dictionary<string, VariableSymbol> _cachedCompiledGlobals = new();
 
         public AbstractProgramReferences(AbstractProgram owner)
         {
@@ -41,9 +42,29 @@ namespace Nebula.Core.Compilation.AST.Binding.Referencing
             AllReferences.Add(script.Namespace, script);
         }
 
+        internal bool TryGetGlobalVariable(string @namespace, string variableName, out VariableSymbol? variable)
+        {
+            if(AllPrograms.TryGetValue(@namespace, out var program))
+            {
+                variable = program.Globals.Keys.FirstOrDefault(f => f.Name == variableName);
+                return variable != null;
+            }
+
+            if (AllReferences.TryGetValue(@namespace, out Script? script) &&
+                script.Globals.TryGetValue(variableName, out VariableDefinition? compiledVariable))
+            {
+                variable = CreateFromCompiled(compiledVariable);
+                return variable != null;
+            }
+
+            variable = null;
+            return false;
+        }
+
         public bool TryGetBundle(string @namespace, string bundleName, out BundleSymbol? bundle)
         {
-            if (AllPrograms.TryGetValue(@namespace, out AbstractProgram? program) && program.Bundles.TryGetValue(bundleName, out bundle))
+            if (AllPrograms.TryGetValue(@namespace, out AbstractProgram? program) 
+                && program.Bundles.TryGetValue(bundleName, out bundle))
             {
                 return true;
             }
@@ -78,9 +99,31 @@ namespace Nebula.Core.Compilation.AST.Binding.Referencing
             return false;
         }
 
+        private VariableSymbol CreateFromCompiled(VariableDefinition compiledVariable)
+        {
+            if (_cachedCompiledGlobals.TryGetValue(compiledVariable.FullName, out VariableSymbol? variable))
+            {
+                return variable;
+            }
+
+            AbstractConstant? constants = null;
+            if(compiledVariable.ConstantValue != null)
+            {
+                constants = new AbstractConstant(compiledVariable.ConstantValue);
+            }
+
+            variable = new GlobalVariableSymbol(compiledVariable.Name,
+                                                compiledVariable.IsConstant,
+                                                TypeSymbol.TypeFromEnum(compiledVariable.Type),
+                                                constants);
+
+            _cachedCompiledGlobals.Add(compiledVariable.FullName, variable);
+            return variable;
+        }
+
         private FunctionSymbol CreateFromCompiled(Function compiledFunction)
         {
-            if (_cachedCompiledFunctions.TryGetValue(compiledFunction.Name, out FunctionSymbol? func))
+            if (_cachedCompiledFunctions.TryGetValue(compiledFunction.FullName, out FunctionSymbol? func))
             {
                 return func;
             }
@@ -89,10 +132,24 @@ namespace Nebula.Core.Compilation.AST.Binding.Referencing
                 CreateParametersFromCompiled(compiledFunction),
                 CreateAttributesFromCompiled(compiledFunction),
                 TypeSymbol.TypeFromEnum(compiledFunction.ReturnType),
-                null);
-            _cachedCompiledFunctions.Add(func.Name, func);
+                null!);
+
+            _cachedCompiledFunctions.Add(compiledFunction.FullName, func);
             return func;
         }
+
+        private BundleSymbol CreateFromCompiled(BundleDefinition compiledBundle)
+        {
+            if (_cachedCompiledBundles.TryGetValue(compiledBundle.FullName, out BundleSymbol? bundle))
+            {
+                return bundle;
+            }
+
+            bundle = new BundleSymbol(compiledBundle.Name, null!, CreateFieldsFromCompiled(compiledBundle));
+            _cachedCompiledBundles.Add(compiledBundle.FullName, bundle);
+            return bundle;
+        }
+
 
         private static ImmutableArray<AttributeSymbol> CreateAttributesFromCompiled(Function compiledFunction)
         {
@@ -118,18 +175,6 @@ namespace Nebula.Core.Compilation.AST.Binding.Referencing
             }
 
             return builder.ToImmutableArray();
-        }
-
-        private BundleSymbol CreateFromCompiled(BundleDefinition compiledBundle)
-        {
-            if (_cachedCompiledBundles.TryGetValue(compiledBundle.Name, out BundleSymbol? bundle))
-            {
-                return bundle;
-            }
-
-            bundle = new BundleSymbol(compiledBundle.Name, null!, CreateFieldsFromCompiled(compiledBundle));
-            _cachedCompiledBundles.Add(bundle.Name, bundle);
-            return bundle;
         }
 
         private static ImmutableArray<AbstractBundleField> CreateFieldsFromCompiled(BundleDefinition bundle)

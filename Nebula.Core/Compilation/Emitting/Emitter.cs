@@ -31,9 +31,9 @@ namespace Nebula.Core.Compilation.Emitting
         public class Options
         {
             public string OutputFolder { get; set; } = "";
-
             public bool OutputToSourceLocation { get; set; } = false;
             public bool ReadableBytecode { get; set; } = true;
+            public IReadOnlyList<AbstractProgram> AllPrograms { get; set; } = [];
         }
 
         /// <summary>Context used by the emitter to keep track of all the code being emitted</summary>
@@ -41,27 +41,27 @@ namespace Nebula.Core.Compilation.Emitting
         {
             public Assembly Assembly { get; } = new(moduleName, @namespace, moduleVersion, sourceCode);
             public Report Report { get; } = new();
+            public Dictionary<VariableSymbol, VariableDefinition> Globals { get; } = [];
             public Dictionary<VariableSymbol, VariableDefinition> Locals { get; } = [];
             public Dictionary<VariableSymbol, ParameterDefinition> Parameters { get; } = [];
             public Dictionary<AbstractLabel, int> Labels { get; } = [];
             public List<(int InstructionIndex, AbstractLabel Target)> LabelReferences { get; } = [];
         }
 
-        public string ModuleName { get; }
-
         private readonly Options _options;
         private Context _currentContext = null!;
 
-        public Emitter(string moduleName, Options options)
+        public Emitter(Options options)
         {
-            ModuleName = moduleName;
             _options = options;
         }
 
-        public void Emit(AbstractProgram program, out Report emitReport)
+        public void Emit(string moduleName, AbstractProgram program, out Report emitReport)
         {
             NamespaceStatement nsToken = (NamespaceStatement)program.Namespace.OriginalNode;
-            _currentContext = new(ModuleName, program.Namespace.Text, new(1, 0, 0), program.SourceCode);
+            _currentContext = new(moduleName, program.Namespace.Text, new(1, 0, 0), program.SourceCode);
+
+            EmitGlobals(program);
 
             foreach (FunctionSymbol nativeFunc in program.NativeFunctions)
             {
@@ -78,14 +78,14 @@ namespace Nebula.Core.Compilation.Emitting
                 EmitFunctionDeclaration(declaration, body);
             }
 
-            string moduleName = Path.ChangeExtension(ModuleName, ".neb");
-            string moduleDbgName = Path.ChangeExtension(ModuleName, ".ndbg");
+            string compiledFileName = Path.ChangeExtension(moduleName, ".neb");
+            string moduleDbgName = Path.ChangeExtension(moduleName, ".ndbg");
 
-            string outputFilePath = Path.Combine(_options.OutputFolder, moduleName);
+            string outputFilePath = Path.Combine(_options.OutputFolder, compiledFileName);
             string outputDbgFilePath = Path.Combine(_options.OutputFolder, moduleDbgName);
             if (!_options.OutputToSourceLocation)
             {
-                outputFilePath = Path.Combine(_options.OutputFolder, moduleName);
+                outputFilePath = Path.Combine(_options.OutputFolder, compiledFileName);
                 outputDbgFilePath = Path.Combine(_options.OutputFolder, moduleDbgName);
             }
             else
@@ -93,7 +93,7 @@ namespace Nebula.Core.Compilation.Emitting
                 string sourceLoc = Path.GetDirectoryName(program.SourceCode.FileName)
                     ?? throw new Exception("Could not get source path!");
 
-                outputFilePath = Path.Combine(sourceLoc, moduleName);
+                outputFilePath = Path.Combine(sourceLoc, compiledFileName);
                 outputDbgFilePath = Path.Combine(sourceLoc, moduleDbgName);
             }
 
@@ -136,6 +136,24 @@ namespace Nebula.Core.Compilation.Emitting
             _currentContext = null!;
         }
 
+        private void EmitGlobals(AbstractProgram program)
+        {
+            int globalCount = 0;
+            foreach (var global in program.Globals)
+            {
+                var variable = global.Key;
+                TypeReference typeReference = _knownTypes[variable.Type.BaseType];
+                VariableDefinition variableDefinition = new(typeReference, variable.Name, globalCount++);
+                if (variable.Type is ObjectTypeSymbol objSymbol)
+                {
+                    variableDefinition.SourceNamespace = objSymbol.Namespace;
+                    variableDefinition.SourceTypeName = objSymbol.Name;
+                }
+
+                _currentContext.Globals[variable] = variableDefinition;
+                _currentContext.Assembly.TypeDefinition.Globals.Add(variableDefinition);
+            }
+        }
 
         #region Emit Function
         private void EmitNativeFunctionDeclaration(FunctionSymbol nativeFunc)
@@ -628,8 +646,18 @@ namespace Nebula.Core.Compilation.Emitting
                 processor.Emit(InstructionOpcode.StArg, parameterDefinition, originalStatement); // Writes value into parameter
                 return;
             }
-
-            VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
+            VariableDefinition? variableDefinition;
+            bool isGlobal;
+            if (node.Variable is GlobalVariableSymbol globalVariable)
+            {
+                isGlobal = true;
+                variableDefinition = _currentContext.Globals[node.Variable];
+            }
+            else
+            {
+                isGlobal = false;
+                variableDefinition = _currentContext.Locals[node.Variable];
+            }
 
             if (node.Variable.Type == TypeSymbol.BaseObject)
             {
@@ -644,35 +672,58 @@ namespace Nebula.Core.Compilation.Emitting
 
             EmitExpression(processor, node.Expression, originalStatement);
             processor.Emit(InstructionOpcode.Dup, originalStatement); // Takes current value on stack and pushes it again
-            processor.Emit(InstructionOpcode.Stloc, variableDefinition, originalStatement); // Writes value into local
+            if (isGlobal)
+            {
+                processor.Emit(InstructionOpcode.Stsfld, variableDefinition, originalStatement); // Writes value into local
+            }
+            else
+            {
+                processor.Emit(InstructionOpcode.Stloc, variableDefinition, originalStatement); // Writes value into local
+            }
         }
 
         private void EmitVariableExpression(NILProcessor processor, AbstractVariableExpression node, Node originalStatement)
         {
             // TODO :: Rethink how variables vs bundles are handled to simplify the instruction set
-            if (node.Variable is ParameterSymbol parameter)
+            switch (node.Variable)
             {
-                ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
+                case ParameterSymbol parameter:
+                    {
+                        ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
 
-                if (node is AbstractArrayAccessExpression arrAccess)
-                {
-                    processor.Emit(InstructionOpcode.Ldarg, parameterDefinition, originalStatement);
-                    EmitExpression(processor, arrAccess.IndexExpression, originalStatement);
-                    processor.Emit(InstructionOpcode.Ldc_i4, arrAccess.IndexExpression, originalStatement);
-                }
+                        if (node is AbstractArrayAccessExpression arrAccess)
+                        {
+                            processor.Emit(InstructionOpcode.Ldarg, parameterDefinition, originalStatement);
+                            EmitExpression(processor, arrAccess.IndexExpression, originalStatement);
+                            processor.Emit(InstructionOpcode.Ldc_i4, arrAccess.IndexExpression, originalStatement);
+                        }
 
-                InstructionOpcode paramOpcode = InstructionOpcode.Ldarg;
-                processor.Emit(paramOpcode, parameterDefinition, originalStatement);
-                return;
+                        InstructionOpcode paramOpcode = InstructionOpcode.Ldarg;
+                        processor.Emit(paramOpcode, parameterDefinition, originalStatement);
+                        break;
+                    }
+                case GlobalVariableSymbol globalVariable:
+                    {
+                        VariableDefinition? variableDefinition = _currentContext.Globals[node.Variable];
+                        InstructionOpcode opcode = InstructionOpcode.Ldsfld;
+                        object argument = variableDefinition;
+                        processor.Emit(opcode, argument, originalStatement);
+                        break;
+                    }
+                case LocalVariableSymbol:
+                    {
+                        // TODO :: Figure out if we want to keep this variable definition as instruction argument or pass the index
+                        // directly
+
+                        VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
+                        InstructionOpcode opcode = InstructionOpcode.Ldloc;
+                        object argument = variableDefinition;
+                        processor.Emit(opcode, argument, originalStatement);
+                        break;
+                    }
+                default:
+                    throw new NotSupportedException($"Unknown symbol type of variable expression: {node.Variable.GetType().Name}");
             }
-
-            // TODO :: Figure out if we want to keep this variable definition as instruction argument or pass the index
-            // directly
-
-            VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
-            InstructionOpcode opcode = InstructionOpcode.Ldloc;
-            object argument = variableDefinition;
-            processor.Emit(opcode, argument, originalStatement);
         }
 
         private void EmitBinaryExpression(NILProcessor processor, AbstractBinaryExpression node, Node originalStatement)
