@@ -63,6 +63,7 @@
     <File Path="Samples/CallstackErrorPrintTest.nebula" />
     <File Path="Samples/CommonBundles.nebula" />
     <File Path="Samples/CyclicReferenceTest.nebula" />
+    <File Path="Samples/EndonMessage.nebula" />
     <File Path="Samples/Fibonacci.nebula" />
     <File Path="Samples/FibonacciConLoop.nebula" />
     <File Path="Samples/FizzBuzz.nebula" />
@@ -72,6 +73,7 @@
     <File Path="Samples/HelloWorld.nebula" />
     <File Path="Samples/ImportBundleTest.nebula" />
     <File Path="Samples/InvertedHelloWorld.nebula" />
+    <File Path="Samples/IsDefinedTest.nebula" />
     <File Path="Samples/MultipleVariables.nebula" />
     <File Path="Samples/NotificationTestSample.nebula" />
     <File Path="Samples/RandomTests.nebula" />
