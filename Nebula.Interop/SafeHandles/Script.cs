@@ -67,7 +67,7 @@ namespace Nebula.Interop.SafeHandles
             for (int i = 0; i < count; i++)
             {
                 IntPtr itemHandle = rawPtrs[i];
-                BundleDefinition bundleDef = new BundleDefinition(itemHandle);
+                BundleDefinition bundleDef = new BundleDefinition(Namespace, itemHandle);
                 _bundles.Add(bundleDef.Name, bundleDef);
             }
         }

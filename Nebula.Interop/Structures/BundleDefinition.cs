@@ -5,18 +5,24 @@ using System.Runtime.InteropServices;
 
 namespace Nebula.Interop.Structures
 {
+
     public sealed class BundleDefinition
     {
         public string Name { get; set; }
+        public string Namespace { get; set; }
+        public string FullName => $"{Namespace}::{Name}";
 
         public IReadOnlyList<BundleField> Fields => _fields;
 
         private readonly List<BundleField> _fields = new List<BundleField>();
 
-        public BundleDefinition(IntPtr handle)
+        public BundleDefinition(string @namespace, IntPtr handle)
         {
+            Namespace = @namespace;
+
             IntPtr namePtr = NativeMethods.BundleDefinition_GetName(handle);
-            Name = Marshal.PtrToStringAnsi(namePtr);
+            Name = Marshal.PtrToStringAnsi(namePtr) ?? "NO_NAME";
+
 
             IntPtr fieldArray = NativeMethods.BundleDefinition_GetFields(handle, out int arrayLen);
             IntPtr[] fields = new IntPtr[arrayLen];
@@ -38,7 +44,6 @@ namespace Nebula.Interop.Structures
             public static extern IntPtr BundleDefinition_GetFields(IntPtr handle, out int arrLen);
             [DllImport(NebulaConstants.DllName, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
             public static extern void BundleDefinition_DestroyFieldDefinitionsList(IntPtr handle);
-
         }
     }
 }
