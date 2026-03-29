@@ -1,4 +1,4 @@
-namespace "CallStackErrorPrintTest";
+namespace "FatalError";
 
 native void WrongFunc(string s);
 

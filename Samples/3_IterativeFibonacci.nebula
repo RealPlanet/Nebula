@@ -1,4 +1,4 @@
-namespace "FibonacciConLoop";
+namespace "IterativeFibonacci";
 
 native void Write(string message);
 native void WriteLine(string message);

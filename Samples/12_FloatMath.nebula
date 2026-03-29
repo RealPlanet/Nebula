@@ -10,6 +10,5 @@ func void main() autoexec
     int castedToInt = int(first);
 
     WriteLine("castedToInt should be 1 -> " + string(castedToInt));
-
     WriteLine("Adding 1.25 and 0.75-> " + string(res));
 }

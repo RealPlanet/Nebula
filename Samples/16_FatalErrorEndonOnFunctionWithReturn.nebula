@@ -1,4 +1,4 @@
-namespace "EndonMessageOnNonThreadedCallError";
+namespace "FatalErrorEndonOnFunctionWithReturn";
 
 native void WriteLine(string s);
 

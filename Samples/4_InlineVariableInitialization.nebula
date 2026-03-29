@@ -1,4 +1,4 @@
-namespace "MultipleVariables";
+namespace "InlineVariableInitialization";
 
 native void WriteLine(string message);
 

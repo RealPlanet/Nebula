@@ -1,11 +1,11 @@
-namespace "CommonBundles";
+namespace "SharedScript";
 
 native void WriteLine(string m);
 
 int EntityCount = 0;
 const int MAX_ENT_COUNT = 1024;
 
-func void PrintEntity(CommonBundles::Entity ent)
+func void PrintEntity(SharedScript::Entity ent)
 {
     WriteLine("Printing bundle Entity information");
     WriteLine("IsAlive should be true and is: " + string(ent.IsAlive));
