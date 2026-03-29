@@ -1,4 +1,4 @@
-namespace "PrimitiveTypedArray";
+namespace "ArrayOfPrimitives";
 
 native void WriteLine(string s);
 native void Write(string s);

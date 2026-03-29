@@ -1,4 +1,4 @@
-namespace "BreakContinue";
+namespace "LoopControlFlow";
 
 native void WriteLine(string m);
 

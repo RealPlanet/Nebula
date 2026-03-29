@@ -1,4 +1,4 @@
-namespace "IsDefinedTest";
+namespace "NullChecking";
 
 native void WriteLine(string message);
 

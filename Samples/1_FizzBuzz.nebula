@@ -1,17 +1,22 @@
 namespace "FizzBuzz";
 
-// Native stdout print
+// Import of a function defined by the virtual machine
 native void WriteLine(string message);
 
-func string FizzBuzz(int n) {
+func string FizzBuzz(int n)
+{
     bool divisibleByThree = n % 3 == 0;
     bool divisibleByFive  = n % 5 == 0;
     
-    if (divisibleByThree && divisibleByFive) {
+    if (divisibleByThree && divisibleByFive)
+    {
         return "FizzBuzz";
-    } else if (divisibleByThree) {
+    }
+    else if (divisibleByThree)
+    {
         return "Fizz";
-    } else if (divisibleByFive) {
+    } else if (divisibleByFive)
+    {
         return "Buzz";
     }
     
@@ -21,7 +26,8 @@ func string FizzBuzz(int n) {
 func void main() autoexec
 {
     int n = 1;
-    while (n <= 100) {
+    while (n <= 100) 
+    {
         WriteLine(FizzBuzz(n));
         n += 1;
     }

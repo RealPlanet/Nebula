@@ -1,4 +1,4 @@
-namespace "Fibonacci";
+namespace "RecursiveFibonacci";
 
 native void WriteLine(string message);
 

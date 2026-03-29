@@ -1,4 +1,4 @@
-namespace "StronglyTypedBundle";
+namespace "Bundles";
 
 native void WriteLine(string s);
 
@@ -18,13 +18,13 @@ func void main() autoexec
     m.Id = 1;
     m.Handled = false;
     
-    handleMessage(m); 
+    HandleMessage(m); 
 
     WriteLine("Message was handled? " + string(m.Handled));
     WriteLine("Message is:" + m.Data);
 }
 
-func void handleMessage(Message m)
+func void HandleMessage(Message m)
 {
     string originalMessage = m.Data;
     WriteLine("Handling message: " + m.Data);

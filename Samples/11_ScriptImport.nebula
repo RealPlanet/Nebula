@@ -1,6 +1,6 @@
-namespace "ImportBundleTest";
+namespace "ScriptImport";
 
-import "CommonBundles";
+import "SharedScript";
 
 native void WriteLine(string s);
 native int HashString(string s);
@@ -14,11 +14,11 @@ func void main() autoexec
 {
     WriteLine("Importing bundle");
 
-    CommonBundles::Entity enemyEnt = [];
+    SharedScript::Entity enemyEnt = [];
     
     enemyEnt.IsAlive = true;
     enemyEnt.Name = "Zombie";
     enemyEnt.NativePtr = EntityPtrFromName(enemyEnt.Name); 
 
-    CommonBundles::PrintEntity(enemyEnt);
+    SharedScript::PrintEntity(enemyEnt);
 }

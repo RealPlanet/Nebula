@@ -1,4 +1,4 @@
-namespace "InvertedHelloWorld";
+namespace "AsyncFunctions";
 
 native void WriteLine(string message);
 

@@ -1,4 +1,4 @@
-namespace "CyclicReferenceTest";
+namespace "GarbageCollection";
 
 bundle BRef
 {
