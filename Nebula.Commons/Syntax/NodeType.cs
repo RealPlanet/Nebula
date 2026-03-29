@@ -108,7 +108,9 @@
         CallExpression,
         ObjectCallExpression,
         LiteralExpression,
-        InitializationExpression,
+        ArrayInitializationExpression,
+        ObjectInitializationExpression,
+        ObjectFieldInitializationExpression,
         IsDefinedExpression,
 
         EndOfFileToken,

@@ -26,7 +26,9 @@
         // Expression
         ErrorExpression,
         LiteralExpression,
-        InitializationExpression,
+        ArrayInitializationExpression,
+        ObjectInitializationExpression,
+        ObjectFieldInitializationExpression,
         CompoundAssignmentExpression,
         UnaryExpression,
         BinaryExpression,
