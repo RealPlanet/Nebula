@@ -74,18 +74,26 @@ namespace Nebula.Core.Reporting
             string message = string.Format(template, where.Text);
             r.PushError(message, where);
         }
+
         public static void ReportBundleDoesNotExist(this Report r, Token identifier)
         {
-            (EParserMessages code, string template) = ParserMessagesProvider.BundleDoesNotExist;
-            string message = string.Format(template, identifier.Text);
-            r.PushError(message, identifier.Location);
+            r.ReportBundleDoesNotExist(identifier.Text, identifier.Location);
         }
+
+        public static void ReportBundleDoesNotExist(this Report r, string name, TextLocation location)
+        {
+            (EParserMessages code, string template) = ParserMessagesProvider.BundleDoesNotExist;
+            string message = string.Format(template, name);
+            r.PushError(message, location);
+        }
+
         public static void ReportFieldDoesNotExist(this Report r, Token identifier)
         {
             (EParserMessages code, string template) = ParserMessagesProvider.FieldDoesNotExist;
             string message = string.Format(template, identifier.Text);
             r.PushError(message, identifier.Location);
         }
+
         public static void ReportVariableAlreadyDeclared(this Report r, Token token)
         {
             (EParserMessages code, string template) = ParserMessagesProvider.VariableAlreadyDeclared;
