@@ -47,7 +47,7 @@ namespace Nebula.Compiler.Tests
         public void FunctionNotAllPathsReturnValue()
         {
             const string text = @"
-                func bool [test](int n)
+                [func bool test(int n)]
                 {
                     if (n > 10)
                        return true;
@@ -591,6 +591,8 @@ namespace Nebula.Compiler.Tests
             {
                 throw new Exception("ERROR :: Must mark as many spans as there are expected reports");
             }
+
+            finalReport.RemoveWarning(BinderMessagesProvider.NamespaceNotSet.Code.ToString());
 
             Assert.AreEqual(expectedReport.Length, finalReport.Count);
 

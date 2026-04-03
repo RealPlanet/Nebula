@@ -7,7 +7,7 @@ bundle dummy {}
 func void main() autoexec
 {
     WriteLine("I start a printing loop, sleep for 5 seconds and then kill it!");
-    dummy main_bus = [];
+    dummy main_bus = {};
 
     async BeginLoop(main_bus);
 

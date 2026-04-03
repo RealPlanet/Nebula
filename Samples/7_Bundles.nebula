@@ -12,11 +12,17 @@ bundle Message
 func void main() autoexec
 {
     WriteLine("Testing Bundles");
-    Message m = [];
+    Message m = {
+        Data = "Hello, world",
+        Id = 1,
+        Handled = false,
+    };
 
-    m.Data = "Hello, world";
-    m.Id = 1;
-    m.Handled = false;
+    m = {
+        Data = "Hello, world",
+        Id = 1,
+        Handled = false,
+    };
     
     HandleMessage(m); 
 

@@ -1,0 +1,24 @@
+namespace "NestedFieldAssignment";
+
+native void WriteLine(string message);
+
+bundle Children
+{
+    int value;
+}
+
+bundle Root
+{
+    Children child;
+}
+
+func void main() autoexec
+{
+    Root root = {
+        child = {
+            value = 10
+        }
+    };
+
+    WriteLine("The child value is: " + string(root.child.value));
+}
