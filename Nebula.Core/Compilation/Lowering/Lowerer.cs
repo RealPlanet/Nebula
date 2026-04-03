@@ -24,6 +24,7 @@ namespace Nebula.Core.Compilation.Lowering
         {
             // Rewrite the body of a function to always be a block statement
             AbstractBlockStatement result = (AbstractBlockStatement)RewriteStatement(body);
+
             return RemoveDeadCode(Flatten(function, result));
         }
 

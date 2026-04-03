@@ -34,6 +34,7 @@
         BinaryExpression,
         VariableExpression,
         AssignmentExpression,
+        DeclarationAssignmentExpression,
         ObjectFieldAssignmentExpression,
         ObjectFieldAccessExpression,
         ObjectCallExpression,

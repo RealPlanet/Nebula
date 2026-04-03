@@ -1,5 +1,6 @@
 ﻿using Nebula.CodeGeneration;
 using Nebula.CodeGeneration.Definitions;
+using Nebula.CodeGeneration.Exceptions;
 using Nebula.Commons.Reporting;
 using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
@@ -13,6 +14,7 @@ using Nebula.Core.Compilation.AST.Tree.Operators;
 using Nebula.Core.Compilation.AST.Tree.Statements;
 using Nebula.Core.Compilation.AST.Tree.Statements.ControlFlow;
 using Nebula.Core.Compilation.CST.Tree.Statements;
+using Nebula.Core.Utility;
 using Nebula.Interop.Enumerators;
 using Nebula.Shared.Enumerators;
 using System;
@@ -145,6 +147,7 @@ namespace Nebula.Core.Compilation.Emitting
             {
                 foreach (var globalReference in reference.Globals.Values)
                 {
+                    Debugger.Break();
                     // TODO
                 }
             }
@@ -390,45 +393,12 @@ namespace Nebula.Core.Compilation.Emitting
             _currentContext.Locals.Add(node.Variable, variableDefinition);
             processor.Body.Variables.Add(variableDefinition);
 
-            // Emit an instruction to allocate bundle
-            if (typeReference == TypeReference.Bundle && node.Variable.Type is ObjectTypeSymbol objTypeSymbol)
-            {
-                if (node.Initializer.ConstantValue == null)
-                {
-                    processor.Emit(InstructionOpcode.LdNull, originalStatement);
-                }
-                else
-            {
-                EmitBundleAllocation(processor, originalStatement, objTypeSymbol);
-                }
-
-                processor.Emit(InstructionOpcode.Stloc, variableDefinition, originalStatement);
-                return;
-            }
-
-            if (typeReference == TypeReference.Array)
-            {
-                ArrayTypeSymbol arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
-                TypeReference arrayValueType = _knownTypes[arraySymbol.ValueType.BaseType];
-                if (node.Initializer.ConstantValue == null)
-                {
-                    processor.Emit(InstructionOpcode.LdNull, originalStatement);
-                    processor.Emit(InstructionOpcode.Stloc, variableDefinition, originalStatement);
-                }
-                else
-                {
-                StoreNewArrIntoLocal(processor, variableDefinition, arraySymbol, arrayValueType, originalStatement);
-                }
-                return;
-            }
-
             EmitExpression(processor, node.Initializer, originalStatement);
-            processor.Emit(InstructionOpcode.Stloc, variableDefinition, originalStatement);
         }
 
-        private void EmitBundleAllocation(NILProcessor processor, Node originalStatement, ObjectTypeSymbol objTypeSymbol)
+        private void EmitObjectInitializationExpression(NILProcessor processor, AbstractObjectInitializationExpression node, Node originalStatement)
         {
-            ExtractBundleNamespaceAndName(objTypeSymbol, out string typeNamespace, out string typedName);
+            ExtractBundleNamespaceAndName((ObjectTypeSymbol)node.ResultType, out string typeNamespace, out string typedName);
 
             object arguments = typedName;
             if (_currentContext.Assembly.Namespace != typeNamespace)
@@ -437,6 +407,21 @@ namespace Nebula.Core.Compilation.Emitting
             }
 
             processor.Emit(InstructionOpcode.Newobj, arguments, originalStatement);
+
+            if (node.FieldExpressions.Length > 0)
+            {
+                foreach (var assignment in node.FieldExpressions)
+                {
+                    processor.Emit(InstructionOpcode.Dup, originalStatement);
+                    if (assignment.Field is null)
+                    {
+                        throw new EmitterException("Field data is missing from object field initialization exception");
+                    }
+
+                    EmitExpression(processor, assignment.Initializer, originalStatement);
+                    processor.Emit(InstructionOpcode.Stfld, assignment.Field.OrdinalPosition, originalStatement);
+                }
+            }
         }
 
         private void StoreNewArrIntoLocal(NILProcessor processor,
@@ -551,6 +536,7 @@ namespace Nebula.Core.Compilation.Emitting
                     EmitArrayAssignmentExpression(processor, (AbstractArrayAssignmentExpression)node, originalStatement);
                     break;
                 case AbstractNodeType.AssignmentExpression:
+                case AbstractNodeType.DeclarationAssignmentExpression:
                     EmitAssignmentExpression(processor, (AbstractAssignmentExpression)node, originalStatement);
                     break;
                 case AbstractNodeType.CallExpression:
@@ -568,8 +554,11 @@ namespace Nebula.Core.Compilation.Emitting
                 case AbstractNodeType.ObjectFieldAccessExpression:
                     EmitObjectFieldAccess(processor, (AbstractObjectFieldAccessExpression)node, originalStatement);
                     break;
-                case AbstractNodeType.InitializationExpression:
-                    EmitInitializationExpression(processor, (AbstractInitializationExpression)node, originalStatement);
+                case AbstractNodeType.ArrayInitializationExpression:
+                    EmitArrayInitializationExpression(processor, (AbstractArrayInitializationExpression)node, originalStatement);
+                    break;
+                case AbstractNodeType.ObjectInitializationExpression:
+                    EmitObjectInitializationExpression(processor, (AbstractObjectInitializationExpression)node, originalStatement);
                     break;
                 case AbstractNodeType.IsDefinedExpression:
                     EmitIsDefinedExpression(processor, (AbstractIsDefinedExpression)node, originalStatement);
@@ -642,9 +631,9 @@ namespace Nebula.Core.Compilation.Emitting
             processor.Emit(InstructionOpcode.ChkDef, originalStatement);
         }
 
-        private void EmitInitializationExpression(NILProcessor processor, AbstractInitializationExpression node, Node originalStatement)
+        private void EmitArrayInitializationExpression(NILProcessor processor, AbstractArrayInitializationExpression node, Node originalStatement)
         {
-            EmitBundleAllocation(processor, originalStatement, (ObjectTypeSymbol)node.ResultType);
+            processor.Emit(InstructionOpcode.Newarr, originalStatement);
         }
 
         private void EmitCallExpression(NILProcessor processor, AbstractCallExpression node, Node originalStatement)
@@ -705,6 +694,7 @@ namespace Nebula.Core.Compilation.Emitting
                 processor.Emit(InstructionOpcode.StArg, parameterDefinition, originalStatement); // Writes value into parameter
                 return;
             }
+
             VariableDefinition? variableDefinition;
             bool isGlobal;
             if (node.Variable is GlobalVariableSymbol globalVariable)
@@ -730,7 +720,11 @@ namespace Nebula.Core.Compilation.Emitting
             }
 
             EmitExpression(processor, node.Expression, originalStatement);
-            processor.Emit(InstructionOpcode.Dup, originalStatement); // Takes current value on stack and pushes it again
+            if (node.Type == AbstractNodeType.AssignmentExpression)
+            {
+                processor.Emit(InstructionOpcode.Dup, originalStatement); // Takes current value on stack and pushes it again
+            }
+
             if (isGlobal)
             {
                 processor.Emit(InstructionOpcode.Stsfld, variableDefinition, originalStatement); // Writes value into global
@@ -754,7 +748,16 @@ namespace Nebula.Core.Compilation.Emitting
                         {
                             processor.Emit(InstructionOpcode.Ldarg, parameterDefinition, originalStatement);
                             EmitExpression(processor, arrAccess.IndexExpression, originalStatement);
-                            processor.Emit(InstructionOpcode.Ldc_i4, arrAccess.IndexExpression, originalStatement);
+
+                            if (arrAccess.IndexExpression.ConstantValue.IsNotNull())
+                            {
+                                EmitOptimizeLdcI4Instruction(processor, (int)arrAccess.IndexExpression.ConstantValue.Value!, originalStatement);
+                            }
+                            else
+                            {
+                                processor.Emit(InstructionOpcode.Ldc_i4, arrAccess.IndexExpression, originalStatement);
+                            }
+
                         }
 
                         InstructionOpcode paramOpcode = InstructionOpcode.Ldarg;
@@ -1011,7 +1014,7 @@ namespace Nebula.Core.Compilation.Emitting
             if (node.ResultType == TypeSymbol.Int)
             {
                 int value = (int)node.ConstantValue.Value;
-                processor.Emit(InstructionOpcode.Ldc_i4, value, originalStatement);
+                EmitOptimizeLdcI4Instruction(processor, value, originalStatement);
                 return;
             }
 
@@ -1034,6 +1037,12 @@ namespace Nebula.Core.Compilation.Emitting
             {
                 string? value = (string)node.ConstantValue.Value;
                 processor.Emit(InstructionOpcode.Ldc_s, value, originalStatement);
+                return;
+            }
+
+            if (node.ResultType == TypeSymbol.Undefined)
+            {
+                processor.Emit(InstructionOpcode.LdNull, originalStatement);
                 return;
             }
 
@@ -1082,6 +1091,28 @@ namespace Nebula.Core.Compilation.Emitting
             ArrayTypeSymbol arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
             TypeReference typeReference = _knownTypes[arraySymbol.ValueType.BaseType];
             StoreNewArrIntoLocal(processor, variableDefinition, arraySymbol, typeReference, node.OriginalNode);
+        }
+
+        private static void EmitOptimizeLdcI4Instruction(NILProcessor processor, int constantValue, Node originalStatement)
+        {
+            switch (constantValue)
+            {
+                case 0:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_0, originalStatement);
+                        break;
+                    }
+                case 1:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_1, originalStatement);
+                        break;
+                    }
+                default:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4, constantValue, originalStatement);
+                        break;
+                    }
+            }
         }
     }
 }
