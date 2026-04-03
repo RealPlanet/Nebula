@@ -14,10 +14,10 @@ namespace Nebula.Core.Compilation.AST.Binding
             {
                 return op.UnaryType switch
                 {
-                    AbstractUnaryType.Negation => new(-(int)operand.ConstantValue.Value),
-                    AbstractUnaryType.Identity => new((int)operand.ConstantValue.Value),
-                    AbstractUnaryType.LogicalNegation => new(!(bool)operand.ConstantValue.Value),
-                    AbstractUnaryType.OnesComplement => new(~(int)operand.ConstantValue.Value),
+                    AbstractUnaryType.Negation => new(-(int)operand.ConstantValue.Value!),
+                    AbstractUnaryType.Identity => new((int)operand.ConstantValue.Value!),
+                    AbstractUnaryType.LogicalNegation => new(!(bool)operand.ConstantValue.Value!),
+                    AbstractUnaryType.OnesComplement => new(~(int)operand.ConstantValue.Value!),
                     _ => throw new Exception($"Unexpected unary operator <{op.UnaryType}>"),
                 };
             }
@@ -53,14 +53,17 @@ namespace Nebula.Core.Compilation.AST.Binding
             }
             #endregion
 
-            if (leftConstant is null || rightConstant is null)
+            if (leftConstant is null
+                || rightConstant is null
+                || leftConstant.Value is null
+                || rightConstant.Value is null)
             {
                 return null;
             }
 
             // We know both values are not null
-            object? l = left.ConstantValue!.Value;
-            object? r = right.ConstantValue!.Value;
+            object l = leftConstant.Value;
+            object r = rightConstant.Value;
             return op.BinaryType switch
             {
                 AbstractBinaryType.Addition => new(EvaluateAddition(op, l, r)),

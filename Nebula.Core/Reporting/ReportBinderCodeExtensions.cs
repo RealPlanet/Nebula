@@ -194,6 +194,12 @@ namespace Nebula.Core.Reporting
             r.PushError(message, location, code.ToString());
         }
 
+        public static void ReportInternalErrorCouldNotDeclareStaticConstructor(this Report r, string ctorName)
+        {
+            (EBinderMessages code, string template) = BinderMessagesProvider.CouldNotDeclareStaticCTor;
+            string message = string.Format(template, ctorName);
+            r.PushError(message);
+        }
 
         #endregion
 
@@ -226,7 +232,7 @@ namespace Nebula.Core.Reporting
 
                     return;
                 case NodeType.VariableDeclaration:
-                    r.ReportUnreachableCode(((VariableDeclaration)node).Identifier.Location);
+                    r.ReportUnreachableCode(((VariableDeclaration)node).AssignmentExpression.Identifier.Location);
                     return;
                 case NodeType.IfStatement:
                     r.ReportUnreachableCode(((IfStatement)node).IfKeyword.Location);
