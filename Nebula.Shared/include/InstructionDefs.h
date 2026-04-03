@@ -200,6 +200,8 @@ namespace nebula {
 			return "ldloc";
 		case VMInstruction::Stloc:
 			return "stloc";
+		case VMInstruction::Newobj:
+			return "newobj";
 		case VMInstruction::NewArr:
 			return "newarr";
 		case VMInstruction::LdElem:
