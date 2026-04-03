@@ -9,5 +9,10 @@
             : base(@namespace, name)
         {
         }
+
+        public override string ToString()
+        {
+            return $"{Namespace}::{Name}";
+        }
     }
 }
