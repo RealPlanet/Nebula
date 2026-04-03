@@ -323,8 +323,8 @@ namespace Nebula.Core.Compilation.AST.Binding
                                                           type,
                                                           null);
 
-            var boundAssignment = BindAssignmentExpression(declaration.AssignmentExpression, isDeclarationAssignment: true);
-            variable.SetConstant(boundAssignment.ConstantValue);
+            var boundAssignment = (AbstractDeclarationAssignmentExpression)BindAssignmentExpression(declaration.AssignmentExpression, isDeclarationAssignment: true);
+            variable.SetConstant(boundAssignment.Expression.ConstantValue);
 
             return new AbstractVariableDeclaration(declaration, variable, boundAssignment);
         }
