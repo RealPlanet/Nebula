@@ -9,6 +9,7 @@ namespace Nebula.Core.Compilation.CST.Tree.Expressions
          : Expression
     {
         public override NodeType Type => NodeType.AssignmentExpression;
+
         public Expression Identifier { get; }
         public Token Operator { get; }
         public Expression RightExpr { get; }
