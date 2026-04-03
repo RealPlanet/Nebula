@@ -142,6 +142,15 @@ namespace Nebula.Commons.Reporting.Strings {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Internal compiler error, could not declare static constructor &apos;{0}&apos;.
+        /// </summary>
+        public static string CouldNotDeclareStaticCTor {
+            get {
+                return ResourceManager.GetString("CouldNotDeclareStaticCTor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Expression &apos;{0}&apos; does not evaluate to &apos;{1}&apos;..
         /// </summary>
         public static string ExpressionDoesNotEvaluateToType {

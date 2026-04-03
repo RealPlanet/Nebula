@@ -19,9 +19,18 @@
 
 	<ItemGroup>
 		<AdditionalFiles Include="Doumentation/Opcodes.xml" />
-		<AdditionalFiles Include="Reporting\Strings\ParserMessages.resx"/>
-		<AdditionalFiles Include="Reporting\Strings\BinderMessages.resx"/>
-		<AdditionalFiles Include="Reporting\Strings\LexerMessages.resx" />
+		<AdditionalFiles Include="Reporting\Strings\ParserMessages.resx">
+		  <Generator>PublicResXFileCodeGenerator</Generator>
+		  <LastGenOutput>ParserMessages.Designer.cs</LastGenOutput>
+		</AdditionalFiles>
+		<AdditionalFiles Include="Reporting\Strings\BinderMessages.resx">
+		  <Generator>PublicResXFileCodeGenerator</Generator>
+		  <LastGenOutput>BinderMessages.Designer.cs</LastGenOutput>
+		</AdditionalFiles>
+		<AdditionalFiles Include="Reporting\Strings\LexerMessages.resx">
+		  <Generator>PublicResXFileCodeGenerator</Generator>
+		  <LastGenOutput>LexerMessages.Designer.cs</LastGenOutput>
+		</AdditionalFiles>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -33,6 +42,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Compile Update="Reporting\Strings\BinderMessages.Designer.cs">
+		  <DesignTime>True</DesignTime>
+		  <AutoGen>True</AutoGen>
+		  <DependentUpon>BinderMessages.resx</DependentUpon>
+		</Compile>
 		<Compile Update="Reporting\Strings\LexerMessages.Designer.cs">
 			<DesignTime>True</DesignTime>
 			<AutoGen>True</AutoGen>
