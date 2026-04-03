@@ -15,8 +15,8 @@ func void Main() autoexec
 
 func void LeakMemory()  
 {
-    BRef a = [];
-    BRef b = [];
+    BRef a = {};
+    BRef b = {};
 
     a.reference = b;
     b.reference = a;

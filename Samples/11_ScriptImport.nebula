@@ -14,7 +14,7 @@ func void main() autoexec
 {
     WriteLine("Importing bundle");
 
-    SharedScript::Entity enemyEnt = [];
+    SharedScript::Entity enemyEnt = {};
     
     enemyEnt.IsAlive = true;
     enemyEnt.Name = "Zombie";

@@ -87,7 +87,9 @@ namespace Nebula.Compiler.Tests
             p.StartInfo.FileName = Path.GetFullPath(ExecutorPath);
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = true;
+            p.StartInfo.RedirectStandardError = true;
             p.OutputDataReceived += P_OutputDataReceived;
+            p.ErrorDataReceived += P_OutputDataReceived;
             p.StartInfo.ArgumentList.Add($"-s");
             p.StartInfo.ArgumentList.Add(Path.GetFullPath(scriptFile));
             foreach (string d in dependencies)
@@ -99,6 +101,7 @@ namespace Nebula.Compiler.Tests
 
             Assert.IsTrue(p.Start());
             p.BeginOutputReadLine();
+            p.BeginErrorReadLine();
 
             bool exitedOk = p.WaitForExit(md.MaxVMExecutionTime);
 

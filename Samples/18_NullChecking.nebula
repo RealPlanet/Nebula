@@ -17,7 +17,7 @@ func void main() autoexec
 		WriteLine("Object is not defined");
 	}
 
-	test = [];
+	test = {};
 	if(isdefined(test))
 	{
 		WriteLine("Object is defined");

@@ -10,7 +10,7 @@ func void main() autoexec
     WriteLine("I then call a function that will return something something, the called function will have an endon within");
     WriteLine("This will result in a fatal vm error!");
 
-    dummy main_bus = [];
+    dummy main_bus = {};
 
     async CountDownNotification(main_bus);
 

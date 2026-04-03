@@ -69,6 +69,7 @@
     <File Path="Samples/16_FatalErrorEndonOnFunctionWithReturn.nebula" />
     <File Path="Samples/17_ArrayOfPrimitives.nebula" />
     <File Path="Samples/18_NullChecking.nebula" />
+    <File Path="Samples/19_NestedFieldAssignment.nebula" />
     <File Path="Samples/1_FizzBuzz.nebula" />
     <File Path="Samples/2_RecursiveFibonacci.nebula" />
     <File Path="Samples/3_IterativeFibonacci.nebula" />
@@ -83,6 +84,8 @@
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="Nebula.Compiler.Tests/Nebula.Compiler.Tests.csproj">
+      <BuildDependency Project="Nebula.Compiler/Nebula.Compiler.csproj" />
+      <BuildDependency Project="Nebula.Executor/Nebula.Executor.vcxproj" />
       <Platform Project="x64" />
     </Project>
     <Project Path="Nebula.Interop.Tests/Nebula.Interop.Tests.csproj">
