@@ -8,8 +8,8 @@ using namespace nebula;
 Function::Function(const Script* parentScript, DataStackVariantIndex returnType, const std::string& name)
     : m_ParentScript{ parentScript }, m_ReturnType{ returnType }, m_Name{ name }
 {
-    assert(m_ParentScript);
-    assert(!m_Name.empty());
+    assert(m_ParentScript && "Parent script is null");
+    assert(!m_Name.empty() && "Function name is empty");
 }
 
 const std::string& nebula::Function::Namespace() const

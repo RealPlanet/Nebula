@@ -187,10 +187,17 @@ bool Interpreter::Step()
 		break;
 	}
 	case Frame::Status::Finished:
+	{
+		if (currentFrame->Stack().Size() > 0)
+		{
+			SetState(State::Abort);
+			assert(false && "Stack is not empty at the end of frame execution!");
+		}
 
 		delete currentFrame;
 		GetCurrentCallstack()->pop_back();
 		break;
+	}
 	}
 
 	if (GetCurrentCallstack()->empty())

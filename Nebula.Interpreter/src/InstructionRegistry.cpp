@@ -344,7 +344,7 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
 	case VMInstruction::Call:
 	case VMInstruction::Newobj:
 	{
-		assert(args.size() == 1 || args.size() == 2);
+		assert((args.size() == 1 || args.size() == 2) && "Wrong argument number for Newobj/call/call_t opcode");
 
 		switch (args.size())
 		{
@@ -363,7 +363,7 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
 	}
 	case VMInstruction::NewArr:
 	{
-		assert(args.size() == 1 || args.size() == 2 || args.size() == 3);
+		assert((args.size() == 1 || args.size() == 2 || args.size() == 3) && "Wrong argument number for newarr opcode");
 		const std::string& targetType = args[0];
 		TInt32 dataType = (TInt32)StringToStackValue(targetType);
 
