@@ -18,7 +18,7 @@ namespace nebula::parsing
 {
 
     // Loads plain text bytecode into a usable script
-    class ParserDebug
+    class LiteralScriptParser
         : public IScriptParser
     {
     public:

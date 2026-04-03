@@ -12,7 +12,7 @@
 using namespace nebula;
 using namespace nebula::parsing;
 
-Script* ParserDebug::ParseScript(const std::string_view& data)
+Script* LiteralScriptParser::ParseScript(const std::string_view& data)
 {
 	constexpr const char* namespaceKeyword = ReadableScriptSection(ScriptSection::Namespace);
 	constexpr const char* globalsKeyword = ReadableScriptSection(ScriptSection::Globals);
@@ -101,7 +101,7 @@ Script* ParserDebug::ParseScript(const std::string_view& data)
 	return script;
 }
 
-bool ParserDebug::ParseNamespace()
+bool LiteralScriptParser::ParseNamespace()
 {
 	SkipWhitespace();
 
@@ -114,7 +114,7 @@ bool ParserDebug::ParseNamespace()
 	return m_ScriptBuilder->SetNamespace(ns);
 }
 
-bool ParserDebug::ParseGlobals()
+bool LiteralScriptParser::ParseGlobals()
 {
 	if (!MatchWord("["))
 	{
@@ -147,7 +147,7 @@ bool ParserDebug::ParseGlobals()
 	return true;
 }
 
-bool ParserDebug::ParseFunction()
+bool LiteralScriptParser::ParseFunction()
 {
 	DataStackVariantIndex returnType;
 	if (!ParseType(returnType))
@@ -182,7 +182,7 @@ bool ParserDebug::ParseFunction()
 	return m_ScriptBuilder->AddFunction(std::move(newFunc));
 }
 
-bool ParserDebug::ParseType(DataStackVariantIndex& result, char stopAt)
+bool LiteralScriptParser::ParseType(DataStackVariantIndex& result, char stopAt)
 {
 	std::string strType;
 	if (!ReadLiteralUntil(strType, stopAt, true)) {
@@ -200,7 +200,7 @@ bool ParserDebug::ParseType(DataStackVariantIndex& result, char stopAt)
 	return true;
 }
 
-bool ParserDebug::ParseFunctionParameters(Function* newFunc)
+bool LiteralScriptParser::ParseFunctionParameters(Function* newFunc)
 {
 	if (!MatchWord("("))
 	{
@@ -235,9 +235,9 @@ bool ParserDebug::ParseFunctionParameters(Function* newFunc)
 	return true;
 }
 
-bool ParserDebug::ParseFunctionAttributes(Function* newFunc)
+bool LiteralScriptParser::ParseFunctionAttributes(Function* newFunc)
 {
-	assert(newFunc);
+	assert(newFunc && "LiteralScriptParser - New function pointer is null");
 
 	// One or more attributes present?
 	while (MatchIfNext(";"))
@@ -258,7 +258,7 @@ bool ParserDebug::ParseFunctionAttributes(Function* newFunc)
 	return true;
 }
 
-bool ParserDebug::ParseFunctionBody(Function* newFunc)
+bool LiteralScriptParser::ParseFunctionBody(Function* newFunc)
 {
 	if (!MatchWord("{")) {
 		m_Report.ReportError(std::format("Could not find open function body marker for function '{}'!", newFunc->Name()));
@@ -313,7 +313,7 @@ bool ParserDebug::ParseFunctionBody(Function* newFunc)
 	return true;
 }
 
-bool ParserDebug::ParseFunctionSpecialData(Function* newFunc)
+bool LiteralScriptParser::ParseFunctionSpecialData(Function* newFunc)
 {
 	while (MatchIfNext("."))
 	{
@@ -340,7 +340,7 @@ bool ParserDebug::ParseFunctionSpecialData(Function* newFunc)
 	return true;
 }
 
-bool ParserDebug::ParseFunctionLocals(Function* newFunc)
+bool LiteralScriptParser::ParseFunctionLocals(Function* newFunc)
 {
 	if (!MatchWord("["))
 	{
@@ -374,7 +374,7 @@ bool ParserDebug::ParseFunctionLocals(Function* newFunc)
 	return true;
 }
 
-bool ParserDebug::ParseBundleDefinitions()
+bool LiteralScriptParser::ParseBundleDefinitions()
 {
 	std::string bundleName;
 	if (!ReadLiteralUntil(bundleName, '(', true))
@@ -426,7 +426,7 @@ bool ParserDebug::ParseBundleDefinitions()
 	return true;
 }
 
-bool ParserDebug::ParseInstructionArguments(VMInstruction opcode, InstructionArguments& out)
+bool LiteralScriptParser::ParseInstructionArguments(VMInstruction opcode, InstructionArguments& out)
 {
 	// Read entire line
 	std::vector<std::string> litArguments;
@@ -451,7 +451,7 @@ bool ParserDebug::ParseInstructionArguments(VMInstruction opcode, InstructionArg
 	return true;
 }
 
-void ParserDebug::SkipWhitespace(bool stopAtEndOfLine)
+void LiteralScriptParser::SkipWhitespace(bool stopAtEndOfLine)
 {
 	while (m_CurrentDataIndex < m_CurrentData.size())
 	{
@@ -471,7 +471,7 @@ void ParserDebug::SkipWhitespace(bool stopAtEndOfLine)
 	}
 }
 
-void ParserDebug::SkipLine()
+void LiteralScriptParser::SkipLine()
 {
 	while (m_CurrentDataIndex < m_CurrentData.size())
 	{
@@ -483,13 +483,13 @@ void ParserDebug::SkipLine()
 	}
 }
 
-bool ParserDebug::Peek(const std::string_view& c)
+bool LiteralScriptParser::Peek(const std::string_view& c)
 {
 	SkipWhitespace();
 	return m_CurrentData.find(c.data(), m_CurrentDataIndex, c.size()) == m_CurrentDataIndex;
 }
 
-bool ParserDebug::MatchIfNext(const std::string_view& word)
+bool LiteralScriptParser::MatchIfNext(const std::string_view& word)
 {
 	SkipWhitespace();
 	if (m_CurrentData.find(word.data(), m_CurrentDataIndex, word.size()) == m_CurrentDataIndex) {
@@ -499,7 +499,7 @@ bool ParserDebug::MatchIfNext(const std::string_view& word)
 	return false;
 }
 
-bool ParserDebug::MatchWord(const std::string_view& word)
+bool LiteralScriptParser::MatchWord(const std::string_view& word)
 {
 	SkipWhitespace();
 
@@ -512,7 +512,7 @@ bool ParserDebug::MatchWord(const std::string_view& word)
 	return false;
 }
 
-bool ParserDebug::ReadLiteral(std::string& out, bool stopAtNewline)
+bool LiteralScriptParser::ReadLiteral(std::string& out, bool stopAtNewline)
 {
 	SkipWhitespace(stopAtNewline);
 	while (!std::iswspace(Current()))
@@ -524,7 +524,7 @@ bool ParserDebug::ReadLiteral(std::string& out, bool stopAtNewline)
 	return out.size() > 0;
 }
 
-bool ParserDebug::ReadLiteralUntil(std::string& out, char c, bool stopAtNewline)
+bool LiteralScriptParser::ReadLiteralUntil(std::string& out, char c, bool stopAtNewline)
 {
 	SkipWhitespace(stopAtNewline);
 	while (!std::iswspace(Current()) && Current() != c)
@@ -536,7 +536,7 @@ bool ParserDebug::ReadLiteralUntil(std::string& out, char c, bool stopAtNewline)
 	return out.size() > 0;
 }
 
-bool ParserDebug::ReadInt(TInt32& i)
+bool LiteralScriptParser::ReadInt(TInt32& i)
 {
 	SkipWhitespace();
 	if (!std::isdigit(Current())) {
@@ -554,7 +554,7 @@ bool ParserDebug::ReadInt(TInt32& i)
 	return true;
 }
 
-bool ParserDebug::ReadFloat(TFloat&)
+bool LiteralScriptParser::ReadFloat(TFloat&)
 {
 	return false;
 }
