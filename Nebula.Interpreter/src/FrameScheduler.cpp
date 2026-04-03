@@ -26,7 +26,7 @@ static void AddOrUpdateWaitingHashSet(std::map<IGCObject*, std::unordered_set<si
 FrameScheduler::FrameScheduler(Frame* parent)
 	: m_Parent{ parent }
 {
-	assert(parent);
+	assert(parent && "Parent frame of scheduler is null!");
 }
 
 void FrameScheduler::Sleep(size_t amount)
