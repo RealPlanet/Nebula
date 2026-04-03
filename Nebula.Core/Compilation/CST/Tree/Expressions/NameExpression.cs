@@ -14,7 +14,12 @@ namespace Nebula.Core.Compilation.CST.Tree.Expressions
         public Token? Separator { get; }
         public Token Identifier { get; }
 
-        internal NameExpression(SourceCode sourceCode, Token? @namespace, Token? separator, Token identifier)
+        public NameExpression(SourceCode sourceCode, Token identifier)
+            : this(sourceCode, null, null, identifier)
+        {
+        }
+
+        public NameExpression(SourceCode sourceCode, Token? @namespace, Token? separator, Token identifier)
             : base(sourceCode)
         {
             Namespace = @namespace;

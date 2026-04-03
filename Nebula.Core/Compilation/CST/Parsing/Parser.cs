@@ -2,7 +2,6 @@
 using Nebula.Commons.Reporting;
 using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
-using Nebula.Core.Compilation.AST.Tree.Expression;
 using Nebula.Core.Compilation.CST.Lexing;
 using Nebula.Core.Compilation.CST.Tree;
 using Nebula.Core.Compilation.CST.Tree.Base;
@@ -13,7 +12,6 @@ using Nebula.Core.Compilation.CST.Tree.Expressions;
 using Nebula.Core.Compilation.CST.Tree.Statements;
 using Nebula.Core.Compilation.CST.Tree.Types;
 using Nebula.Core.Reporting;
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -411,7 +409,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
                         bool isVariableDefinitionWithNamespace = Current.Type == NodeType.IdentifierToken &&
                             Peek(1).Type == NodeType.DoubleColonToken &&
                             Peek(2).Type == NodeType.IdentifierToken &&
-                            Peek(3).Type == NodeType.IdentifierToken; 
+                            Peek(3).Type == NodeType.IdentifierToken;
 
                         // Variable declaration with type from another namespace
                         if (isVariableDefinitionWithNamespace)
@@ -634,10 +632,13 @@ namespace Nebula.Core.Compilation.CST.Parsing
             while (Current.Type != NodeType.SemicolonToken && Current.Type != NodeType.EndOfFileToken)
             {
                 Token identifier = MatchToken(NodeType.IdentifierToken);
+                NameExpression nameExpression = new(_currentSource, identifier);
+
                 Token equals = MatchToken(NodeType.EqualsToken);
                 Expression initializer = ParseExpression();
 
-                VariableDeclaration variable = new(_currentSource, varType, identifier, equals, initializer);
+                AssignmentExpression assignmentExpression = new(_currentSource, nameExpression, equals, initializer);
+                VariableDeclaration variable = new(_currentSource, varType, assignmentExpression);
                 variables.Append(variable);
 
                 if (Current.Type != separatorType)
@@ -732,7 +733,11 @@ namespace Nebula.Core.Compilation.CST.Parsing
                     }
                 case NodeType.OpenSquareBracketToken:
                     {
-                        return ParseInitializationExpression();
+                        return ParseArrayInitializationExpression();
+                    }
+                case NodeType.OpenBracketToken:
+                    {
+                        return ParseObjectInitializationExpression();
                     }
                 case NodeType.IsDefinedKeyword:
                     {
@@ -763,12 +768,43 @@ namespace Nebula.Core.Compilation.CST.Parsing
             return new IsDefinedExpression(_currentSource, isDefined, openParenthesis, expressionToCheck, closeParenthesis);
         }
 
-        private InitializationExpression ParseInitializationExpression()
+        private ArrayInitializationExpression ParseArrayInitializationExpression()
         {
             Token open = MatchToken(NodeType.OpenSquareBracketToken);
             Token close = MatchToken(NodeType.ClosedSquareBracketToken);
 
-            return new InitializationExpression(_currentSource, open, close);
+            return new ArrayInitializationExpression(_currentSource, open, close);
+        }
+
+        private ObjectInitializationExpression ParseObjectInitializationExpression()
+        {
+            var open = MatchToken(NodeType.OpenBracketToken);
+
+            TokenSeparatedList<ObjectFieldInitializationExpression> expressions = new(NodeType.CommaToken);
+            while (Current.Type != NodeType.ClosedBracketToken && Current.Type != NodeType.EndOfFileToken)
+            {
+                ObjectFieldInitializationExpression expr = ParseObjectFieldInitializationExpression();
+                expressions.Append(expr);
+                if (Current.Type != NodeType.CommaToken)
+                {
+                    break;
+                }
+
+                Token comma = MatchToken(NodeType.CommaToken);
+                expressions.AppendSeparator(comma);
+            }
+
+            var close = MatchToken(NodeType.ClosedBracketToken);
+            return new ObjectInitializationExpression(_currentSource, open, expressions, close);
+        }
+
+        private ObjectFieldInitializationExpression ParseObjectFieldInitializationExpression()
+        {
+            var identifier = MatchToken(NodeType.IdentifierToken);
+            var equals = MatchToken(NodeType.EqualsToken);
+            var expression = ParseExpression();
+
+            return new ObjectFieldInitializationExpression(_currentSource, identifier, equals, expression);
         }
 
         private Expression ParseNameOrFunctionCallExpression()
