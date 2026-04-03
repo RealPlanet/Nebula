@@ -1,6 +1,8 @@
 ﻿using Nebula.Commons.Text;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Nebula.Commons.Reporting
 {
@@ -25,6 +27,15 @@ namespace Nebula.Commons.Reporting
             _messages.AddRange(other.Messages);
             _warnings.AddRange(other.Warnings);
             _errors.AddRange(other.Errors);
+        }
+
+        public void RemoveWarning(string source)
+        {
+            var warningsToRemove = _warnings.Where(w => w.Source == source).ToList();
+            foreach(var w in warningsToRemove)
+            {
+                _warnings.Remove(w);
+            }
         }
 
         public void PushInformation(string message, TextLocation where, string source = "")

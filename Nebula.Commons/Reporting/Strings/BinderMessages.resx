@@ -261,4 +261,8 @@
     <value>Unreachable code detected.</value>
     <comment>E</comment>
   </data>
+  <data name="CouldNotDeclareStaticCTor" xml:space="preserve">
+    <value>Internal compiler error, could not declare static constructor '{0}'</value>
+    <comment>E</comment>
+  </data>
 </root>
