@@ -4,7 +4,6 @@ using Nebula.Core.Compilation.AST.Binding;
 using Nebula.Core.Compilation.AST.Tree;
 using Nebula.Core.Compilation.CST.Parsing;
 using Nebula.Core.Compilation.Emitting;
-using Nebula.Core.Utility;
 using Nebula.Interop.SafeHandles;
 using System.Collections.Generic;
 using System.IO;
