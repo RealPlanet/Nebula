@@ -11,66 +11,86 @@
 
 namespace nebula
 {
-    class Script;
+	class Script;
 
-    // A map of functions associated by function name
-    using FunctionMap = std::map<std::string, Function, std::less<>>;
-    // A map of bundle definition associated by bundle name
-    using BundleMap = std::map<std::string, BundleDefinition, std::less<>>;
+	class GlobalVariable
+	{
+	public:
+		GlobalVariable(const std::string& name, DataStackVariantIndex type)
+			: m_sMetadataName{ name }, m_eType{ type } {
+		}
 
-    // Contains the script and the parsing report with any messages, warnings, errors
-    // reported during script load.
-    //
-    // Script will be null if parsing had any errors.
-    struct ScriptLoadResult
-    {
-        shared::DiagnosticReport ParsingReport;
-        Script* Script{ nullptr };
-    };
+		const std::string& GetName() const { return m_sMetadataName; }
+		DataStackVariantIndex GetType() const { return m_eType; }
 
-    // A in-memory rapresentation of a compiled 'Nebula' script
-    class Script
-    {
-        friend class ScriptBuilder;
-    public:
-        static ScriptLoadResult FromFile(const std::string& filePath);
-        static ScriptLoadResult FromMemory(const std::string_view& data, const std::string& sourcePath = "");
+	private:
+		std::string m_sMetadataName;
+		DataStackVariantIndex m_eType;
+	};
 
-    public:
-        ~Script();
+	using GlobalList = std::vector<GlobalVariable>;
 
-        inline const std::string& Namespace() const { return m_Namespace; }
-        inline const FunctionMap& Functions() const { return m_Functions; }
-        inline const BundleMap& Bundles() const { return m_Bundles; }
-        inline const std::string& GetSourcePath() const { return m_SourcePath; }
+	// A map of functions associated by function name
+	using FunctionMap = std::map<std::string, Function, std::less<>>;
+	// A map of bundle definition associated by bundle name
+	using BundleMap = std::map<std::string, BundleDefinition, std::less<>>;
 
-    private:
-        Script();
-        std::string m_SourcePath;
-        std::string m_Namespace;
-        FunctionMap m_Functions;
-        BundleMap   m_Bundles;
-    };
+	// Contains the script and the parsing report with any messages, warnings, errors
+	// reported during script load.
+	//
+	// Script will be null if parsing had any errors.
+	struct ScriptLoadResult
+	{
+		shared::DiagnosticReport ParsingReport;
+		Script* Script{ nullptr };
+	};
 
-    class ScriptBuilder
-    {
-    public:
-        ScriptBuilder();
-        ~ScriptBuilder();
+	// A in-memory rapresentation of a compiled 'Nebula' script
+	class Script
+	{
+		friend class ScriptBuilder;
+	public:
+		static ScriptLoadResult FromFile(const std::string& filePath);
+		static ScriptLoadResult FromMemory(const std::string_view& data, const std::string& sourcePath = "");
 
-        // Get script pointer and invalidate this builder,
-        // (internal ptr) is set to nullptr
-        Script* Finalize() noexcept;
-        Script* Get() noexcept { return m_InternalScript; }
+	public:
+		~Script();
 
-        bool HasNamespace() const;
-        bool SetNamespace(const std::string& ns);
+		inline const std::string& Namespace() const { return m_Namespace; }
+		inline const GlobalList& Globals() const { return m_Globals; }
+		inline const FunctionMap& Functions() const { return m_Functions; }
+		inline const BundleMap& Bundles() const { return m_Bundles; }
+		inline const std::string& GetSourcePath() const { return m_SourcePath; }
 
-        bool AddFunction(Function&& func);
-        bool AddBundle(BundleDefinition&& bundle);
+	private:
+		Script();
+		std::string m_SourcePath;
+		std::string m_Namespace;
+		GlobalList  m_Globals;
+		FunctionMap m_Functions;
+		BundleMap   m_Bundles;
+	};
 
-    private:
-        Script* m_InternalScript{ nullptr };
-    };
+	class ScriptBuilder
+	{
+	public:
+		ScriptBuilder();
+		~ScriptBuilder();
+
+		// Get script pointer and invalidate this builder,
+		// (internal ptr) is set to nullptr
+		Script* Finalize() noexcept;
+		Script* Get() noexcept { return m_InternalScript; }
+
+		bool HasNamespace() const;
+		bool SetNamespace(const std::string& ns);
+
+		bool AddFunction(Function&& func);
+		bool AddBundle(BundleDefinition&& bundle);
+		bool AddGlobal(const std::string& name, DataStackVariantIndex type);
+
+	private:
+		Script* m_InternalScript{ nullptr };
+	};
 }
 

@@ -13,17 +13,25 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression
         public object Value => ConstantValue.Value;
         public override AbstractConstant ConstantValue { get; }
 
-        public AbstractLiteralExpression(Node syntax, object value)
+        public AbstractLiteralExpression(Node syntax, object? value)
             : base(syntax)
         {
-            ResultType = value switch
+            if(value == null)
             {
-                bool => TypeSymbol.Bool,
-                float => TypeSymbol.Float,
-                int => TypeSymbol.Int,
-                string => TypeSymbol.String,
-                _ => throw new Exception($"Unexpected literal '{value}' of type '{value.GetType()}'"),
-            };
+                ResultType = TypeSymbol.Undefined;
+                value = new();
+            }
+            else
+            {
+                ResultType = value switch
+                {
+                    bool => TypeSymbol.Bool,
+                    float => TypeSymbol.Float,
+                    int => TypeSymbol.Int,
+                    string => TypeSymbol.String,
+                    _ => throw new Exception($"Unexpected literal '{value}' of type '{value.GetType()}'"),
+                };
+            }
 
             ConstantValue = new(value);
         }

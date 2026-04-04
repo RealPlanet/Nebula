@@ -16,9 +16,9 @@ namespace Nebula.Core.Utility
                 case SymbolType.Function:
                     WriteFunctionTo((FunctionSymbol)symbol, writer);
                     break;
-                //case SymbolType.GLOBAL_VARIABLE:
-                //    WriteGlobalVariableTo((GlobalVariableSymbol)symbol, writer);
-                //    break;
+                case SymbolType.GlobalVariable:
+                   WriteGlobalVariableTo((GlobalVariableSymbol)symbol, writer);
+                    break;
                 case SymbolType.LocalVariable:
                     WriteLocalVariableTo((LocalVariableSymbol)symbol, writer);
                     break;
@@ -69,6 +69,19 @@ namespace Nebula.Core.Utility
         //    writer.WriteSpace();
         //    writer.WriteIdentifier(symbol.Name);
         //}
+        private static void WriteGlobalVariableTo(GlobalVariableSymbol symbol, TextWriter writer)
+        {
+            if (symbol.IsReadOnly)
+            {
+                writer.WriteKeyword(NodeType.ConstKeyword);
+            }
+
+            writer.WriteSpace();
+            symbol.Type?.WriteTo(writer);
+            writer.WriteSpace();
+            writer.WriteIdentifier(symbol.Name);
+        }
+
         private static void WriteLocalVariableTo(LocalVariableSymbol symbol, TextWriter writer)
         {
             if (symbol.IsReadOnly)

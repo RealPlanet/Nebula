@@ -2,6 +2,7 @@
 using Nebula.Core.Compilation.AST.Tree.Base;
 using Nebula.Core.Compilation.AST.Tree.Expression;
 using Nebula.Core.Compilation.AST.Tree.Statements.ControlFlow;
+using Nebula.Core.Utility;
 using Nebula.Core.Utility.Abstract;
 using System;
 using System.Collections.Generic;
@@ -132,7 +133,7 @@ namespace Nebula.Core.Graph
         private static AbstractExpression Negate(AbstractExpression condition)
         {
             AbstractUnaryExpression? negated = AbstractNodeFactory.Not(condition.OriginalNode, condition);
-            if (negated.ConstantValue != null)
+            if (negated.ConstantValue.IsNotNull())
             {
                 return new AbstractLiteralExpression(condition.OriginalNode, negated.ConstantValue.Value);
             }

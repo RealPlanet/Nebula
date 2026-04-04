@@ -34,7 +34,6 @@ namespace Nebula.Compiler
             {
                 _references.AddRange(files);
                 return true;
-
             }
 
             return false;

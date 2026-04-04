@@ -1,6 +1,7 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
 using Nebula.Core.Compilation.CST.Tree.Base;
+using System;
 using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.CST.Tree.Expressions
@@ -12,9 +13,9 @@ namespace Nebula.Core.Compilation.CST.Tree.Expressions
 
         public Token Literal { get; }
 
-        public object Value { get; }
+        public object? Value { get; }
 
-        internal LiteralExpression(SourceCode soureCode, Token literalToken, object value)
+        internal LiteralExpression(SourceCode soureCode, Token literalToken, object? value)
             : base(soureCode)
         {
             Literal = literalToken;
@@ -22,7 +23,7 @@ namespace Nebula.Core.Compilation.CST.Tree.Expressions
         }
 
         internal LiteralExpression(SourceCode soureCode, Token literalToken)
-            : this(soureCode, literalToken, literalToken.Value!)
+            : this(soureCode, literalToken, literalToken.Value ?? throw new NullReferenceException("Literal token value is null"))
         {
         }
 

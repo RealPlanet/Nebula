@@ -1,0 +1,171 @@
+<?xml-model href="Opcodes.xsd"?>
+<Opcodes>
+	<Opcode Type="Nop">
+		<Description Text="Empty operation"/>
+	</Opcode>
+	<Opcode Type="Pop">
+		<Description Text="Pop the value on top of the stack"/>
+	</Opcode>
+	<Opcode Type="Dup">
+		<Description Text="Duplicates value on top of stack"/>
+	</Opcode>
+	<Opcode Type="Call">
+		<Description Text="Invoke function"/>
+	</Opcode>
+	<Opcode Type="Call_t">
+		<Description Text="Invoke function on a new thread"/>
+	</Opcode>
+	<Opcode Type="Callvirt">
+		<Description Text="Invoke function on object"/>
+	</Opcode>
+	<Opcode Type="ConvType">
+		<Description Text="Convert the top of the stack value from to [type]"/>
+	</Opcode>
+	<Opcode Type="Ret">
+		<Description Text="Return control flow"/>
+	</Opcode>
+	<Opcode Type="Br">
+		<Description Text="Jump always"/>
+	</Opcode>
+	<Opcode Type="BrTrue">
+		<Description Text="Jump if true"/>
+	</Opcode>
+	<Opcode Type="BrFalse">
+		<Description Text="Jump if false"/>
+	</Opcode>
+	<Opcode Type="Ceq">
+		<Description Text="Compares two values on the stack and pushes 1 if they're equal otherwise 0"/>
+	</Opcode>
+	<Opcode Type="Neg">
+		<Description Text="Negates the value on top of the stack"/>
+	</Opcode>
+	<Opcode Type="Not">
+		<Description Text=""/>
+	</Opcode>
+	<Opcode Type="And">
+		<Description Text=""/>
+	</Opcode>
+	<Opcode Type="Or">
+		<Description Text=""/>
+	</Opcode>
+	<Opcode Type="Xor">
+		<Description Text=""/>
+	</Opcode>
+	<Opcode Type="Clt">
+		<Description Text=""/>
+	</Opcode>
+	<Opcode Type="Cgt">
+		<Description Text=""/>
+	</Opcode>
+	<Opcode Type="Wait">
+		<Description Text=""/>
+	</Opcode>
+	<Opcode Type="EndOn">
+		<Description Text=""/>
+	</Opcode>
+	<Opcode Type="Wait_n">
+		<Description Text=""/>
+	</Opcode>
+	<Opcode Type="Notify">
+		<Description Text=""/>
+	</Opcode>
+	<Opcode Type="Add">
+		<Description Text=""/>
+	</Opcode>
+	<Opcode Type="Sub">
+		<Description Text=""/>
+	</Opcode>
+	<Opcode Type="Mul">
+		<Description Text=""/>
+	</Opcode>
+	<Opcode Type="Div">
+		<Description Text=""/>
+	</Opcode>
+	<Opcode Type="Rem">
+		<Description Text="Pushes the remainer of a division onto the stack"/>
+	</Opcode>
+	<Opcode Type="AddStr">
+		<Description Text=""/>
+	</Opcode>
+	<Opcode Type="LdNull">
+		<Description Text="Load null onto the stack"/>
+	</Opcode>
+	<Opcode Type="Ldc_i4_0">
+		<Description Text="Load constant i32 0"/>
+	</Opcode>
+	<Opcode Type="Ldc_i4_1">
+		<Description Text="Load constant i32 1"/>
+	</Opcode>
+	<Opcode Type="Ldc_i4_2">
+		<Description Text="Load constant i32 2"/>
+	</Opcode>
+	<Opcode Type="Ldc_i4_3">
+		<Description Text="Load constant i32 3"/>
+	</Opcode>
+	<Opcode Type="Ldc_i4_4">
+		<Description Text="Load constant i32 4"/>
+	</Opcode>
+	<Opcode Type="Ldc_i4_5">
+		<Description Text="Load constant i32 5"/>
+	</Opcode>
+	<Opcode Type="Ldc_i4_6">
+		<Description Text="Load constant i32 6"/>
+	</Opcode>
+	<Opcode Type="Ldc_i4_7">
+		<Description Text="Load constant i32 7"/>
+	</Opcode>
+	<Opcode Type="Ldc_i4_8">
+		<Description Text="Load constant i32 8"/>
+	</Opcode>
+	<Opcode Type="Ldc_i4_9">
+		<Description Text="Load constant i32 9"/>
+	</Opcode>
+	<Opcode Type="Ldc_i4">
+		<Description Text="Load constant i32"/>
+	</Opcode>
+	<Opcode Type="Ldc_r4">
+		<Description Text="Load constant f32"/>
+	</Opcode>
+	<Opcode Type="Ldc_s">
+		<Description Text="Load string constant"/>
+	</Opcode>
+	<Opcode Type="Newobj">
+		<Description Text="Allocates an object and initializes all it's values to their default value"/>
+	</Opcode>
+	<Opcode Type="Newarr">
+		<Description Text="Creates a new array with elements of type"/>
+	</Opcode>
+	<Opcod Type="Ldsfld">
+		<Description Text="Pushes the value of a static field onto the evaluation stack"/>
+	</Opcod>
+	<Opcode Type="Ldarg">
+		<Description Text=""/>
+	</Opcode>
+	<Opcode Type="Ldloc">
+		<Description Text=""/>
+	</Opcode>
+	<Opcode Type="Ldfld">
+		<Description Text="Read data in local bundle and put it on top of stack"/>
+	</Opcode>
+	<Opcod Type="Stsfld">
+		<Description Text="Replaces the value of a static field with a value from the evaluation stack."/>
+	</Opcod>
+	<Opcode Type="Stloc">
+		<Description Text="Store local variable"/>
+	</Opcode>
+	<Opcode Type="StArg">
+		<Description Text=""/>
+	</Opcode>
+	<Opcode Type="Stfld">
+		<Description Text="Store data in local bundle"/>
+	</Opcode>
+	<Opcode Type="Stelem">
+		<Description Text="Replaces the array element at a given index with the value on the evaluation stack"/>
+	</Opcode>
+	<Opcode Type="Ldelem">
+		<Description Text="Replaces the array element at a given index with the value on the evaluation stack"/>
+	</Opcode>
+	<Opcode Type="ChkDef">
+		<Description Text="Pops the object value on the evaluation stack and pushes a boolean value on the stack. True if object is not null and False if object is null."/>
+	</Opcode>
+</Opcodes>

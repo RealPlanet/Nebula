@@ -18,7 +18,7 @@ namespace nebula::parsing
 {
 
     // Loads plain text bytecode into a usable script
-    class ParserDebug
+    class LiteralScriptParser
         : public IScriptParser
     {
     public:
@@ -27,6 +27,7 @@ namespace nebula::parsing
 
     private:
         bool ParseNamespace();
+        bool ParseGlobals();
         bool ParseFunction();
         bool ParseType(DataStackVariantIndex& result, char stopAt = ' ');
         bool ParseFunctionParameters(Function*);

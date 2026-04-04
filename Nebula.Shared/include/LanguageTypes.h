@@ -15,13 +15,15 @@ namespace nebula
     class VariantArray;
     class IGCObject;
 
+    // Utility types
+    using TBundle = RefCounted<Bundle>;
+    using TArray = RefCounted<VariantArray>;
+
     // Datastack types
     //using TByte = uint8_t;
     using TInt32 = int32_t;
     using TFloat = float_t;
     using TString = std::string;
-    using TBundle = RefCounted<Bundle>;
-    using TArray = RefCounted<VariantArray>;
     using TGCObject = RefCounted<IGCObject>;
 
     /// <summary> Enum for variant lookup and emit </summary>

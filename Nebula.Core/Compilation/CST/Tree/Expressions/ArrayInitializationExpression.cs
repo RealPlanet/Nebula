@@ -1,0 +1,29 @@
+﻿using Nebula.Commons.Syntax;
+using Nebula.Commons.Text;
+using Nebula.Core.Compilation.CST.Tree.Base;
+using System.Collections.Generic;
+
+namespace Nebula.Core.Compilation.CST.Tree.Expressions
+{
+    public sealed class ArrayInitializationExpression
+        : Expression
+    {
+        public ArrayInitializationExpression(SourceCode sourceCode, Token openSquareBracket, Token closedSquareBracket)
+            : base(sourceCode)
+        {
+            OpenSquareBracket = openSquareBracket;
+            ClosedSquareBracket = closedSquareBracket;
+        }
+
+        public override NodeType Type => NodeType.ArrayInitializationExpression;
+
+        public Token OpenSquareBracket { get; }
+        public Token ClosedSquareBracket { get; }
+
+        public override IEnumerable<Node> GetChildren()
+        {
+            yield return OpenSquareBracket;
+            yield return ClosedSquareBracket;
+        }
+    }
+}

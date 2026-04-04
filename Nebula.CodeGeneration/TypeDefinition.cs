@@ -8,6 +8,7 @@ namespace Nebula.CodeGeneration
     /// </summary>
     public sealed class TypeDefinition
     {
+        public ICollection<VariableDefinition> Globals { get; } = [];
         public ICollection<BundleDefinition> Bundles { get; } = [];
         public ICollection<MethodDefinition> Methods { get; } = [];
         public ICollection<NativeMethodDefinition> NativeMethods { get; } = [];

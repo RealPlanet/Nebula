@@ -53,14 +53,17 @@ namespace Nebula.Core.Compilation.AST.Binding
             }
             #endregion
 
-            if (leftConstant is null || rightConstant is null)
+            if (leftConstant is null
+                || rightConstant is null
+                || leftConstant.Value is null
+                || rightConstant.Value is null)
             {
                 return null;
             }
 
             // We know both values are not null
-            object? l = left.ConstantValue!.Value;
-            object? r = right.ConstantValue!.Value;
+            object l = leftConstant.Value;
+            object r = rightConstant.Value;
             return op.BinaryType switch
             {
                 AbstractBinaryType.Addition => new(EvaluateAddition(op, l, r)),

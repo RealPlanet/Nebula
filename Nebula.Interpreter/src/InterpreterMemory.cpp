@@ -32,7 +32,7 @@ static void GatherStackRoots(Interpreter* vm, std::vector<AllocableObjectPtr>& f
             size_t localCount = memory.LocalCount();
             for (int j{ 0 }; j < localCount; j++)
             {
-                const FrameVariable& fv = memory.LocalAt(j);
+                const Variable& fv = memory.LocalAt(j);
                 if (const TGCObject* obj = std::get_if<TGCObject>(&fv.Value()))
                 {
                     foundRoots.push_back(*obj);
@@ -73,7 +73,7 @@ TBundle InterpreterMemory::AllocBundle(const BundleDefinition& definition)
     return ptr;
 }
 
-TArray nebula::InterpreterMemory::AllocArray(const DataStackVariantIndex& type)
+TArray InterpreterMemory::AllocArray(const DataStackVariantIndex& type)
 {
     // Attempt to free memory at each allocation
     Collect();
@@ -142,7 +142,7 @@ void InterpreterMemory::Collect(bool force)
     }
 }
 
-void nebula::InterpreterMemory::Sweep()
+void InterpreterMemory::Sweep()
 {
     auto it = m_IGCObjects.begin();
     while (it != m_IGCObjects.end())
@@ -165,4 +165,27 @@ void nebula::InterpreterMemory::Sweep()
             it++;
         }
     }
+}
+
+void InterpreterMemory::AddGlobals(const Script* script)
+{
+    std::vector<Variable> variables{};
+    variables.reserve(script->Globals().size());
+
+    for (auto& global : script->Globals())
+    {
+        variables.emplace_back(global.GetType());
+    }
+    m_ScriptGlobals[script->Namespace()] = variables;
+}
+
+Variable* InterpreterMemory::GetGlobal(const std::string_view& script, TInt32 index)
+{
+    auto it = m_ScriptGlobals.find(script);
+    if (it == m_ScriptGlobals.end())
+    {
+        return nullptr;
+    }
+
+    return &it->second.at(index);
 }

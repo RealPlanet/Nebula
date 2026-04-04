@@ -1,15 +1,11 @@
 ﻿using Nebula.Commons.Text;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Nebula.Commons.Reporting
 {
-    public enum ReportType
-    {
-        Information,
-        Warning,
-        Error,
-    }
 
     public sealed class Report
         : IEnumerable<ReportMessage>
@@ -18,43 +14,43 @@ namespace Nebula.Commons.Reporting
         public bool HasErrors => Errors.Count > 0;
         public bool HasWarnings => Warnings.Count > 0;
 
+
+        public IReadOnlyList<ReportMessage> Messages => _messages;
+        private readonly List<ReportMessage> _messages = new();
+        public IReadOnlyList<ReportMessage> Warnings => _warnings;
+        private readonly List<ReportMessage> _warnings = new();
+        public IReadOnlyList<ReportMessage> Errors => _errors;
+        private readonly List<ReportMessage> _errors = new();
+
         public void Append(Report other)
         {
-            Messages.AddRange(other.Messages);
-            Warnings.AddRange(other.Warnings);
-            Errors.AddRange(other.Errors);
+            _messages.AddRange(other.Messages);
+            _warnings.AddRange(other.Warnings);
+            _errors.AddRange(other.Errors);
         }
 
-        public void PushCode(ReportMessageCodes code, string message, TextLocation where)
+        public void RemoveWarning(string source)
         {
-            ReportMessage m = new(code, message, where);
-            switch (m.Type)
+            var warningsToRemove = _warnings.Where(w => w.Source == source).ToList();
+            foreach(var w in warningsToRemove)
             {
-                case ReportType.Information:
-                    Messages.Add(m);
-                    break;
-                case ReportType.Warning:
-                    Warnings.Add(m);
-                    break;
-                case ReportType.Error:
-                    Errors.Add(m);
-                    break;
+                _warnings.Remove(w);
             }
         }
 
-        public void PushInformation(string message, TextLocation where)
+        public void PushInformation(string message, TextLocation where, string source = "")
         {
-            Messages.Add(new(ReportType.Information, message, where));
+            _messages.Add(new(ReportType.Information, source, message, where));
         }
 
-        public void PushWarning(string message, TextLocation where)
+        public void PushWarning(string message, TextLocation where, string source = "")
         {
-            Warnings.Add(new(ReportType.Warning, message, where));
+            _warnings.Add(new(ReportType.Warning, source, message, where));
         }
 
-        public void PushError(string message, TextLocation where)
+        public void PushError(string message, TextLocation where, string source = "")
         {
-            Errors.Add(new(ReportType.Error, message, where));
+            _errors.Add(new(ReportType.Error, source, message, where));
         }
 
         public void PushWarning(string message)
@@ -72,22 +68,22 @@ namespace Nebula.Commons.Reporting
             switch (message.Type)
             {
                 case ReportType.Information:
-                    Messages.Add(message);
+                    _messages.Add(message);
                     break;
                 case ReportType.Warning:
-                    Warnings.Add(message);
+                    _warnings.Add(message);
                     break;
                 case ReportType.Error:
-                    Errors.Add(message);
+                    _errors.Add(message);
                     break;
             }
         }
 
         public void Clear()
         {
-            Messages.Clear();
-            Warnings.Clear();
-            Errors.Clear();
+            _messages.Clear();
+            _warnings.Clear();
+            _errors.Clear();
         }
 
         public IEnumerator<ReportMessage> GetEnumerator()
@@ -109,9 +105,5 @@ namespace Nebula.Commons.Reporting
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-        public List<ReportMessage> Messages { get; } = new();
-        public List<ReportMessage> Warnings { get; } = new();
-        public List<ReportMessage> Errors { get; } = new();
     }
 }

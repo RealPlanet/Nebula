@@ -104,8 +104,8 @@ namespace Nebula.Core.Utility.Concrete
                 case AbstractNodeType.ObjectFieldAssignmentExpression:
                     WriteObjectFieldAssignmentExpression((AbstractObjectFieldAssignmentExpression)node, writer);
                     break;
-                case AbstractNodeType.InitializationExpression:
-                    WriteInitializationExpression((AbstractInitializationExpression)node, writer);
+                case AbstractNodeType.ArrayInitializationExpression:
+                    WriteInitializationExpression((AbstractArrayInitializationExpression)node, writer);
                     break;
                 default:
                     throw new Exception($"Unexpected node {node.Type}");
@@ -118,7 +118,7 @@ namespace Nebula.Core.Utility.Concrete
             writer.WriteString(field.FieldName);
         }
 
-        private static void WriteInitializationExpression(AbstractInitializationExpression node, IndentedTextWriter writer)
+        private static void WriteInitializationExpression(AbstractArrayInitializationExpression node, IndentedTextWriter writer)
         {
             writer.WritePunctuation(NodeType.OpenSquareBracketToken);
             writer.Write($"{node.ResultType.BaseType}::{node.ResultType}");
@@ -127,8 +127,7 @@ namespace Nebula.Core.Utility.Concrete
 
         private static void WriteObjectFieldAssignmentExpression(AbstractObjectFieldAssignmentExpression node, IndentedTextWriter writer)
         {
-            node.Target.WriteTo(writer);
-            node.Field.WriteTo(writer);
+            node.TargetExpression.WriteTo(writer);
             writer.WriteSpace();
             writer.WritePunctuation(NodeType.EqualsToken);
             writer.WriteSpace();
@@ -137,7 +136,6 @@ namespace Nebula.Core.Utility.Concrete
 
         private static void WriteObjectFieldAccessExpression(AbstractObjectFieldAccessExpression node, IndentedTextWriter writer)
         {
-            node.Target.WriteTo(writer);
             node.Field.WriteTo(writer);
         }
 

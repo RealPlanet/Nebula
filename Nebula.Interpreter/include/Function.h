@@ -37,6 +37,8 @@ namespace nebula
         bool AddParameter(DataStackVariantIndex type);
         bool AppendInstruction(const FunctionInstruction& instruction);
 
+        bool HasAttribute(VMAttribute attr) const;
+
     private:
         const Script* m_ParentScript{ nullptr };
 

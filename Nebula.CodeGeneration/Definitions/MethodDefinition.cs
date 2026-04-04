@@ -23,5 +23,10 @@ namespace Nebula.CodeGeneration.Definitions
             ReturnType = returnType;
             OriginalNode = originalNode;
         }
+
+        public override string ToString()
+        {
+            return $"{ReturnType} {Name}";
+        }
     }
 }

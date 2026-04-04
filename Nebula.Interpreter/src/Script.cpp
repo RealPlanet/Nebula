@@ -29,7 +29,7 @@ ScriptLoadResult nebula::Script::FromFile(const std::string& filePath)
 
 ScriptLoadResult nebula::Script::FromMemory(const std::string_view& data, const std::string& sourcePath)
 {
-	std::unique_ptr<IScriptParser> parser = std::make_unique<parsing::ParserDebug>();
+	std::unique_ptr<IScriptParser> parser = std::make_unique<parsing::LiteralScriptParser>();
 
 	ScriptLoadResult result;
 	result.Script = parser->ParseScript(data);
@@ -103,5 +103,11 @@ bool ScriptBuilder::AddBundle(BundleDefinition&& bundle)
 	}
 
 	m_InternalScript->m_Bundles.emplace(bundle.Name(), bundle);
+	return true;
+}
+
+bool ScriptBuilder::AddGlobal(const std::string& name, DataStackVariantIndex type)
+{
+	m_InternalScript->m_Globals.emplace_back(name, type);
 	return true;
 }

@@ -1,4 +1,5 @@
 ﻿using Nebula.Interop.Enumerators;
+using Nebula.Shared.Enumerators;
 using Nebula.Interop.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ namespace Nebula.Interop.Structures
         public TypeIdentifier ReturnType { get; }
         public string Name { get; }
         public string Namespace { get; }
+        public string FullName => $"{Namespace}::{Name}";
 
         public IReadOnlyList<FunctionParameter> Parameters => _parameters;
         public IReadOnlyList<FunctionAttribute> Attributes => _attributes;
@@ -28,11 +30,10 @@ namespace Nebula.Interop.Structures
             ReturnType = (TypeIdentifier)NativeMethods.Function_GetReturnType(_borrowedHandle);
 
             IntPtr namePtr = NativeMethods.Function_GetName(_borrowedHandle);
-            Name = Marshal.PtrToStringAnsi(namePtr);
+            Name = Marshal.PtrToStringAnsi(namePtr) ?? "NO_NAME";
 
             IntPtr namespacePtr = NativeMethods.Function_GetNamespace(_borrowedHandle);
-            Namespace = Marshal.PtrToStringAnsi(namePtr);
-
+            Namespace = Marshal.PtrToStringAnsi(namePtr) ?? "NO_NAMESPACE";
 
             LoadAttributes();
             LoadParameters();

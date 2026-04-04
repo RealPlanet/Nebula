@@ -124,12 +124,26 @@ bool Interpreter::AddScript(std::shared_ptr<Script> script)
 
 	m_Scripts.insert(std::make_pair(script->Namespace(), script));
 
+	m_Memory.AddGlobals(script.get());
+
 	for (auto& kvp : script->Functions()) {
-		if (std::find(kvp.second.Attributes().begin(), kvp.second.Attributes().end(), VMAttribute::AutoExec) == kvp.second.Attributes().end()) {
+		if (!kvp.second.HasAttribute(VMAttribute::AutoExec)) {
 			continue;
 		}
 
-		CreateFrameOnStack(&kvp.second, true);
+		bool highPriority = kvp.second.HasAttribute(VMAttribute::Initializer);
+		if (highPriority)
+		{
+			Frame newFrame{ nullptr, &kvp.second, true };
+			Frame::Status initResult = newFrame.RunToCompletion(this);
+			if (initResult != Frame::Status::Finished) {
+				BuildErrorStack(&newFrame);
+				return false;
+			}
+		}
+		else {
+			CreateFrameOnStack(&kvp.second, true);
+		}
 	}
 
 	return true;
@@ -173,10 +187,17 @@ bool Interpreter::Step()
 		break;
 	}
 	case Frame::Status::Finished:
+	{
+		if (currentFrame->Stack().Size() > 0)
+		{
+			SetState(State::Abort);
+			assert(false && "Stack is not empty at the end of frame execution!");
+		}
 
 		delete currentFrame;
 		GetCurrentCallstack()->pop_back();
 		break;
+	}
 	}
 
 	if (GetCurrentCallstack()->empty())

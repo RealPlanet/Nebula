@@ -11,7 +11,7 @@ namespace Nebula.Interop.Structures
             get
             {
                 IntPtr ptr = NativeMethods.Frame_GetFunctionNamespace(_borrowedHandle);
-                return Marshal.PtrToStringAnsi(ptr);
+                return Marshal.PtrToStringAnsi(ptr) ?? "NO_NAMESPACE";
             }
         }
 
@@ -20,7 +20,7 @@ namespace Nebula.Interop.Structures
             get
             {
                 IntPtr ptr = NativeMethods.Frame_GetFunctionName(_borrowedHandle);
-                return Marshal.PtrToStringAnsi(ptr);
+                return Marshal.PtrToStringAnsi(ptr) ?? "NO_FUNCTION_NAME";
             }
         }
 

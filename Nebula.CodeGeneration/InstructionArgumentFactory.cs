@@ -1,5 +1,5 @@
 ﻿using Nebula.CodeGeneration.Definitions;
-using Nebula.Interop.Enumerators;
+using Nebula.Shared.Enumerators;
 using System;
 using System.Collections.Generic;
 
@@ -18,9 +18,11 @@ namespace Nebula.CodeGeneration
             Register(InstructionOpcode.Ldc_i4, RequireInt32);
             Register(InstructionOpcode.Ldc_r4, RequireFloat);
 
+            Register(InstructionOpcode.Ldsfld, RequireGlobalVariableIndex);
             Register(InstructionOpcode.Ldarg, RequireVariableIndex);
             Register(InstructionOpcode.Ldloc, RequireVariableIndex);
 
+            Register(InstructionOpcode.Stsfld, RequireGlobalVariableIndex);
             Register(InstructionOpcode.Stloc, RequireVariableIndex);
             Register(InstructionOpcode.StArg, RequireVariableIndex);
 
@@ -84,6 +86,21 @@ namespace Nebula.CodeGeneration
             if (input.Operand is ParameterDefinition parDef)
             {
                 return parDef.Index.ToString();
+            }
+
+            throw new InvalidOperationException($"Unknown operand type '{input.Operand?.GetType().Name ?? "NULL"}'");
+        }
+
+        private static string RequireGlobalVariableIndex(Instruction input)
+        {
+            if (input.Operand is VariableDefinition varDef)
+            {
+                if (string.IsNullOrEmpty(varDef.Namespace))
+                {
+                    return varDef.Index.ToString();
+                }
+
+                return $"{varDef.Index} {varDef.Namespace}";
             }
 
             throw new InvalidOperationException($"Unknown operand type '{input.Operand?.GetType().Name ?? "NULL"}'");

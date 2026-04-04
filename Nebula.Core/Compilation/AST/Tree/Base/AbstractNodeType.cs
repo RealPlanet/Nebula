@@ -26,12 +26,15 @@
         // Expression
         ErrorExpression,
         LiteralExpression,
-        InitializationExpression,
+        ArrayInitializationExpression,
+        ObjectInitializationExpression,
+        ObjectFieldInitializationExpression,
         CompoundAssignmentExpression,
         UnaryExpression,
         BinaryExpression,
         VariableExpression,
         AssignmentExpression,
+        DeclarationAssignmentExpression,
         ObjectFieldAssignmentExpression,
         ObjectFieldAccessExpression,
         ObjectCallExpression,
@@ -39,5 +42,6 @@
         ArrayAccessExpression,
         CallExpression,
         ConversionExpression,
+        IsDefinedExpression,
     }
 }

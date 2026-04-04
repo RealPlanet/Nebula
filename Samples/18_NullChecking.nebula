@@ -1,0 +1,29 @@
+namespace "NullChecking";
+
+native void WriteLine(string message);
+
+bundle myObject {
+}
+
+func void main() autoexec
+{
+	myObject test = undefined;
+	if(isdefined(test))
+	{
+		WriteLine("Object is defined");
+	}
+	else
+	{
+		WriteLine("Object is not defined");
+	}
+
+	test = {};
+	if(isdefined(test))
+	{
+		WriteLine("Object is defined");
+	}
+	else
+	{
+		WriteLine("Object is not defined");
+	}
+}

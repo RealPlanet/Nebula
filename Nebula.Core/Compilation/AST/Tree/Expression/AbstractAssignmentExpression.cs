@@ -1,13 +1,14 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Core.Compilation.AST.Symbols;
 using Nebula.Core.Compilation.AST.Tree.Base;
+using Nebula.Interop.Structures;
 
 namespace Nebula.Core.Compilation.AST.Tree.Expression
 {
     /// <summary>
     /// An assignment expression withing Bound Syntax Tree.
     /// </summary>
-    public sealed class AbstractAssignmentExpression
+    public class AbstractAssignmentExpression
         : AbstractExpression
     {
         public override TypeSymbol ResultType => Expression.ResultType;
@@ -22,6 +23,7 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression
         /// The R-Value of this assignment which can be any type of expresion which returns a result.
         /// </summary>
         public AbstractExpression Expression { get; }
+
         public AbstractAssignmentExpression(Node syntax, VariableSymbol variable, AbstractExpression expression)
             : base(syntax)
         {

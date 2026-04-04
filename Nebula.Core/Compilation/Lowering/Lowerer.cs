@@ -1,4 +1,5 @@
-﻿using Nebula.Core.Compilation.AST.Symbols;
+﻿using Nebula.Commons.Syntax;
+using Nebula.Core.Compilation.AST.Symbols;
 using Nebula.Core.Compilation.AST.Tree;
 using Nebula.Core.Compilation.AST.Tree.Base;
 using Nebula.Core.Compilation.AST.Tree.Expression;
@@ -23,6 +24,7 @@ namespace Nebula.Core.Compilation.Lowering
         {
             // Rewrite the body of a function to always be a block statement
             AbstractBlockStatement result = (AbstractBlockStatement)RewriteStatement(body);
+
             return RemoveDeadCode(Flatten(function, result));
         }
 
@@ -59,9 +61,14 @@ namespace Nebula.Core.Compilation.Lowering
             {
                 if (builder.Count == 0 || CanFallThrough(builder.Last()))
                 {
-                    var originalNode = (BlockStatement)statement.OriginalNode;
+                    Node originalNode = statement.OriginalNode;
+                    if (statement.OriginalNode is BlockStatement block)
+                    {
+                        originalNode = block.CloseBracket;
+                    }
+
                     // We use the bracket as original node for the debugger or similar
-                    builder.Add(new AbstractReturnStatement(originalNode.CloseBracket, null));
+                    builder.Add(new AbstractReturnStatement(originalNode, null));
                 }
             }
 

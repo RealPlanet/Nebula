@@ -1,5 +1,6 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
+using Nebula.Core.Compilation.CST.Tree.Declaration;
 using Nebula.Core.Compilation.CST.Tree.Declaration.Bundle;
 using Nebula.Core.Compilation.CST.Tree.Declaration.Function;
 using Nebula.Core.Compilation.CST.Tree.Statements;
@@ -17,6 +18,8 @@ namespace Nebula.Core.Compilation
 
         /// <summary>All the namespaces this unit wants to reference</summary>
         public IList<ImportStatement> Imports { get; } = new List<ImportStatement>();
+
+        public IList<VariableDeclarationCollection> Globals { get; } = new List<VariableDeclarationCollection>();
 
         /// <summary>Functions defined in this compilation unit</summary>
         public IList<FunctionDeclaration> Functions { get; } = new List<FunctionDeclaration>();
@@ -39,6 +42,7 @@ namespace Nebula.Core.Compilation
         {
             NamespaceStatement = NamespaceStatement.Empty;
             Imports.Clear();
+            Globals.Clear();
             Functions.Clear();
             NativeFunctions.Clear();
             Bundles.Clear();

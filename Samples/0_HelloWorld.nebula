@@ -1,0 +1,11 @@
+// Declare namespace for this script
+namespace "HelloWorld";
+
+// Import of a function defined by the virtual machine
+native void WriteLine(string message);
+
+// Declare function with autoexec attribute to start as soon as script is loaded
+func void main() autoexec
+{
+	WriteLine("Hello, World!");
+}

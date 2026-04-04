@@ -3,6 +3,7 @@ using Nebula.Interop.Interfaces;
 using Nebula.Interop.Structures;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace Nebula.Interop.SafeHandles
@@ -13,13 +14,15 @@ namespace Nebula.Interop.SafeHandles
     public sealed class Script
         : SafeHandleZeroOrMinusOneIsInvalid
     {
-        public string Namespace { get; private set; }
+        public string Namespace { get; private set; } = string.Empty;
 
+        public IReadOnlyDictionary<string, VariableDefinition> Globals => _globals;
         public IReadOnlyDictionary<string, BundleDefinition> Bundles => _bundles;
         public IReadOnlyDictionary<string, Function> Functions => _functions;
 
         private readonly Dictionary<string, BundleDefinition> _bundles = new Dictionary<string, BundleDefinition>();
         private readonly Dictionary<string, Function> _functions = new Dictionary<string, Function>();
+        private readonly Dictionary<string, VariableDefinition> _globals = new Dictionary<string, VariableDefinition>();
 
         private Script(IntPtr handle)
             : base(true)
@@ -27,7 +30,7 @@ namespace Nebula.Interop.SafeHandles
             SetHandle(handle);
         }
 
-        public static bool FromFile(string path, ScriptParseReportCallback reportCallback, out Script managedScript)
+        public static bool FromFile(string path, ScriptParseReportCallback reportCallback, [NotNullWhen(true)] out Script? managedScript)
         {
             IntPtr reportFuncPtr = Marshal.GetFunctionPointerForDelegate(reportCallback);
             IntPtr scriptHandle = NativeMethods.Script_FromFile(path, reportFuncPtr);
@@ -46,10 +49,29 @@ namespace Nebula.Interop.SafeHandles
         public void RefreshFromNative()
         {
             IntPtr namespaceHandle = NativeMethods.Script_GetNamespace(handle);
-            Namespace = Marshal.PtrToStringAnsi(namespaceHandle);
+            Namespace = Marshal.PtrToStringAnsi(namespaceHandle) ?? 
+                throw new NullReferenceException("No namespace found in compiled script");
 
+            LoadGlobalsFromNative();
             LoadBundlesFromNative();
             LoadFunctionsFromNative();
+        }
+
+        private void LoadGlobalsFromNative()
+        {
+            _globals.Clear();
+
+            IntPtr listHandle = NativeMethods.Script_GetGlobals(handle, out int count);
+            IntPtr[] rawPtrs = new IntPtr[count];
+            Marshal.Copy(listHandle, rawPtrs, 0, count);
+            NativeMethods.Script_DestroyGlobalsList(listHandle);
+
+            for (int i = 0; i < count; i++)
+            {
+                IntPtr itemHandle = rawPtrs[i];
+                VariableDefinition global = new VariableDefinition(Namespace, itemHandle, i);
+                _globals.Add(global.Name, global);
+            }
         }
 
         private void LoadBundlesFromNative()
@@ -64,7 +86,7 @@ namespace Nebula.Interop.SafeHandles
             for (int i = 0; i < count; i++)
             {
                 IntPtr itemHandle = rawPtrs[i];
-                BundleDefinition bundleDef = new BundleDefinition(itemHandle);
+                BundleDefinition bundleDef = new BundleDefinition(Namespace, itemHandle);
                 _bundles.Add(bundleDef.Name, bundleDef);
             }
         }
@@ -105,6 +127,9 @@ namespace Nebula.Interop.SafeHandles
             public static extern IntPtr Script_GetNamespace(IntPtr handle);
 
             [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern IntPtr Script_GetGlobals(IntPtr handle, out int globalCount);
+
+            [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]
             public static extern IntPtr Script_GetBundleDefinitions(IntPtr handle, out int definitionCount);
 
             [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]
@@ -113,6 +138,8 @@ namespace Nebula.Interop.SafeHandles
             [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]
             public static extern void Script_Destroy(IntPtr handle);
 
+            [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern void Script_DestroyGlobalsList(IntPtr handle);
             [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]
             public static extern void Script_DestroyBundleDefinitionList(IntPtr handle);
             [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]

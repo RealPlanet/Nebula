@@ -78,47 +78,42 @@ namespace Nebula.Core.Compilation
                 return false;
             }
 
-            result.Programs = [];
-            foreach (AbstractProgram program in programs)
+            if (options.EmitProgram)
             {
-                string moduleName = Path.GetFileNameWithoutExtension(program.SourceCode.FileName);
-                bool emitOk = Emit(options, moduleName, program, out Report? emitReport);
-                result.Report.Append(emitReport);
-                if (!emitOk)
+                var allPrograms = programs;
+                var allReferences = options.References;
+
+                var emitOptions = new Emitter.Options()
                 {
-                    result.FailedSourcePath = program.SourceCode.FileName;
-                    return false;
+                    OutputToSourceLocation = options.OutputToSourceLocation,
+                    OutputFolder = options.OutputFolder,
+                    ReadableBytecode = options.ReadableBytecode,
+                };
+
+                Emitter emitter = new(emitOptions);
+
+                foreach (var program in programs)
+                {
+                    string moduleName = Path.GetFileNameWithoutExtension(program.SourceCode.FileName);
+                    emitter.Emit(moduleName, program, out var report);
+                    result.Report.Append(report);
+
+                    if (report.HasErrors &&
+                        string.IsNullOrEmpty(result.FailedSourcePath))
+                    {
+                        result.FailedSourcePath = program.SourceCode.FileName;
+                    }
                 }
             }
 
             result.Programs = programs.ToArray();
-            return true;
+            return string.IsNullOrEmpty(result.FailedSourcePath);
         }
 
         private static CompilationUnit? Parse(Options options, SourceCode source, out Report compilationReport)
         {
             CompilationUnit unit = Parser.Parse(source, out compilationReport);
             return compilationReport.HasErrors ? null : unit;
-        }
-
-        private static bool Emit(Options options, string moduleName, AbstractProgram program, out Report emitReport)
-        {
-            if (!options.EmitProgram)
-            {
-                emitReport = new();
-                return true;
-            }
-
-            // Emit
-            Emitter emitter = new(moduleName, new()
-            {
-                OutputToSourceLocation = options.OutputToSourceLocation,
-                OutputFolder = options.OutputFolder,
-                ReadableBytecode = options.ReadableBytecode,
-            });
-
-            emitter.Emit(program, out emitReport);
-            return !emitReport.HasErrors;
         }
     }
 }

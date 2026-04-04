@@ -73,6 +73,8 @@
         EndOnNotificationKeyword,
         NotifyKeyword,
         NativeKeyword,
+        IsDefinedKeyword,
+        UndefinedKeyword,
 
         BlockStatement,         // Generic sequence of nodes surrounded by an open and close { }
         ExpressionStatement,
@@ -99,15 +101,17 @@
         UnaryExpression,
         BinaryExpression,
         AssignmentExpression,
-        ObjectVariableAccessExpression,
+        ObjectFieldAccessExpression,
         ArrayAccessExpression,
         NameExpression,
         ParenthesizedExpression,
         CallExpression,
         ObjectCallExpression,
         LiteralExpression,
-        InitializationExpression,
-
+        ArrayInitializationExpression,
+        ObjectInitializationExpression,
+        ObjectFieldInitializationExpression,
+        IsDefinedExpression,
 
         EndOfFileToken,
         TypeClause,

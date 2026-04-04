@@ -530,7 +530,7 @@ int Frame_GetInstructionCount(nebula::Frame* handle)
 	return static_cast<int>(count);
 }
 
-nebula::FrameVariable* Frame_GetLocalVariableAt(nebula::Frame* handle, int index)
+nebula::Variable* Frame_GetLocalVariableAt(nebula::Frame* handle, int index)
 {
 	if (handle == nullptr)
 	{
@@ -545,7 +545,7 @@ nebula::FrameVariable* Frame_GetLocalVariableAt(nebula::Frame* handle, int index
 	return &handle->Memory().LocalAt(index);
 }
 
-nebula::FrameVariable* Frame_GetParameterVariableAt(nebula::Frame* handle, int index)
+nebula::Variable* Frame_GetParameterVariableAt(nebula::Frame* handle, int index)
 {
 	if (handle == nullptr)
 	{
@@ -613,9 +613,34 @@ const char* Script_GetNamespace(nebula::Script* handle)
 		return nullptr;
 	}
 
-	nebula::Script* script = ((nebula::Script*)handle);
+	return handle->Namespace().data();
+}
 
-	return script->Namespace().data();
+GlobalVariableDefinitions Script_GetGlobals(nebula::Script* handle, int* outCount)
+{
+	*outCount = -1;
+	if (handle == nullptr)
+	{
+		return nullptr;
+	}
+
+	auto& globals = handle->Globals();
+	auto count = globals.size();
+	*outCount = (int)count;
+	GlobalVariableDefinitions result = new const nebula::GlobalVariable * [count];
+
+	int i{ 0 };
+	for (auto it = globals.begin(); it != globals.end(); it++, i++) {
+		auto ptr = &(*it);
+		result[i] = ptr;
+	}
+
+	return result;
+}
+
+void Script_DestroyGlobalsList(GlobalVariableDefinitions handle)
+{
+	delete[] handle;
 }
 
 Functions Script_GetFunctions(nebula::Script* handle, int* outCount)
@@ -830,6 +855,33 @@ nebula::VariantArray* DataStackVariant_GetArrayValue(nebula::DataStackVariant* h
 
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
+//      VARIABLE DEFINITION
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+
+
+const char* VariableDefinition_GetName(nebula::GlobalVariable* handle)
+{
+	if (handle == nullptr)
+	{
+		return nullptr;
+	}
+
+	return handle->GetName().c_str();
+}
+
+nebula::DataStackVariantIndex VariableDefinition_GetType(nebula::GlobalVariable* handle)
+{
+	if (handle == nullptr)
+	{
+		return nebula::DataStackVariantIndex::_UnknownType;
+	}
+
+	return handle->GetType();
+}
+
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
 //      BUNDLE FIELD
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
@@ -962,7 +1014,7 @@ void Function_Destroy(nebula::Function* handle)
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
 
-int FrameVariable_GetType(nebula::FrameVariable* handle)
+int FrameVariable_GetType(nebula::Variable* handle)
 {
 	if (handle == nullptr)
 	{
@@ -979,7 +1031,7 @@ if (handle->Value().index() != handle->Type())\
     return val;\
 }
 
-const char* FrameVariable_GetStringValue(nebula::FrameVariable* handle)
+const char* FrameVariable_GetStringValue(nebula::Variable* handle)
 {
 	if (handle == nullptr || handle->Type() != nebula::DataStackVariantIndex::_TypeString)
 	{
@@ -992,7 +1044,7 @@ const char* FrameVariable_GetStringValue(nebula::FrameVariable* handle)
 	return string.data();
 }
 
-bool FrameVariable_SetStringValue(nebula::FrameVariable* handle, const char* value)
+bool FrameVariable_SetStringValue(nebula::Variable* handle, const char* value)
 {
 	if (handle == nullptr)
 	{
@@ -1003,7 +1055,7 @@ bool FrameVariable_SetStringValue(nebula::FrameVariable* handle, const char* val
 	return handle->SetValue(variant);
 }
 
-int FrameVariable_GetIntValue(nebula::FrameVariable* handle)
+int FrameVariable_GetIntValue(nebula::Variable* handle)
 {
 	if (handle == nullptr || handle->Type() != nebula::DataStackVariantIndex::_TypeInt32)
 	{
@@ -1015,7 +1067,7 @@ int FrameVariable_GetIntValue(nebula::FrameVariable* handle)
 	return handle->AsInt32();
 }
 
-bool FrameVariable_SetIntValue(nebula::FrameVariable* handle, int value)
+bool FrameVariable_SetIntValue(nebula::Variable* handle, int value)
 {
 	if (handle == nullptr)
 	{
@@ -1026,7 +1078,7 @@ bool FrameVariable_SetIntValue(nebula::FrameVariable* handle, int value)
 	return handle->SetValue(variant);
 }
 
-float FrameVariable_GetFloatValue(nebula::FrameVariable* handle)
+float FrameVariable_GetFloatValue(nebula::Variable* handle)
 {
 	if (handle == nullptr || handle->Type() != nebula::DataStackVariantIndex::_TypeFloat)
 	{
@@ -1038,7 +1090,7 @@ float FrameVariable_GetFloatValue(nebula::FrameVariable* handle)
 	return handle->AsFloat();
 }
 
-bool FrameVariable_SetFloatValue(nebula::FrameVariable* handle, float value)
+bool FrameVariable_SetFloatValue(nebula::Variable* handle, float value)
 {
 	if (handle == nullptr)
 	{
@@ -1049,7 +1101,7 @@ bool FrameVariable_SetFloatValue(nebula::FrameVariable* handle, float value)
 	return handle->SetValue(variant);
 }
 
-nebula::Bundle* FrameVariable_GetBundleValue(nebula::FrameVariable* handle)
+nebula::Bundle* FrameVariable_GetBundleValue(nebula::Variable* handle)
 {
 	if (handle == nullptr ||
 		handle->Type() != nebula::DataStackVariantIndex::_TypeObject ||
@@ -1063,7 +1115,7 @@ nebula::Bundle* FrameVariable_GetBundleValue(nebula::FrameVariable* handle)
 	return (nebula::Bundle*)handle->AsGCObject().get();
 }
 
-nebula::VariantArray* FrameVariable_GetArrayValue(nebula::FrameVariable* handle)
+nebula::VariantArray* FrameVariable_GetArrayValue(nebula::Variable* handle)
 {
 	if (handle == nullptr ||
 		handle->Type() != nebula::DataStackVariantIndex::_TypeObject ||

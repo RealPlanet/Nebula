@@ -72,6 +72,8 @@ namespace Nebula.Commons.Syntax
             NodeType.NativeKeyword => "native",
             NodeType.BundleKeyword => "bundle",
             NodeType.ImportKeyword => "import",
+            NodeType.IsDefinedKeyword => "isdefined",
+            NodeType.UndefinedKeyword => "undefined",
             NodeType.OpenSquareBracketToken => "[",
             NodeType.ClosedSquareBracketToken => "]",
             _ => null,
@@ -127,6 +129,8 @@ namespace Nebula.Commons.Syntax
             "do" => NodeType.DoKeyword,
             "for" => NodeType.ForKeyword,
             "import" => NodeType.ImportKeyword,
+            "isdefined" => NodeType.IsDefinedKeyword,
+            "undefined" => NodeType.UndefinedKeyword,
             _ => NodeType.IdentifierToken,
         };
 

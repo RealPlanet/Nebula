@@ -1,11 +1,11 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
-using Nebula.SourceGeneration.Properties;
 using System;
 using System.CodeDom.Compiler;
+using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace Nebula.SourceGeneration
@@ -14,36 +14,41 @@ namespace Nebula.SourceGeneration
     public class OpcodeEnumGenerator
         : IIncrementalGenerator
     {
-        private static readonly Assembly s_sourceAssembly = Assembly.GetAssembly(typeof(OpcodeEnumGenerator));
-
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            context.RegisterSourceOutput(context.CompilationProvider, (spc, compilation) =>
+            var opcodeSourceFile = context.AdditionalTextsProvider.Where(file => Path.GetFileName(file.Path) == "Opcodes.xml");
+            var fileContents = opcodeSourceFile.Select((text, cancellationToken) => text.GetText(cancellationToken)?.ToString());
+            var provider = fileContents.Collect();
+
+            context.RegisterSourceOutput(provider, (spc, opcodeDefinitionFiles) =>
             {
-                XDocument opcodeSource = XDocument.Parse(Resources.Opcodes);
+                int counter = 0;
+                foreach (var content in opcodeDefinitionFiles)
+                {
+                    XDocument opcodeSource = XDocument.Parse(content);
+                    StringWriter streamWriter = new StringWriter();
+                    IndentedTextWriter writer = new IndentedTextWriter(streamWriter);
 
-                StringWriter fileContents = new StringWriter();
-                IndentedTextWriter writer = new IndentedTextWriter(fileContents);
+                    writer.WriteLine("namespace Nebula.Shared.Enumerators");
+                    writer.WriteLine('{');
+                    writer.Indent++;
 
-                writer.WriteLine("namespace Nebula.Interop.Enumerators");
-                writer.WriteLine('{');
-                writer.Indent++;
+                    writer.WriteLine("public enum InstructionOpcode");
+                    writer.WriteLine("{");
+                    writer.Indent++;
 
-                writer.WriteLine("public enum InstructionOpcode");
-                writer.WriteLine("{");
-                writer.Indent++;
+                    WriteOpcodeValues(opcodeSource, writer);
 
-                WriteOpcodeValues(opcodeSource, writer);
-
-                writer.Indent--;
-                writer.WriteLine("}");
-                writer.Indent--;
-                writer.WriteLine("}");
+                    writer.Indent--;
+                    writer.WriteLine("}");
+                    writer.Indent--;
+                    writer.WriteLine("}");
 
 
-                string contents = fileContents.ToString();
-                var sourceText = SourceText.From(contents, Encoding.UTF8);
-                spc.AddSource("InstructionOpcode.g.cs", sourceText);
+                    string contents = streamWriter.ToString();
+                    SourceText sourceText = SourceText.From(contents, Encoding.UTF8);
+                    spc.AddSource($"InstructionOpcode_{counter++}.g.cs", sourceText);
+                }
             });
         }
 
@@ -53,7 +58,13 @@ namespace Nebula.SourceGeneration
             foreach (var opcode in opcodeList.Elements())
             {
                 string opcodeName = opcode.Attribute("Type").Value;
-                string description = (opcode.Element("Description").Value ?? string.Empty).Trim();
+                string description = string.Empty;
+                var descriptionElement = opcode.Element("Description");
+                if (descriptionElement != null)
+                {
+                    description = descriptionElement.Attribute("Text")?.Value ?? string.Empty;
+                    description.Trim();
+                }
 
                 if (!string.IsNullOrEmpty(description))
                 {
@@ -67,7 +78,7 @@ namespace Nebula.SourceGeneration
 
         private static void WriteSummaryComment(IndentedTextWriter writer, string description)
         {
-            string[] descriptionLines = description.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            string[] descriptionLines = CalculateDescriptionLines(description);
 
             if (descriptionLines.Length == 1)
             {
@@ -85,6 +96,50 @@ namespace Nebula.SourceGeneration
             }
 
             writer.WriteLine("///</summary>");
+        }
+
+        private static string[] CalculateDescriptionLines(string description)
+        {
+            const int maxLength = 120;
+            if (string.IsNullOrWhiteSpace(description))
+                return Array.Empty<string>();
+
+            List<string> result = new List<string>();
+
+            // Split into sentences (keeps punctuation)
+            var sentences = Regex.Split(description, @"(?<=[.!?])\s+");
+
+            foreach (var sentence in sentences)
+            {
+                if (sentence.Length <= maxLength)
+                {
+                    result.Add(sentence.Trim());
+                }
+                else
+                {
+                    // Split long sentences by words
+                    var words = sentence.Split(' ');
+                    var current = "";
+
+                    foreach (var word in words)
+                    {
+                        if ((current + word).Length > maxLength)
+                        {
+                            result.Add(current.Trim());
+                            current = word + " ";
+                        }
+                        else
+                        {
+                            current += word + " ";
+                        }
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(current))
+                        result.Add(current.Trim());
+                }
+            }
+
+            return result.ToArray();
         }
     }
 }

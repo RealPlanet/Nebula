@@ -22,6 +22,7 @@
     <ClInclude Include="include\ThreadMap.h" />
     <ClInclude Include="include\Script.h" />
     <ClInclude Include="include\InterpreterMemory.h" />
+    <ClInclude Include="include\Variable.h" />
     <ClInclude Include="include\VariantArray.h" />
     <ClInclude Include="src\InstructionRegistry.h" />
     <ClInclude Include="src\LiteralScriptParser.h" />
@@ -111,7 +112,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>src\;include\;..\Nebula.Shared\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\;include\;thirdparty\;..\Nebula.Shared\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <TreatWarningAsError>true</TreatWarningAsError>

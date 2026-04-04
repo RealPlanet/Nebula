@@ -1,5 +1,6 @@
 ﻿using Nebula.CodeGeneration;
 using Nebula.CodeGeneration.Definitions;
+using Nebula.CodeGeneration.Exceptions;
 using Nebula.Commons.Reporting;
 using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
@@ -13,7 +14,9 @@ using Nebula.Core.Compilation.AST.Tree.Operators;
 using Nebula.Core.Compilation.AST.Tree.Statements;
 using Nebula.Core.Compilation.AST.Tree.Statements.ControlFlow;
 using Nebula.Core.Compilation.CST.Tree.Statements;
+using Nebula.Core.Utility;
 using Nebula.Interop.Enumerators;
+using Nebula.Shared.Enumerators;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -30,7 +33,6 @@ namespace Nebula.Core.Compilation.Emitting
         public class Options
         {
             public string OutputFolder { get; set; } = "";
-
             public bool OutputToSourceLocation { get; set; } = false;
             public bool ReadableBytecode { get; set; } = true;
         }
@@ -41,26 +43,28 @@ namespace Nebula.Core.Compilation.Emitting
             public Assembly Assembly { get; } = new(moduleName, @namespace, moduleVersion, sourceCode);
             public Report Report { get; } = new();
             public Dictionary<VariableSymbol, VariableDefinition> Locals { get; } = [];
+            public Dictionary<VariableSymbol, VariableDefinition> Globals { get; } = [];
             public Dictionary<VariableSymbol, ParameterDefinition> Parameters { get; } = [];
             public Dictionary<AbstractLabel, int> Labels { get; } = [];
             public List<(int InstructionIndex, AbstractLabel Target)> LabelReferences { get; } = [];
         }
 
-        public string ModuleName { get; }
-
         private readonly Options _options;
         private Context _currentContext = null!;
+        private AbstractProgram _currentProgram = null!;
 
-        public Emitter(string moduleName, Options options)
+        public Emitter(Options options)
         {
-            ModuleName = moduleName;
             _options = options;
         }
 
-        public void Emit(AbstractProgram program, out Report emitReport)
+        public void Emit(string moduleName, AbstractProgram program, out Report emitReport)
         {
-            NamespaceStatement nsToken = (NamespaceStatement)program.Namespace.OriginalNode;
-            _currentContext = new(ModuleName, program.Namespace.Text, new(1, 0, 0), program.SourceCode);
+            _currentProgram = program;
+            NamespaceStatement nsToken = (NamespaceStatement)_currentProgram.Namespace.OriginalNode;
+            _currentContext = new(moduleName, program.Namespace.Text, new(1, 0, 0), program.SourceCode);
+
+            EmitGlobals(program);
 
             foreach (FunctionSymbol nativeFunc in program.NativeFunctions)
             {
@@ -77,14 +81,14 @@ namespace Nebula.Core.Compilation.Emitting
                 EmitFunctionDeclaration(declaration, body);
             }
 
-            string moduleName = Path.ChangeExtension(ModuleName, ".neb");
-            string moduleDbgName = Path.ChangeExtension(ModuleName, ".ndbg");
+            string compiledFileName = Path.ChangeExtension(moduleName, ".neb");
+            string moduleDbgName = Path.ChangeExtension(moduleName, ".ndbg");
 
-            string outputFilePath = Path.Combine(_options.OutputFolder, moduleName);
+            string outputFilePath = Path.Combine(_options.OutputFolder, compiledFileName);
             string outputDbgFilePath = Path.Combine(_options.OutputFolder, moduleDbgName);
             if (!_options.OutputToSourceLocation)
             {
-                outputFilePath = Path.Combine(_options.OutputFolder, moduleName);
+                outputFilePath = Path.Combine(_options.OutputFolder, compiledFileName);
                 outputDbgFilePath = Path.Combine(_options.OutputFolder, moduleDbgName);
             }
             else
@@ -92,7 +96,7 @@ namespace Nebula.Core.Compilation.Emitting
                 string sourceLoc = Path.GetDirectoryName(program.SourceCode.FileName)
                     ?? throw new Exception("Could not get source path!");
 
-                outputFilePath = Path.Combine(sourceLoc, moduleName);
+                outputFilePath = Path.Combine(sourceLoc, compiledFileName);
                 outputDbgFilePath = Path.Combine(sourceLoc, moduleDbgName);
             }
 
@@ -135,6 +139,64 @@ namespace Nebula.Core.Compilation.Emitting
             _currentContext = null!;
         }
 
+        private void EmitGlobals(AbstractProgram program)
+        {
+            var allCompiledNamespaces = program.References.AllPrograms.Keys.ToHashSet();
+            var usableReferences = program.References.AllReferences
+                .Where(kvp => !allCompiledNamespaces.Contains(kvp.Key))
+                .Select(kvp => kvp.Value);
+
+            // Declare the referenced global variables, I don't really like this solution but what w
+            foreach (var reference in usableReferences)
+            {
+                foreach (var globalReference in reference.Globals.Values)
+                {
+                    if (!program.References.TryGetGlobalVariable(globalReference.Namespace, globalReference.Name, out var symbol))
+                    {
+                        throw new InvalidDataException();
+                    }
+
+                    VariableDefinition variableDefinition = GenerateVariableDefinition(globalReference.OrdinalPosition, symbol);
+                    _currentContext.Globals[symbol] = variableDefinition;
+                }
+            }
+
+            foreach (var otherProgram in program.References.AllPrograms.Values)
+            {
+                int tmpGlobalCount = 0;
+                foreach (var globalReference in otherProgram.Globals.Keys)
+                {
+                    VariableDefinition variableDefinition = GenerateVariableDefinition(tmpGlobalCount, globalReference);
+                    _currentContext.Globals[globalReference] = variableDefinition;
+                    tmpGlobalCount++;
+                }
+            }
+
+            int localGlobalCount = 0;
+            // Define our local scope globals
+            foreach (var variable in program.Globals.Keys)
+            {
+                VariableDefinition variableDefinition = GenerateVariableDefinition(localGlobalCount, variable);
+                variableDefinition.Namespace = string.Empty;
+
+                _currentContext.Globals[variable] = variableDefinition;
+                _currentContext.Assembly.TypeDefinition.Globals.Add(variableDefinition);
+                localGlobalCount++;
+            }
+
+            VariableDefinition GenerateVariableDefinition(int globalCount, VariableSymbol variable)
+            {
+                TypeReference typeReference = _knownTypes[variable.Type.BaseType];
+                VariableDefinition variableDefinition = new(typeReference, variable.Namespace, variable.Name, globalCount);
+                if (variable.Type is ObjectTypeSymbol objSymbol)
+                {
+                    variableDefinition.SourceNamespace = objSymbol.Namespace;
+                    variableDefinition.SourceTypeName = objSymbol.Name;
+                }
+
+                return variableDefinition;
+            }
+        }
 
         #region Emit Function
         private void EmitNativeFunctionDeclaration(FunctionSymbol nativeFunc)
@@ -191,7 +253,6 @@ namespace Nebula.Core.Compilation.Emitting
 
             _currentContext.Assembly.TypeDefinition.Bundles.Add(bundle);
         }
-
 
         private void EmitFunctionBody(MethodDefinition method, AbstractBlockStatement body)
         {
@@ -332,7 +393,7 @@ namespace Nebula.Core.Compilation.Emitting
         {
             TypeReference typeReference = _knownTypes[node.Variable.Type.BaseType];
 
-            VariableDefinition variableDefinition = new(typeReference, node.Variable.Name, processor.Body.Variables.Count);
+            VariableDefinition variableDefinition = new(typeReference, node.Variable.Namespace, node.Variable.Name, processor.Body.Variables.Count);
 
             if (node.Variable.Type is ObjectTypeSymbol objSymbol)
             {
@@ -343,30 +404,12 @@ namespace Nebula.Core.Compilation.Emitting
             _currentContext.Locals.Add(node.Variable, variableDefinition);
             processor.Body.Variables.Add(variableDefinition);
 
-            // Emit an instruction to allocate bundle
-            if (typeReference == TypeReference.Bundle && node.Variable.Type is ObjectTypeSymbol objTypeSymbol)
-            {
-                EmitBundleAllocation(processor, originalStatement, objTypeSymbol);
-                processor.Emit(InstructionOpcode.Stloc, variableDefinition, originalStatement);
-                return;
-            }
-
-            if (typeReference == TypeReference.Array)
-            {
-                ArrayTypeSymbol arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
-                TypeReference arrayValueType = _knownTypes[arraySymbol.ValueType.BaseType];
-
-                StoreNewArrIntoLocal(processor, variableDefinition, arraySymbol, arrayValueType, originalStatement);
-                return;
-            }
-
             EmitExpression(processor, node.Initializer, originalStatement);
-            processor.Emit(InstructionOpcode.Stloc, variableDefinition, originalStatement);
         }
 
-        private void EmitBundleAllocation(NILProcessor processor, Node originalStatement, ObjectTypeSymbol objTypeSymbol)
+        private void EmitObjectInitializationExpression(NILProcessor processor, AbstractObjectInitializationExpression node, Node originalStatement)
         {
-            ExtractBundleNamespaceAndName(objTypeSymbol, out string typeNamespace, out string typedName);
+            ExtractBundleNamespaceAndName((ObjectTypeSymbol)node.ResultType, out string typeNamespace, out string typedName);
 
             object arguments = typedName;
             if (_currentContext.Assembly.Namespace != typeNamespace)
@@ -375,6 +418,21 @@ namespace Nebula.Core.Compilation.Emitting
             }
 
             processor.Emit(InstructionOpcode.Newobj, arguments, originalStatement);
+
+            if (node.FieldExpressions.Length > 0)
+            {
+                foreach (var assignment in node.FieldExpressions)
+                {
+                    processor.Emit(InstructionOpcode.Dup, originalStatement);
+                    if (assignment.Field is null)
+                    {
+                        throw new EmitterException("Field data is missing from object field initialization exception");
+                    }
+
+                    EmitExpression(processor, assignment.Initializer, originalStatement);
+                    processor.Emit(InstructionOpcode.Stfld, assignment.Field.OrdinalPosition, originalStatement);
+                }
+            }
         }
 
         private void StoreNewArrIntoLocal(NILProcessor processor,
@@ -383,6 +441,7 @@ namespace Nebula.Core.Compilation.Emitting
                                           TypeReference baseValueType,
                                           Node originalNode)
         {
+
             object arguments = ExtractNewArrArguments(arraySymbol, baseValueType);
 
             processor.Emit(InstructionOpcode.Newarr, arguments, originalNode);
@@ -488,6 +547,7 @@ namespace Nebula.Core.Compilation.Emitting
                     EmitArrayAssignmentExpression(processor, (AbstractArrayAssignmentExpression)node, originalStatement);
                     break;
                 case AbstractNodeType.AssignmentExpression:
+                case AbstractNodeType.DeclarationAssignmentExpression:
                     EmitAssignmentExpression(processor, (AbstractAssignmentExpression)node, originalStatement);
                     break;
                 case AbstractNodeType.CallExpression:
@@ -505,17 +565,18 @@ namespace Nebula.Core.Compilation.Emitting
                 case AbstractNodeType.ObjectFieldAccessExpression:
                     EmitObjectFieldAccess(processor, (AbstractObjectFieldAccessExpression)node, originalStatement);
                     break;
-                case AbstractNodeType.InitializationExpression:
-                    EmitInitializationExpression(processor, (AbstractInitializationExpression)node, originalStatement);
+                case AbstractNodeType.ArrayInitializationExpression:
+                    EmitArrayInitializationExpression(processor, (AbstractArrayInitializationExpression)node, originalStatement);
+                    break;
+                case AbstractNodeType.ObjectInitializationExpression:
+                    EmitObjectInitializationExpression(processor, (AbstractObjectInitializationExpression)node, originalStatement);
+                    break;
+                case AbstractNodeType.IsDefinedExpression:
+                    EmitIsDefinedExpression(processor, (AbstractIsDefinedExpression)node, originalStatement);
                     break;
                 default:
                     throw new Exception($"Unexpected node type {node.Type}");
             }
-        }
-
-        private void EmitInitializationExpression(NILProcessor processor, AbstractInitializationExpression node, Node originalStatement)
-        {
-            EmitBundleAllocation(processor, originalStatement, (ObjectTypeSymbol)node.ResultType);
         }
 
         private void EmitConversionExpression(NILProcessor processor, AbstractConversionExpression node, Node originalStatement)
@@ -556,17 +617,36 @@ namespace Nebula.Core.Compilation.Emitting
         private void EmitObjectFieldAssignment(NILProcessor processor, AbstractObjectFieldAssignmentExpression node, Node originalStatement)
         {
             //processor.WriteComment("An object reference or pointer is pushed onto the stack.");
-            EmitExpression(processor, node.Target, originalStatement);
+            EmitExpression(processor, node.TargetExpression, originalStatement);
             processor.Emit(InstructionOpcode.Dup, originalStatement);
-
             EmitExpression(processor, node.Expression, originalStatement);
             processor.Emit(InstructionOpcode.Stfld, node.Field.OrdinalPosition, originalStatement);
+            processor.Emit(InstructionOpcode.Ldfld, node.Field.OrdinalPosition, originalStatement);
         }
 
         private void EmitObjectFieldAccess(NILProcessor processor, AbstractObjectFieldAccessExpression node, Node originalStatement)
         {
-            EmitExpression(processor, node.Target, originalStatement);
-            processor.Emit(InstructionOpcode.Ldfld, node.Field.OrdinalPosition, originalStatement);
+            if (node.Mode == AbstractObjectFieldAccessExpression.FieldMode.Read)
+            {
+                processor.Emit(InstructionOpcode.Ldfld, node.Field.OrdinalPosition, originalStatement);
+            }
+        }
+
+        private void EmitIsDefinedExpression(NILProcessor processor, AbstractIsDefinedExpression node, Node originalStatement)
+        {
+            if (node.ConstantValue != null)
+            {
+                EmitConstantExpression(processor, node, originalStatement);
+                return;
+            }
+
+            EmitExpression(processor, node.Expression, originalStatement);
+            processor.Emit(InstructionOpcode.ChkDef, originalStatement);
+        }
+
+        private static void EmitArrayInitializationExpression(NILProcessor processor, AbstractArrayInitializationExpression node, Node originalStatement)
+        {
+            processor.Emit(InstructionOpcode.Newarr, originalStatement);
         }
 
         private void EmitCallExpression(NILProcessor processor, AbstractCallExpression node, Node originalStatement)
@@ -628,7 +708,18 @@ namespace Nebula.Core.Compilation.Emitting
                 return;
             }
 
-            VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
+            VariableDefinition? variableDefinition;
+            bool isGlobal;
+            if (node.Variable is GlobalVariableSymbol globalVariable)
+            {
+                isGlobal = true;
+                variableDefinition = _currentContext.Globals[node.Variable];
+            }
+            else
+            {
+                isGlobal = false;
+                variableDefinition = _currentContext.Locals[node.Variable];
+            }
 
             if (node.Variable.Type == TypeSymbol.BaseObject)
             {
@@ -642,36 +733,72 @@ namespace Nebula.Core.Compilation.Emitting
             }
 
             EmitExpression(processor, node.Expression, originalStatement);
-            processor.Emit(InstructionOpcode.Dup, originalStatement); // Takes current value on stack and pushes it again
-            processor.Emit(InstructionOpcode.Stloc, variableDefinition, originalStatement); // Writes value into local
+            if (node.Type == AbstractNodeType.AssignmentExpression)
+            {
+                processor.Emit(InstructionOpcode.Dup, originalStatement); // Takes current value on stack and pushes it again
+            }
+
+            if (isGlobal)
+            {
+                processor.Emit(InstructionOpcode.Stsfld, variableDefinition, originalStatement); // Writes value into global
+            }
+            else
+            {
+                processor.Emit(InstructionOpcode.Stloc, variableDefinition, originalStatement); // Writes value into local
+            }
         }
 
         private void EmitVariableExpression(NILProcessor processor, AbstractVariableExpression node, Node originalStatement)
         {
             // TODO :: Rethink how variables vs bundles are handled to simplify the instruction set
-            if (node.Variable is ParameterSymbol parameter)
+            switch (node.Variable)
             {
-                ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
+                case ParameterSymbol parameter:
+                    {
+                        ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
 
-                if (node is AbstractArrayAccessExpression arrAccess)
-                {
-                    processor.Emit(InstructionOpcode.Ldarg, parameterDefinition, originalStatement);
-                    EmitExpression(processor, arrAccess.IndexExpression, originalStatement);
-                    processor.Emit(InstructionOpcode.Ldc_i4, arrAccess.IndexExpression, originalStatement);
-                }
+                        if (node is AbstractArrayAccessExpression arrAccess)
+                        {
+                            processor.Emit(InstructionOpcode.Ldarg, parameterDefinition, originalStatement);
+                            EmitExpression(processor, arrAccess.IndexExpression, originalStatement);
 
-                InstructionOpcode paramOpcode = InstructionOpcode.Ldarg;
-                processor.Emit(paramOpcode, parameterDefinition, originalStatement);
-                return;
+                            if (arrAccess.IndexExpression.ConstantValue.IsNotNull())
+                            {
+                                EmitOptimizeLdcI4Instruction(processor, (int)arrAccess.IndexExpression.ConstantValue.Value, originalStatement);
+                            }
+                            else
+                            {
+                                processor.Emit(InstructionOpcode.Ldc_i4, arrAccess.IndexExpression, originalStatement);
+                            }
+
+                        }
+
+                        InstructionOpcode paramOpcode = InstructionOpcode.Ldarg;
+                        processor.Emit(paramOpcode, parameterDefinition, originalStatement);
+                        break;
+                    }
+                case GlobalVariableSymbol globalVariable:
+                    {
+                        VariableDefinition? variableDefinition = _currentContext.Globals[node.Variable];
+                        InstructionOpcode opcode = InstructionOpcode.Ldsfld;
+                        object argument = variableDefinition;
+                        processor.Emit(opcode, argument, originalStatement);
+                        break;
+                    }
+                case LocalVariableSymbol:
+                    {
+                        // TODO :: Figure out if we want to keep this variable definition as instruction argument or pass the index
+                        // directly
+
+                        VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
+                        InstructionOpcode opcode = InstructionOpcode.Ldloc;
+                        object argument = variableDefinition;
+                        processor.Emit(opcode, argument, originalStatement);
+                        break;
+                    }
+                default:
+                    throw new NotSupportedException($"Unknown symbol type of variable expression: {node.Variable.GetType().Name}");
             }
-
-            // TODO :: Figure out if we want to keep this variable definition as instruction argument or pass the index
-            // directly
-
-            VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
-            InstructionOpcode opcode = InstructionOpcode.Ldloc;
-            object argument = variableDefinition;
-            processor.Emit(opcode, argument, originalStatement);
         }
 
         private void EmitBinaryExpression(NILProcessor processor, AbstractBinaryExpression node, Node originalStatement)
@@ -741,6 +868,8 @@ namespace Nebula.Core.Compilation.Emitting
                     processor.Emit(InstructionOpcode.Clt, originalStatement);
                     processor.Emit(InstructionOpcode.Ldc_i4_0, originalStatement);
                     processor.Emit(InstructionOpcode.Ceq, originalStatement);
+                    break;
+                case AbstractBinaryType.FieldAccess:
                     break;
                 default:
                     throw new Exception($"Unexpected binary operator {SyntaxEx.GetText(node.Operator.NodeType)}");
@@ -900,7 +1029,7 @@ namespace Nebula.Core.Compilation.Emitting
             if (node.ResultType == TypeSymbol.Int)
             {
                 int value = (int)node.ConstantValue.Value;
-                processor.Emit(InstructionOpcode.Ldc_i4, value, originalStatement);
+                EmitOptimizeLdcI4Instruction(processor, value, originalStatement);
                 return;
             }
 
@@ -923,6 +1052,12 @@ namespace Nebula.Core.Compilation.Emitting
             {
                 string? value = (string)node.ConstantValue.Value;
                 processor.Emit(InstructionOpcode.Ldc_s, value, originalStatement);
+                return;
+            }
+
+            if (node.ResultType == TypeSymbol.Undefined)
+            {
+                processor.Emit(InstructionOpcode.LdNull, originalStatement);
                 return;
             }
 
@@ -971,6 +1106,68 @@ namespace Nebula.Core.Compilation.Emitting
             ArrayTypeSymbol arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
             TypeReference typeReference = _knownTypes[arraySymbol.ValueType.BaseType];
             StoreNewArrIntoLocal(processor, variableDefinition, arraySymbol, typeReference, node.OriginalNode);
+        }
+
+        private static void EmitOptimizeLdcI4Instruction(NILProcessor processor, int constantValue, Node originalStatement)
+        {
+            switch (constantValue)
+            {
+                case 0:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_0, originalStatement);
+                        break;
+                    }
+                case 1:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_1, originalStatement);
+                        break;
+                    }
+                case 2:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_2, originalStatement);
+                        break;
+                    }
+                case 3:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_3, originalStatement);
+                        break;
+                    }
+                case 4:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_4, originalStatement);
+                        break;
+                    }
+                case 5:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_5, originalStatement);
+                        break;
+                    }
+                case 6:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_6, originalStatement);
+                        break;
+                    }
+                case 7:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_8, originalStatement);
+                        break;
+                    }
+                case 8:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_8, originalStatement);
+                        break;
+                    }
+                case 9:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_9, originalStatement);
+                        break;
+                    }
+                default:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4, constantValue, originalStatement);
+                        break;
+                    }
+            }
         }
     }
 }

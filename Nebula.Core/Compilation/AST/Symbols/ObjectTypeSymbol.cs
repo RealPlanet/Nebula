@@ -6,11 +6,13 @@
         public override TypeSymbol BaseType => TypeSymbol.BaseObject;
 
         public ObjectTypeSymbol(string @namespace, string name)
-            : base(name)
+            : base(@namespace, name)
         {
-            Namespace = @namespace;
         }
 
-        public string Namespace { get; }
+        public override string ToString()
+        {
+            return $"{Namespace}::{Name}";
+        }
     }
 }

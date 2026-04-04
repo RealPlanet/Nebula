@@ -9,6 +9,7 @@ using Nebula.Core.Compilation.CST.Tree.Expressions;
 using Nebula.Core.Compilation.CST.Tree.Statements;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
 
 namespace Nebula.LSP
@@ -27,10 +28,12 @@ namespace Nebula.LSP
 
         public static DocumentSymbol ToSymbol(this VariableDeclaration declaration)
         {
+            var name = declaration.SourceCode.ToString(declaration.AssignmentExpression.Identifier.Span);
+
             return new DocumentSymbol
             {
                 Kind = SymbolKind.Variable,
-                Name = declaration.Identifier.Text,
+                Name = name,
                 Range = declaration.Location.ToRange(),
                 SelectionRange = declaration.Location.ToRange(),
             };

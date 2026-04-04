@@ -1,0 +1,23 @@
+namespace "GarbageCollection";
+
+bundle BRef
+{
+    BRef reference;
+}
+
+func void Main() autoexec
+{
+    for(int i = 0; i < 9999; i += 1)
+    {
+        LeakMemory();
+    }
+}
+
+func void LeakMemory()  
+{
+    BRef a = {};
+    BRef b = {};
+
+    a.reference = b;
+    b.reference = a;
+}

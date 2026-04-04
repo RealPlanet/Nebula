@@ -40,29 +40,6 @@ namespace Nebula.Compiler.Tests
             Debug.Assert(op1Text != null);
             Debug.Assert(op2Text != null);
 
-            if (op2 == NodeType.DotToken)
-            {
-                //       op1
-                //      /   \
-                //      a    objAccess
-                //           /  \
-                //          b    c
-
-                using (AssertingEnum? Enum = new(expression))
-                {
-                    Enum.AssertNode(NodeType.BinaryExpression);
-                    Enum.AssertNode(NodeType.NameExpression);
-                    Enum.AssertToken(NodeType.IdentifierToken, "a");
-                    Enum.AssertToken(op1, op1Text);
-                    Enum.AssertNode(NodeType.ObjectVariableAccessExpression);
-                    Enum.AssertToken(NodeType.IdentifierToken, "b");
-                    Enum.AssertToken(op2, op2Text);
-                    Enum.AssertToken(NodeType.IdentifierToken, "c");
-                }
-
-                return;
-            }
-
             if (op1Precedence >= op2Precedence)
             {
                 //       op2
@@ -159,11 +136,17 @@ namespace Nebula.Compiler.Tests
                 {
                     Enum.AssertNode(NodeType.UnaryExpression);
                     Enum.AssertToken(UnaryType, unaryText);
-                    Enum.AssertNode(NodeType.BinaryExpression);
-                    Enum.AssertNode(NodeType.NameExpression);
+                    Enum.AssertNode(BinaryType == NodeType.DotToken ? NodeType.ObjectFieldAccessExpression : NodeType.BinaryExpression);
+                    if (BinaryType != NodeType.DotToken)
+                    {
+                        Enum.AssertNode(NodeType.NameExpression);
+                    }
                     Enum.AssertToken(NodeType.IdentifierToken, "a");
                     Enum.AssertToken(BinaryType, binaryText);
-                    Enum.AssertNode(NodeType.NameExpression);
+                    if (BinaryType != NodeType.DotToken)
+                    {
+                        Enum.AssertNode(NodeType.NameExpression);
+                    }
                     Enum.AssertToken(NodeType.IdentifierToken, "b");
                 }
             }

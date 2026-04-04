@@ -1,0 +1,24 @@
+namespace "ScriptImport";
+
+import "SharedScript";
+
+native void WriteLine(string s);
+native int HashString(string s);
+
+func int EntityPtrFromName(string s)
+{
+    return HashString(s);
+}
+
+func void main() autoexec
+{
+    WriteLine("Importing bundle");
+
+    SharedScript::Entity enemyEnt = {};
+    
+    enemyEnt.IsAlive = true;
+    enemyEnt.Name = "Zombie";
+    enemyEnt.NativePtr = EntityPtrFromName(enemyEnt.Name); 
+
+    SharedScript::PrintEntity(enemyEnt);
+}

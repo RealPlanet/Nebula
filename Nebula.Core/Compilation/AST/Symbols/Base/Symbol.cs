@@ -5,11 +5,14 @@ namespace Nebula.Core.Compilation.AST.Symbols.Base
 {
     public abstract class Symbol
     {
+        public string Namespace { get; }
         public string Name { get; }
 
         public abstract SymbolType SymbolType { get; }
-        private protected Symbol(string name)
+
+        private protected Symbol(string @namespace, string name)
         {
+            Namespace = @namespace;
             Name = name;
         }
 
