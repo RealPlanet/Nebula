@@ -135,7 +135,7 @@ namespace Nebula.Core.Graph
             AbstractUnaryExpression? negated = AbstractNodeFactory.Not(condition.OriginalNode, condition);
             if (negated.ConstantValue.IsNotNull())
             {
-                return new AbstractLiteralExpression(condition.OriginalNode, negated.ConstantValue.Value!);
+                return new AbstractLiteralExpression(condition.OriginalNode, negated.ConstantValue.Value);
             }
 
             return negated;
@@ -145,7 +145,7 @@ namespace Nebula.Core.Graph
         {
             if (condition is AbstractLiteralExpression l)
             {
-                bool value = (bool)l.Value!;
+                bool value = (bool)l.Value;
                 if (value)
                 {
                     condition = null;

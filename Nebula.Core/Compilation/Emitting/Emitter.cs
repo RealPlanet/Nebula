@@ -762,7 +762,7 @@ namespace Nebula.Core.Compilation.Emitting
 
                             if (arrAccess.IndexExpression.ConstantValue.IsNotNull())
                             {
-                                EmitOptimizeLdcI4Instruction(processor, (int)arrAccess.IndexExpression.ConstantValue.Value!, originalStatement);
+                                EmitOptimizeLdcI4Instruction(processor, (int)arrAccess.IndexExpression.ConstantValue.Value, originalStatement);
                             }
                             else
                             {

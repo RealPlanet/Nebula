@@ -752,7 +752,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
             return ParseNameOrFunctionCallExpression();
         }
 
-        private Expression ParseUndefinedLiteral()
+        private LiteralExpression ParseUndefinedLiteral()
         {
             var keyword = MatchToken(NodeType.UndefinedKeyword);
             return new LiteralExpression(_currentSource, keyword, null);

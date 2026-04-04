@@ -14,10 +14,10 @@ namespace Nebula.Core.Compilation.AST.Binding
             {
                 return op.UnaryType switch
                 {
-                    AbstractUnaryType.Negation => new(-(int)operand.ConstantValue.Value!),
-                    AbstractUnaryType.Identity => new((int)operand.ConstantValue.Value!),
-                    AbstractUnaryType.LogicalNegation => new(!(bool)operand.ConstantValue.Value!),
-                    AbstractUnaryType.OnesComplement => new(~(int)operand.ConstantValue.Value!),
+                    AbstractUnaryType.Negation => new(-(int)operand.ConstantValue.Value),
+                    AbstractUnaryType.Identity => new((int)operand.ConstantValue.Value),
+                    AbstractUnaryType.LogicalNegation => new(!(bool)operand.ConstantValue.Value),
+                    AbstractUnaryType.OnesComplement => new(~(int)operand.ConstantValue.Value),
                     _ => throw new Exception($"Unexpected unary operator <{op.UnaryType}>"),
                 };
             }

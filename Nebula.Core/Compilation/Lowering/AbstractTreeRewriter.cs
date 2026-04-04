@@ -6,6 +6,7 @@ using Nebula.Core.Compilation.AST.Tree.Statements.ControlFlow;
 using Nebula.Core.Compilation.AST.Tree.Statements.Loop;
 using System;
 using System.Collections.Immutable;
+using System.IO;
 
 namespace Nebula.Core.Compilation.Lowering
 {
@@ -170,6 +171,11 @@ namespace Nebula.Core.Compilation.Lowering
             if(expr == expression.Initializer)
             {
                 return expression;
+            }
+
+            if(expression.Field is null)
+            {
+                throw new InvalidDataException();
             }
 
             return new AbstractObjectFieldInitializationExpression(expression.OriginalNode, expression.FieldName, expression.Field, expr);

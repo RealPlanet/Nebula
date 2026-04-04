@@ -10,15 +10,16 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression
     {
         public override TypeSymbol ResultType { get; }
         public override AbstractNodeType Type => AbstractNodeType.LiteralExpression;
-        public object? Value => ConstantValue.Value;
+        public object Value => ConstantValue.Value;
         public override AbstractConstant ConstantValue { get; }
 
-        public AbstractLiteralExpression(Node syntax, object value)
+        public AbstractLiteralExpression(Node syntax, object? value)
             : base(syntax)
         {
             if(value == null)
             {
                 ResultType = TypeSymbol.Undefined;
+                value = new();
             }
             else
             {
