@@ -617,17 +617,19 @@ namespace Nebula.Core.Compilation.Emitting
         private void EmitObjectFieldAssignment(NILProcessor processor, AbstractObjectFieldAssignmentExpression node, Node originalStatement)
         {
             //processor.WriteComment("An object reference or pointer is pushed onto the stack.");
-            EmitExpression(processor, node.Target, originalStatement);
+            EmitExpression(processor, node.TargetExpression, originalStatement);
             processor.Emit(InstructionOpcode.Dup, originalStatement);
-
             EmitExpression(processor, node.Expression, originalStatement);
             processor.Emit(InstructionOpcode.Stfld, node.Field.OrdinalPosition, originalStatement);
+            processor.Emit(InstructionOpcode.Ldfld, node.Field.OrdinalPosition, originalStatement);
         }
 
         private void EmitObjectFieldAccess(NILProcessor processor, AbstractObjectFieldAccessExpression node, Node originalStatement)
         {
-            EmitExpression(processor, node.Target, originalStatement);
-            processor.Emit(InstructionOpcode.Ldfld, node.Field.OrdinalPosition, originalStatement);
+            if (node.Mode == AbstractObjectFieldAccessExpression.FieldMode.Read)
+            {
+                processor.Emit(InstructionOpcode.Ldfld, node.Field.OrdinalPosition, originalStatement);
+            }
         }
 
         private void EmitIsDefinedExpression(NILProcessor processor, AbstractIsDefinedExpression node, Node originalStatement)
@@ -642,7 +644,7 @@ namespace Nebula.Core.Compilation.Emitting
             processor.Emit(InstructionOpcode.ChkDef, originalStatement);
         }
 
-        private void EmitArrayInitializationExpression(NILProcessor processor, AbstractArrayInitializationExpression node, Node originalStatement)
+        private static void EmitArrayInitializationExpression(NILProcessor processor, AbstractArrayInitializationExpression node, Node originalStatement)
         {
             processor.Emit(InstructionOpcode.Newarr, originalStatement);
         }
@@ -866,6 +868,8 @@ namespace Nebula.Core.Compilation.Emitting
                     processor.Emit(InstructionOpcode.Clt, originalStatement);
                     processor.Emit(InstructionOpcode.Ldc_i4_0, originalStatement);
                     processor.Emit(InstructionOpcode.Ceq, originalStatement);
+                    break;
+                case AbstractBinaryType.FieldAccess:
                     break;
                 default:
                     throw new Exception($"Unexpected binary operator {SyntaxEx.GetText(node.Operator.NodeType)}");

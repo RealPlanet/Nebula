@@ -232,6 +232,8 @@ namespace nebula {
 			return "ldelem";
 		case VMInstruction::LdSfld:
 			return "ldsfld";
+		case VMInstruction::LdFld:
+			return "ldfld";
 		case VMInstruction::StFld:
 			return "stfld";
 		case VMInstruction::StsFld:

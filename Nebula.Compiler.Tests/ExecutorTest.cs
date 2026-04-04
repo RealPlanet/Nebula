@@ -24,7 +24,28 @@ namespace Nebula.Compiler.Tests
         public static string SamplesFolder => @"..\..\..\..\..\Samples";
 
         [TestMethod]
-        [DynamicData(nameof(GetSamples))]
+        public void AllSamplesCompile()
+        {
+            Core.Compilation.Compiler.Options options = new()
+            {
+                EmitProgram = true,
+                OutputFolder = ".",
+            };
+
+            foreach (var sample in GetAllSamples)
+            {
+                options.Sources.Add(SourceCode.From(sample));
+            }
+
+            bool compileOk = Core.Compilation.Compiler.Compile(options, out Core.Compilation.Compiler.Result? result);
+
+            WriteReport(result.Report);
+
+            Assert.IsTrue(compileOk);
+        }
+
+        [TestMethod]
+        [DynamicData(nameof(GetSamplesWithMetadata))]
         public void AllSamplesRunAsExpected(string path, TestMetadata md)
         {
 
@@ -119,7 +140,19 @@ namespace Nebula.Compiler.Tests
             Console.WriteLine(e.Data);
         }
 
-        private static IEnumerable<object[]> GetSamples
+        private static IEnumerable<string> GetAllSamples
+        {
+            get
+            {
+                Assert.IsTrue(Directory.Exists(SamplesFolder));
+                foreach (string file in Directory.GetFiles(SamplesFolder, "*.nebula"))
+                {
+                    yield return file;
+                }
+            }
+        }
+
+        private static IEnumerable<object[]> GetSamplesWithMetadata
         {
             get
             {

@@ -101,13 +101,7 @@ namespace Nebula.Core.Compilation.Lowering
 
         protected virtual AbstractExpression RewriteObjectFieldAccessExpression(AbstractObjectFieldAccessExpression node)
         {
-            var target = RewriteExpression(node.Target);
-            if (target == node.Target)
-            {
-                return node;
-            }
-
-            return new AbstractObjectFieldAccessExpression(node.OriginalNode, target, node.Field);
+            return node;
         }
 
         protected virtual AbstractArrayAccessExpression RewriteArrayAccessExpression(AbstractArrayAccessExpression node)
@@ -365,16 +359,15 @@ namespace Nebula.Core.Compilation.Lowering
 
         protected virtual AbstractExpression RewriteBundleFieldAssignmentExpression(AbstractObjectFieldAssignmentExpression node)
         {
-            AbstractExpression target = RewriteExpression(node.Target);
+            AbstractExpression targetExpression = RewriteExpression(node.TargetExpression);
             AbstractExpression expression = RewriteExpression(node.Expression);
 
-
-            if (target == node.Target && expression == node.Expression)
+            if (targetExpression == node.TargetExpression && expression == node.Expression)
             {
                 return node;
             }
 
-            return new AbstractObjectFieldAssignmentExpression(node.OriginalNode, target, node.Field, expression);
+            return new AbstractObjectFieldAssignmentExpression(node.OriginalNode, targetExpression, node.Field, expression);
         }
 
         protected virtual AbstractExpression RewriteArrayAssignmentExpression(AbstractArrayAssignmentExpression node)

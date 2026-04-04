@@ -4,6 +4,7 @@ native void WriteLine(string message);
 
 bundle Children
 {
+    Children child;
     int value;
 }
 
@@ -16,9 +17,16 @@ func void main() autoexec
 {
     Root root = {
         child = {
-            value = 10
+            child = {
+                child = {
+                    value = 10
+                }
+            }
         }
     };
 
-    WriteLine("The child value is: " + string(root.child.value));
+    WriteLine("The child value is: " + string(root.child.child.child.value));
+    
+    root.child.child.child.value = 99;
+    WriteLine("The child value is: " + string(root.child.child.child.value));
 }

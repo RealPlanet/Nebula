@@ -127,8 +127,7 @@ namespace Nebula.Core.Utility.Concrete
 
         private static void WriteObjectFieldAssignmentExpression(AbstractObjectFieldAssignmentExpression node, IndentedTextWriter writer)
         {
-            node.Target.WriteTo(writer);
-            node.Field.WriteTo(writer);
+            node.TargetExpression.WriteTo(writer);
             writer.WriteSpace();
             writer.WritePunctuation(NodeType.EqualsToken);
             writer.WriteSpace();
@@ -137,7 +136,6 @@ namespace Nebula.Core.Utility.Concrete
 
         private static void WriteObjectFieldAccessExpression(AbstractObjectFieldAccessExpression node, IndentedTextWriter writer)
         {
-            node.Target.WriteTo(writer);
             node.Field.WriteTo(writer);
         }
 
