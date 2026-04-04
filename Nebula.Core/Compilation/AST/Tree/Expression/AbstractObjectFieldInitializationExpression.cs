@@ -14,7 +14,7 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression
 
         public string FieldName { get; }
 
-        public AbstractBundleField? Field { get; private set; } = null;
+        public AbstractBundleField? Field { get; private set; }
 
         public AbstractExpression Initializer { get; private set; }
 
