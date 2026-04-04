@@ -337,6 +337,16 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
 	case VMInstruction::Wait_n: // String on stack
 	case VMInstruction::Endon: // String on stack
 	case VMInstruction::Notify: // String on stack
+	case VMInstruction::Ldc_i4_0:
+	case VMInstruction::Ldc_i4_1:
+	case VMInstruction::Ldc_i4_2:
+	case VMInstruction::Ldc_i4_3:
+	case VMInstruction::Ldc_i4_4:
+	case VMInstruction::Ldc_i4_5:
+	case VMInstruction::Ldc_i4_6:
+	case VMInstruction::Ldc_i4_7:
+	case VMInstruction::Ldc_i4_8:
+	case VMInstruction::Ldc_i4_9:
 	{
 		return { /* No arguments */ };
 	}
@@ -420,14 +430,6 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
 		assert(processed == args[0].size());
 		return { converted };
 	}
-	case VMInstruction::Ldc_i4_0:
-	{
-		return { 0 };
-	}
-	case VMInstruction::Ldc_i4_1:
-	{
-		return { 1 };
-	}
 	case VMInstruction::Ldc_s:
 	{
 		assert(args.size() == 1);
@@ -456,9 +458,11 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
 		}
 		}
 
+		break;
 	}
 	case VMInstruction::LastInstruction:
-		__debugbreak(); //  should Not happen
+		assert(false);
+		break;
 	}
 
 
@@ -734,6 +738,46 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 	case VMInstruction::Ldc_i4_1:
 	{
 		stack.Push(1);
+		return InstructionErrorCode::None;
+	}
+	case VMInstruction::Ldc_i4_2:
+	{
+		stack.Push(2);
+		return InstructionErrorCode::None;
+	}
+	case VMInstruction::Ldc_i4_3:
+	{
+		stack.Push(3);
+		return InstructionErrorCode::None;
+	}
+	case VMInstruction::Ldc_i4_4:
+	{
+		stack.Push(4);
+		return InstructionErrorCode::None;
+	}
+	case VMInstruction::Ldc_i4_5:
+	{
+		stack.Push(5);
+		return InstructionErrorCode::None;
+	}
+	case VMInstruction::Ldc_i4_6:
+	{
+		stack.Push(6);
+		return InstructionErrorCode::None;
+	}
+	case VMInstruction::Ldc_i4_7:
+	{
+		stack.Push(7);
+		return InstructionErrorCode::None;
+	}
+	case VMInstruction::Ldc_i4_8:
+	{
+		stack.Push(8);
+		return InstructionErrorCode::None;
+	}
+	case VMInstruction::Ldc_i4_9:
+	{
+		stack.Push(9);
 		return InstructionErrorCode::None;
 	}
 	case VMInstruction::Ldc_i4:

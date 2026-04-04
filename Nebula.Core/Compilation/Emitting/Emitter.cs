@@ -1118,6 +1118,46 @@ namespace Nebula.Core.Compilation.Emitting
                         processor.Emit(InstructionOpcode.Ldc_i4_1, originalStatement);
                         break;
                     }
+                case 2:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_2, originalStatement);
+                        break;
+                    }
+                case 3:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_3, originalStatement);
+                        break;
+                    }
+                case 4:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_4, originalStatement);
+                        break;
+                    }
+                case 5:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_5, originalStatement);
+                        break;
+                    }
+                case 6:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_6, originalStatement);
+                        break;
+                    }
+                case 7:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_8, originalStatement);
+                        break;
+                    }
+                case 8:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_8, originalStatement);
+                        break;
+                    }
+                case 9:
+                    {
+                        processor.Emit(InstructionOpcode.Ldc_i4_9, originalStatement);
+                        break;
+                    }
                 default:
                     {
                         processor.Emit(InstructionOpcode.Ldc_i4, constantValue, originalStatement);
