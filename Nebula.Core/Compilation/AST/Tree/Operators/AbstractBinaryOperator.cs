@@ -83,7 +83,13 @@ namespace Nebula.Core.Compilation.AST.Tree.Operators
 
         private AbstractBinaryOperator(NodeType tokenType, AbstractBinaryType boundType, TypeSymbol type)
             : this(tokenType, boundType, type, type, type)
-        { }
+        {
+        }
+
+        public static AbstractBinaryOperator? Bind(TypeSymbol leftObj, TypeSymbol result)
+        {
+            return new AbstractBinaryOperator(NodeType.DotToken, AbstractBinaryType.FieldAccess, leftObj, result);
+        }
 
         public static AbstractBinaryOperator? Bind(NodeType tokenType, TypeSymbol leftType, TypeSymbol rightLeft)
         {

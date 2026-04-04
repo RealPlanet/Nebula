@@ -101,7 +101,7 @@
         UnaryExpression,
         BinaryExpression,
         AssignmentExpression,
-        ObjectVariableAccessExpression,
+        ObjectFieldAccessExpression,
         ArrayAccessExpression,
         NameExpression,
         ParenthesizedExpression,

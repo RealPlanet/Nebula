@@ -40,54 +40,6 @@ namespace Nebula.Compiler.Tests
             Debug.Assert(op1Text != null);
             Debug.Assert(op2Text != null);
 
-            if (op1 == NodeType.DotToken)
-            {
-                //       op2
-                //      /   \
-                //   objAcc  c
-                //  /  \
-                // a    b
-
-                using (AssertingEnum? Enum = new(expression))
-                {
-                    Enum.AssertNode(NodeType.BinaryExpression);
-                    Enum.AssertNode(NodeType.ObjectVariableAccessExpression);
-                    Enum.AssertToken(NodeType.IdentifierToken, "a");
-                    Enum.AssertToken(op1, op1Text);
-
-                    Enum.AssertToken(NodeType.IdentifierToken, "b");
-                    Enum.AssertToken(op2, op2Text);
-
-                    Enum.AssertNode(NodeType.NameExpression);
-                    Enum.AssertToken(NodeType.IdentifierToken, "c");
-                }
-
-                return;
-            }
-
-            if (op2 == NodeType.DotToken)
-            {
-                //       op1
-                //      /   \
-                //      a    objAccess
-                //           /  \
-                //          b    c
-
-                using (AssertingEnum? Enum = new(expression))
-                {
-                    Enum.AssertNode(NodeType.BinaryExpression);
-                    Enum.AssertNode(NodeType.NameExpression);
-                    Enum.AssertToken(NodeType.IdentifierToken, "a");
-                    Enum.AssertToken(op1, op1Text);
-                    Enum.AssertNode(NodeType.ObjectVariableAccessExpression);
-                    Enum.AssertToken(NodeType.IdentifierToken, "b");
-                    Enum.AssertToken(op2, op2Text);
-                    Enum.AssertToken(NodeType.IdentifierToken, "c");
-                }
-
-                return;
-            }
-
             if (op1Precedence >= op2Precedence)
             {
                 //       op2
@@ -152,7 +104,7 @@ namespace Nebula.Compiler.Tests
             Debug.Assert(unaryText != null);
             Debug.Assert(binaryText != null);
 
-            if (unaryPrecedence > binaryPrecedence)
+            if (unaryPrecedence >= binaryPrecedence)
             {
                 //   binary
                 //   /    \
@@ -184,7 +136,7 @@ namespace Nebula.Compiler.Tests
                 {
                     Enum.AssertNode(NodeType.UnaryExpression);
                     Enum.AssertToken(UnaryType, unaryText);
-                    Enum.AssertNode(BinaryType == NodeType.DotToken ? NodeType.ObjectVariableAccessExpression : NodeType.BinaryExpression);
+                    Enum.AssertNode(BinaryType == NodeType.DotToken ? NodeType.ObjectFieldAccessExpression : NodeType.BinaryExpression);
                     if (BinaryType != NodeType.DotToken)
                     {
                         Enum.AssertNode(NodeType.NameExpression);

@@ -18,6 +18,7 @@
         GreaterThanOrEqual,
         BitwiseAnd,
         BitwiseOr,
-        BitwiseXor
+        BitwiseXor,
+        FieldAccess
     }
 }

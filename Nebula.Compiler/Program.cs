@@ -127,7 +127,7 @@ namespace Nebula.Compiler
                     continue;
                 }
 
-                if (!Script.FromFile(referencePath, OnReportCallback, out Script loadedScript))
+                if (!Script.FromFile(referencePath, OnReportCallback, out Script? loadedScript))
                 {
                     Writer.WriteLine($"Could not load compiled script at '{referencePath}'", ConsoleColor.Red);
                     continue;

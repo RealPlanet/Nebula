@@ -11,14 +11,14 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression.Bundles
         public override TypeSymbol ResultType => Expression.ResultType;
         public override AbstractNodeType Type => AbstractNodeType.ObjectFieldAssignmentExpression;
 
-        public AbstractExpression Target { get; }
+        public AbstractExpression TargetExpression { get; }
         public AbstractBundleField Field { get; }
         public AbstractExpression Expression { get; }
 
-        public AbstractObjectFieldAssignmentExpression(Node syntax, AbstractExpression target, AbstractBundleField field, AbstractExpression expression)
+        public AbstractObjectFieldAssignmentExpression(Node syntax, AbstractExpression targetExpression, AbstractBundleField field, AbstractExpression expression)
             : base(syntax)
         {
-            Target = target;
+            TargetExpression = targetExpression;
             Field = field;
             Expression = expression;
         }

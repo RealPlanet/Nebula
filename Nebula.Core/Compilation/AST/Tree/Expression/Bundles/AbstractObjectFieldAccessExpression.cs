@@ -9,15 +9,20 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression.Bundles
     public sealed class AbstractObjectFieldAccessExpression
         : AbstractExpression
     {
+        public enum FieldMode
+        {
+            Read,
+            Write,
+        }
+
         public override AbstractNodeType Type => AbstractNodeType.ObjectFieldAccessExpression;
         public override TypeSymbol ResultType => Field.FieldType;
-        public AbstractExpression Target { get; }
         public AbstractBundleField Field { get; }
+        public FieldMode Mode { get; set; } = FieldMode.Read;
 
-        public AbstractObjectFieldAccessExpression(Node syntax, AbstractExpression target, AbstractBundleField field)
+        public AbstractObjectFieldAccessExpression(Node syntax, AbstractBundleField field)
             : base(syntax)
         {
-            Target = target;
             Field = field;
         }
     }
