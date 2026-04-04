@@ -13,12 +13,11 @@ namespace Nebula.Interop.SafeHandles
     public sealed class Script
         : SafeHandleZeroOrMinusOneIsInvalid
     {
-        public string Namespace { get; private set; }
-
-        public IReadOnlyDictionary<string, BundleDefinition> Bundles => _bundles;
-        public IReadOnlyDictionary<string, Function> Functions => _functions;
+        public string Namespace { get; private set; } = string.Empty;
 
         public IReadOnlyDictionary<string, VariableDefinition> Globals => _globals;
+        public IReadOnlyDictionary<string, BundleDefinition> Bundles => _bundles;
+        public IReadOnlyDictionary<string, Function> Functions => _functions;
 
         private readonly Dictionary<string, BundleDefinition> _bundles = new Dictionary<string, BundleDefinition>();
         private readonly Dictionary<string, Function> _functions = new Dictionary<string, Function>();
@@ -49,10 +48,29 @@ namespace Nebula.Interop.SafeHandles
         public void RefreshFromNative()
         {
             IntPtr namespaceHandle = NativeMethods.Script_GetNamespace(handle);
-            Namespace = Marshal.PtrToStringAnsi(namespaceHandle);
+            Namespace = Marshal.PtrToStringAnsi(namespaceHandle) ?? 
+                throw new NullReferenceException("No namespace found in compiled script");
 
+            LoadGlobalsFromNative();
             LoadBundlesFromNative();
             LoadFunctionsFromNative();
+        }
+
+        private void LoadGlobalsFromNative()
+        {
+            _globals.Clear();
+
+            IntPtr listHandle = NativeMethods.Script_GetGlobals(handle, out int count);
+            IntPtr[] rawPtrs = new IntPtr[count];
+            Marshal.Copy(listHandle, rawPtrs, 0, count);
+            NativeMethods.Script_DestroyGlobalsList(listHandle);
+
+            for (int i = 0; i < count; i++)
+            {
+                IntPtr itemHandle = rawPtrs[i];
+                VariableDefinition global = new VariableDefinition(Namespace, itemHandle, i);
+                _globals.Add(global.Name, global);
+            }
         }
 
         private void LoadBundlesFromNative()
@@ -108,6 +126,9 @@ namespace Nebula.Interop.SafeHandles
             public static extern IntPtr Script_GetNamespace(IntPtr handle);
 
             [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern IntPtr Script_GetGlobals(IntPtr handle, out int globalCount);
+
+            [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]
             public static extern IntPtr Script_GetBundleDefinitions(IntPtr handle, out int definitionCount);
 
             [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]
@@ -116,6 +137,8 @@ namespace Nebula.Interop.SafeHandles
             [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]
             public static extern void Script_Destroy(IntPtr handle);
 
+            [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern void Script_DestroyGlobalsList(IntPtr handle);
             [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]
             public static extern void Script_DestroyBundleDefinitionList(IntPtr handle);
             [DllImport(NebulaConstants.DllName, CallingConvention = CallingConvention.Cdecl)]

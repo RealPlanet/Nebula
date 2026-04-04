@@ -9,6 +9,7 @@
 namespace nebula {
     class Interpreter;
     class Script;
+    class GlobalVariable;
     class BundleField;
     class BundleDefinition;
     class Bundle;
@@ -40,6 +41,7 @@ extern "C"
     typedef const nebula::Function** Functions;
     // A list of definition pointers
     typedef const nebula::BundleDefinition** BundleDefinitions;
+    typedef const nebula::GlobalVariable** GlobalVariableDefinitions;
 
 
     // Generic
@@ -86,6 +88,8 @@ extern "C"
     // Script
     __declspec(dllexport) nebula::Script* Script_FromFile(const char* path, nebula::interop::ReportCallbackPtr reportCallback);
     __declspec(dllexport) const char* Script_GetNamespace(nebula::Script* handle);
+    __declspec(dllexport) GlobalVariableDefinitions Script_GetGlobals(nebula::Script* handle, int* outCount);
+    __declspec(dllexport) void Script_DestroyGlobalsList(GlobalVariableDefinitions handle);
     __declspec(dllexport) Functions Script_GetFunctions(nebula::Script* handle, int* outCount);
     __declspec(dllexport) void Script_DestroyFunctionList(Functions handle); // Destroy list, not elements
     __declspec(dllexport) BundleDefinitions Script_GetBundleDefinitions(nebula::Script* handle, int* outCount);
@@ -111,6 +115,10 @@ extern "C"
     __declspec(dllexport) float DataStackVariant_GetFloatValue(nebula::DataStackVariant* handle);
     __declspec(dllexport) nebula::Bundle* DataStackVariant_GetBundleValue(nebula::DataStackVariant* handle);
     __declspec(dllexport) nebula::VariantArray* DataStackVariant_GetArrayValue(nebula::DataStackVariant* handle);
+
+    // Variable Definition
+    __declspec(dllexport) const char* VariableDefinition_GetName(nebula::GlobalVariable* handle);
+    __declspec(dllexport) nebula::DataStackVariantIndex VariableDefinition_GetType(nebula::GlobalVariable* handle);
 
     // BundleField
     __declspec(dllexport) const char* BundleField_GetName(nebula::BundleFieldDefinition* handle);

@@ -125,15 +125,28 @@ bool LiteralScriptParser::ParseGlobals()
 	SkipWhitespace(true);
 	while (Current() != ']' && Current() != '\n' && Current() != '\r')
 	{
+		std::string name;
+		if (!ReadLiteralUntil(name, ':', true))
+		{
+			return false;
+		}
+
+		if (!MatchWord(":"))
+		{
+			return false;
+		}
+
 		DataStackVariantIndex index;
 		if (!ParseType(index, ','))
 		{
 			return false;
 		}
-		this->m_ScriptBuilder->AddGlobal(index);
+		this->m_ScriptBuilder->AddGlobal(name, index);
 
 		if (Peek(","))
+		{
 			MatchWord(",");
+		}
 
 		SkipWhitespace(true);
 	}

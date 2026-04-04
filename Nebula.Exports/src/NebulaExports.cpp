@@ -613,9 +613,34 @@ const char* Script_GetNamespace(nebula::Script* handle)
 		return nullptr;
 	}
 
-	nebula::Script* script = ((nebula::Script*)handle);
+	return handle->Namespace().data();
+}
 
-	return script->Namespace().data();
+GlobalVariableDefinitions Script_GetGlobals(nebula::Script* handle, int* outCount)
+{
+	*outCount = -1;
+	if (handle == nullptr)
+	{
+		return nullptr;
+	}
+
+	auto& globals = handle->Globals();
+	auto count = globals.size();
+	*outCount = (int)count;
+	GlobalVariableDefinitions result = new const nebula::GlobalVariable * [count];
+
+	int i{ 0 };
+	for (auto it = globals.begin(); it != globals.end(); it++, i++) {
+		auto ptr = &(*it);
+		result[i] = ptr;
+	}
+
+	return result;
+}
+
+void Script_DestroyGlobalsList(GlobalVariableDefinitions handle)
+{
+	delete[] handle;
 }
 
 Functions Script_GetFunctions(nebula::Script* handle, int* outCount)
@@ -826,6 +851,33 @@ nebula::VariantArray* DataStackVariant_GetArrayValue(nebula::DataStackVariant* h
 	}
 
 	return (nebula::VariantArray*)it->get();
+}
+
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+//      VARIABLE DEFINITION
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+
+
+const char* VariableDefinition_GetName(nebula::GlobalVariable* handle)
+{
+	if (handle == nullptr)
+	{
+		return nullptr;
+	}
+
+	return handle->GetName().c_str();
+}
+
+nebula::DataStackVariantIndex VariableDefinition_GetType(nebula::GlobalVariable* handle)
+{
+	if (handle == nullptr)
+	{
+		return nebula::DataStackVariantIndex::_UnknownType;
+	}
+
+	return handle->GetType();
 }
 
 /////////////////////////////////////////////////////////

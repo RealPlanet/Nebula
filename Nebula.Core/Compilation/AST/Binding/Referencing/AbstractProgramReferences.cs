@@ -6,6 +6,7 @@ using Nebula.Interop.Structures;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Nebula.Core.Compilation.AST.Binding.Referencing
@@ -42,7 +43,7 @@ namespace Nebula.Core.Compilation.AST.Binding.Referencing
             AllReferences.Add(script.Namespace, script);
         }
 
-        internal bool TryGetGlobalVariable(string @namespace, string variableName, out VariableSymbol? variable)
+        internal bool TryGetGlobalVariable(string @namespace, string variableName, [NotNullWhen(true)] out VariableSymbol? variable)
         {
             if(AllPrograms.TryGetValue(@namespace, out var program))
             {
@@ -107,10 +108,11 @@ namespace Nebula.Core.Compilation.AST.Binding.Referencing
             }
 
             AbstractConstant? constants = null;
-            if(compiledVariable.ConstantValue != null)
-            {
-                constants = new AbstractConstant(compiledVariable.ConstantValue);
-            }
+            // Do not support constant folding for the moment, so we load the value from the imported script always
+            //if(compiledVariable.ConstantValue != null)
+            //{
+            //    constants = new AbstractConstant(compiledVariable.ConstantValue);
+            //}
 
             variable = new GlobalVariableSymbol(compiledVariable.Namespace,
                                                 compiledVariable.Name,
