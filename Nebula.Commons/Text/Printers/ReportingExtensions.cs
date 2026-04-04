@@ -70,26 +70,27 @@ namespace Nebula.Commons.Text.Printers
         {
             SourceCode text = msg.Location.Text!;
             string fileName = msg.Location.FileName;
-            int startLine = msg.Location.StartLine + 1;
+            int startLineIndex = msg.Location.StartLine + 1;
             int startCharacter = msg.Location.StartCharacter + 1;
-            int endLine = msg.Location.EndLine + 1;
+            int endLineIndex = msg.Location.EndLine + 1;
             int endCharacter = msg.Location.EndCharacter + 1;
 
             TextSpan span = msg.Location.Span;
             int lineIndex = text.GetLineIndex(span.Start);
             int lineNumber = lineIndex + 1;
             TextLine? line = text.Lines[lineIndex];
+            TextLine? endLine = text.Lines[endLineIndex];
             int character = span.Start - line.Start + 1;
 
             writer.WriteLine();
             ConsoleColor messageColor = msg.IsWarning ? ConsoleColor.DarkYellow : ConsoleColor.DarkRed;
             writer.SetForeground(messageColor);
-            writer.Write($"{fileName}({startLine},{startCharacter},{endLine},{endCharacter}): ");
+            writer.Write($"{fileName}({startLineIndex},{startCharacter},{endLineIndex},{endCharacter}): ");
             writer.WriteLine(msg);
             writer.ResetColor();
 
             TextSpan prefixSpan = TextSpan.FromBounds(line.Start, span.Start);
-            TextSpan suffixSpan = TextSpan.FromBounds(span.End, line.End);
+            TextSpan suffixSpan = TextSpan.FromBounds(span.End, endLine.End);
 
             string? prefix = text.ToString(prefixSpan);
             string? errorText = text.ToString(span);
