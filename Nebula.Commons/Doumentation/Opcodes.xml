@@ -96,6 +96,30 @@
 	<Opcode Type="Ldc_i4_1">
 		<Description Text="Load constant i32 1"/>
 	</Opcode>
+	<Opcode Type="Ldc_i4_2">
+		<Description Text="Load constant i32 2"/>
+	</Opcode>
+	<Opcode Type="Ldc_i4_3">
+		<Description Text="Load constant i32 3"/>
+	</Opcode>
+	<Opcode Type="Ldc_i4_4">
+		<Description Text="Load constant i32 4"/>
+	</Opcode>
+	<Opcode Type="Ldc_i4_5">
+		<Description Text="Load constant i32 5"/>
+	</Opcode>
+	<Opcode Type="Ldc_i4_6">
+		<Description Text="Load constant i32 6"/>
+	</Opcode>
+	<Opcode Type="Ldc_i4_7">
+		<Description Text="Load constant i32 7"/>
+	</Opcode>
+	<Opcode Type="Ldc_i4_8">
+		<Description Text="Load constant i32 8"/>
+	</Opcode>
+	<Opcode Type="Ldc_i4_9">
+		<Description Text="Load constant i32 9"/>
+	</Opcode>
 	<Opcode Type="Ldc_i4">
 		<Description Text="Load constant i32"/>
 	</Opcode>

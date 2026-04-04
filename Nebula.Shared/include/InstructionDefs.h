@@ -59,6 +59,14 @@ namespace nebula {
 		LdNull,
 		Ldc_i4_0,
 		Ldc_i4_1,
+		Ldc_i4_2,
+		Ldc_i4_3,
+		Ldc_i4_4,
+		Ldc_i4_5,
+		Ldc_i4_6,
+		Ldc_i4_7,
+		Ldc_i4_8,
+		Ldc_i4_9,
 		Ldc_i4,
 		Ldc_r4,
 		Ldc_s,
@@ -190,6 +198,22 @@ namespace nebula {
 			return "ldc_i4_0";
 		case VMInstruction::Ldc_i4_1:
 			return "ldc_i4_1";
+		case VMInstruction::Ldc_i4_2:
+			return "ldc_i4_2";
+		case VMInstruction::Ldc_i4_3:
+			return "ldc_i4_3";
+		case VMInstruction::Ldc_i4_4:
+			return "ldc_i4_4";
+		case VMInstruction::Ldc_i4_5:
+			return "ldc_i4_5";
+		case VMInstruction::Ldc_i4_6:
+			return "ldc_i4_6";
+		case VMInstruction::Ldc_i4_7:
+			return "ldc_i4_7";
+		case VMInstruction::Ldc_i4_8:
+			return "ldc_i4_8";
+		case VMInstruction::Ldc_i4_9:
+			return "ldc_i4_9";
 		case VMInstruction::Ldc_i4:
 			return "ldc_i4";
 		case VMInstruction::Ldc_s:
@@ -254,6 +278,14 @@ namespace nebula {
 			{"ldnull",		VMInstruction::LdNull		},
 			{"ldc_i4_0",	VMInstruction::Ldc_i4_0		},
 			{"ldc_i4_1",	VMInstruction::Ldc_i4_1		},
+			{"ldc_i4_2",	VMInstruction::Ldc_i4_2		},
+			{"ldc_i4_3",	VMInstruction::Ldc_i4_3		},
+			{"ldc_i4_4",	VMInstruction::Ldc_i4_4		},
+			{"ldc_i4_5",	VMInstruction::Ldc_i4_5		},
+			{"ldc_i4_6",	VMInstruction::Ldc_i4_6		},
+			{"ldc_i4_7",	VMInstruction::Ldc_i4_7		},
+			{"ldc_i4_8",	VMInstruction::Ldc_i4_8		},
+			{"ldc_i4_9",	VMInstruction::Ldc_i4_9		},
 			{"ldc_i4",		VMInstruction::Ldc_i4		},
 			{"ldc_r4",		VMInstruction::Ldc_r4		},
 			{"ldc_s",		VMInstruction::Ldc_s		},
