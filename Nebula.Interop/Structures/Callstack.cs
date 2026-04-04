@@ -19,7 +19,7 @@ namespace Nebula.Interop.Structures
                 int count = FrameCount;
                 if (count <= 0)
                 {
-                    return null;
+                    throw new IndexOutOfRangeException("No frames in callstack");
                 }
 
 

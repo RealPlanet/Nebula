@@ -17,7 +17,7 @@ namespace Nebula.Interop.Structures
         {
             Type = (TypeIdentifier)NativeMethods.BundleField_GetType(handle);
             IntPtr str = NativeMethods.BundleField_GetName(handle);
-            Name = Marshal.PtrToStringAnsi(str);
+            Name = Marshal.PtrToStringAnsi(str) ?? "NO_NAME";
         }
 
         public TypeIdentifier Type { get; }
