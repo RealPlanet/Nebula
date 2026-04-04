@@ -2,6 +2,7 @@
 using Nebula.Commons.Debugger;
 using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
+using Nebula.Commons.Text.Printers;
 using Nebula.Interop.Enumerators;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
@@ -198,9 +199,9 @@ namespace Nebula.CodeGeneration.Writer
             writer.Write("[ ");
 
             int i = 0;
-            foreach(var variable in variables)
+            foreach (var variable in variables)
             {
-                writer.WriteVariable(variable);
+                writer.WriteVariable(variable, withName: true);
 
                 if (i != variables.Count - 1)
                 {
@@ -223,7 +224,7 @@ namespace Nebula.CodeGeneration.Writer
             for (int i = 0; i < variables.Count; i++)
             {
                 VariableDefinition variable = variables[i];
-                writer.WriteVariable(variable);
+                writer.WriteVariable(variable, withName: false);
 
                 if (i != variables.Count - 1)
                 {
@@ -262,11 +263,15 @@ namespace Nebula.CodeGeneration.Writer
             writer.Write(param.Name);
         }
 
-        public static void WriteVariable(this IndentedTextWriter writer, VariableDefinition param)
+        public static void WriteVariable(this IndentedTextWriter writer, VariableDefinition param, bool withName)
         {
+            if (withName)
+            {
+                writer.Write(param.Name);
+                writer.Write(" : ");
+            }
+
             writer.Write(param.VariableType.Name.ToLower());
-            //writer.WriteSpace();
-            //writer.Write(param.Index);
         }
 
         public static void WriteInstruction(this IndentedTextWriter writer, Instruction instruction, int labelCount)

@@ -106,8 +106,8 @@ bool ScriptBuilder::AddBundle(BundleDefinition&& bundle)
 	return true;
 }
 
-bool ScriptBuilder::AddGlobal(DataStackVariantIndex type)
+bool ScriptBuilder::AddGlobal(const std::string& name, DataStackVariantIndex type)
 {
-	m_InternalScript->m_Globals.emplace_back(type);
+	m_InternalScript->m_Globals.emplace_back(name, type);
 	return true;
 }

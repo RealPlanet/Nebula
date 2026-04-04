@@ -172,9 +172,9 @@ void InterpreterMemory::AddGlobals(const Script* script)
     std::vector<Variable> variables{};
     variables.reserve(script->Globals().size());
 
-    for (auto& globalType : script->Globals())
+    for (auto& global : script->Globals())
     {
-        variables.emplace_back(globalType);
+        variables.emplace_back(global.GetType());
     }
     m_ScriptGlobals[script->Namespace()] = variables;
 }

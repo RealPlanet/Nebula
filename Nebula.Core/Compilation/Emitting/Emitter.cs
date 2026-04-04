@@ -141,14 +141,23 @@ namespace Nebula.Core.Compilation.Emitting
 
         private void EmitGlobals(AbstractProgram program)
         {
+            var allCompiledNamespaces = program.References.AllPrograms.Keys.ToHashSet();
+            var usableReferences = program.References.AllReferences
+                .Where(kvp => !allCompiledNamespaces.Contains(kvp.Key))
+                .Select(kvp => kvp.Value);
 
             // Declare the referenced global variables, I don't really like this solution but what w
-            foreach (var reference in program.References.AllReferences.Values)
+            foreach (var reference in usableReferences)
             {
                 foreach (var globalReference in reference.Globals.Values)
                 {
-                    Debugger.Break();
-                    // TODO
+                    if (!program.References.TryGetGlobalVariable(globalReference.Namespace, globalReference.Name, out var symbol))
+                    {
+                        throw new InvalidDataException();
+                    }
+
+                    VariableDefinition variableDefinition = GenerateVariableDefinition(globalReference.OrdinalPosition, symbol);
+                    _currentContext.Globals[symbol] = variableDefinition;
                 }
             }
 
@@ -157,8 +166,9 @@ namespace Nebula.Core.Compilation.Emitting
                 int tmpGlobalCount = 0;
                 foreach (var globalReference in otherProgram.Globals.Keys)
                 {
-                    VariableDefinition variableDefinition = GenerateVariableDefinition(ref tmpGlobalCount, globalReference);
+                    VariableDefinition variableDefinition = GenerateVariableDefinition(tmpGlobalCount, globalReference);
                     _currentContext.Globals[globalReference] = variableDefinition;
+                    tmpGlobalCount++;
                 }
             }
 
@@ -166,17 +176,18 @@ namespace Nebula.Core.Compilation.Emitting
             // Define our local scope globals
             foreach (var variable in program.Globals.Keys)
             {
-                VariableDefinition variableDefinition = GenerateVariableDefinition(ref localGlobalCount, variable);
+                VariableDefinition variableDefinition = GenerateVariableDefinition(localGlobalCount, variable);
                 variableDefinition.Namespace = string.Empty;
 
                 _currentContext.Globals[variable] = variableDefinition;
                 _currentContext.Assembly.TypeDefinition.Globals.Add(variableDefinition);
+                localGlobalCount++;
             }
 
-            VariableDefinition GenerateVariableDefinition(ref int globalCount, VariableSymbol variable)
+            VariableDefinition GenerateVariableDefinition(int globalCount, VariableSymbol variable)
             {
                 TypeReference typeReference = _knownTypes[variable.Type.BaseType];
-                VariableDefinition variableDefinition = new(typeReference, variable.Namespace, variable.Name, globalCount++);
+                VariableDefinition variableDefinition = new(typeReference, variable.Namespace, variable.Name, globalCount);
                 if (variable.Type is ObjectTypeSymbol objSymbol)
                 {
                     variableDefinition.SourceNamespace = objSymbol.Namespace;
