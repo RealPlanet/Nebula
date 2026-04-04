@@ -3,6 +3,7 @@ using Nebula.Interop.Interfaces;
 using Nebula.Interop.Structures;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace Nebula.Interop.SafeHandles
@@ -29,7 +30,7 @@ namespace Nebula.Interop.SafeHandles
             SetHandle(handle);
         }
 
-        public static bool FromFile(string path, ScriptParseReportCallback reportCallback, out Script managedScript)
+        public static bool FromFile(string path, ScriptParseReportCallback reportCallback, [NotNullWhen(true)] out Script? managedScript)
         {
             IntPtr reportFuncPtr = Marshal.GetFunctionPointerForDelegate(reportCallback);
             IntPtr scriptHandle = NativeMethods.Script_FromFile(path, reportFuncPtr);
