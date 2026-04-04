@@ -572,8 +572,7 @@ namespace Nebula.Core.Compilation.AST.Binding
 
             if (!variable.Type.IsArray)
             {
-                // TODO Report, must be array
-                //_binderReport.ReportPrimitiveTypesDontHaveFields(variable.Name, syntax.Identifier.Location);
+                _binderReport.ReportVariableNotOfType(variable.Name, TypeSymbol.BaseArray, syntax.Location);
                 return new AbstractErrorExpression(syntax);
             }
 
@@ -987,7 +986,7 @@ namespace Nebula.Core.Compilation.AST.Binding
             {
                 if (function.ReturnType != TypeSymbol.Void && function.ReturnType != TypeSymbol.BaseObject)
                 {
-                    // TODO :: Report
+                    _binderReport.ReportAsyncVariableMustBeVoidOrObject(function, expr.Location);
                     return new AbstractErrorExpression(expr);
                 }
             }

@@ -61,6 +61,15 @@ namespace Nebula.Commons.Reporting.Strings {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Function &apos;{0}&apos; cannot be async invoked because it does not return void or object..
+        /// </summary>
+        public static string AsyncFunctionCallMustReturnVoidOrObject {
+            get {
+                return ResourceManager.GetString("AsyncFunctionCallMustReturnVoidOrObject", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Attribute &apos;{0}&apos; requires void return parameter..
         /// </summary>
         public static string AttributeRequiresVoidReturnType {
@@ -183,6 +192,15 @@ namespace Nebula.Commons.Reporting.Strings {
         public static string VariableAlreadyDeclared {
             get {
                 return ResourceManager.GetString("VariableAlreadyDeclared", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Variable &apos;{0}&apos; is not of type &apos;{1}&apos;..
+        /// </summary>
+        public static string VariableNotOfType {
+            get {
+                return ResourceManager.GetString("VariableNotOfType", resourceCulture);
             }
         }
     }

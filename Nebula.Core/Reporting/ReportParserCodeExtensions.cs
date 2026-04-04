@@ -2,6 +2,7 @@
 using Nebula.Commons.Reporting.Strings;
 using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
+using Nebula.Core.Compilation.AST.Symbols;
 using Nebula.Shared.Enumerators;
 
 namespace Nebula.Core.Reporting
@@ -99,6 +100,20 @@ namespace Nebula.Core.Reporting
             (EParserMessages code, string template) = ParserMessagesProvider.VariableAlreadyDeclared;
             string message = string.Format(template, token.Text);
             r.PushError(message, token.Location);
+        }
+
+        public static void ReportVariableNotOfType(this Report r, string variableName, TypeSymbol type, TextLocation location)
+        {
+            (EParserMessages code, string template) = ParserMessagesProvider.VariableNotOfType;
+            string message = string.Format(template, variableName, type.ToString());
+            r.PushError(message, location);
+        }
+
+        public static void ReportAsyncVariableMustBeVoidOrObject(this Report r, FunctionSymbol symbol, TextLocation location)
+        {
+            (EParserMessages code, string template) = ParserMessagesProvider.AsyncFunctionCallMustReturnVoidOrObject;
+            string message = string.Format(template, symbol.Name);
+            r.PushError(message, location);
         }
     }
 }
