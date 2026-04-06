@@ -223,12 +223,14 @@ namespace Nebula.Core.Compilation.AST.Binding
                 foreach (var kvp in _currentProgram.Globals)
                 {
                     var variable = kvp.Value;
+                    if (variable.Initializer is AbstractDeclarationAssignmentExpression declarationAssignment)
+                    {
+                        var initializer = declarationAssignment.Expression;
+                        var statement = new AbstractExpressionStatement(variable.OriginalNode,
+                                                                        AbstractNodeFactory.Assignment(variable.OriginalNode, variable.Variable, initializer));
 
-                    var initializer = ((AbstractDeclarationAssignmentExpression)variable.Initializer).Expression;
-                    var statement = new AbstractExpressionStatement(variable.OriginalNode,
-                                                                    AbstractNodeFactory.Assignment(variable.OriginalNode, variable.Variable, initializer));
-
-                    statements.Add(statement);
+                        statements.Add(statement);
+                    }
                 }
 
                 AbstractBlockStatement initializerBody = AbstractNodeFactory.Block(statements.First().OriginalNode, statements.ToArray());
@@ -867,7 +869,7 @@ namespace Nebula.Core.Compilation.AST.Binding
                             if (fieldToInitialize is null)
                             {
                                 _binderReport.ReportFieldDoesNotExist(((ObjectFieldInitializationExpression)fieldInitializationExpression.OriginalNode).Identifier);
-                                return false;
+                                continue;
                             }
 
                             fieldInitializationExpression.SetFieldToInitialize(fieldToInitialize);
@@ -875,10 +877,7 @@ namespace Nebula.Core.Compilation.AST.Binding
                             if (fieldInitializationExpression.ResultType.IsObject)
                             {
                                 var subInitializer = (AbstractObjectInitializationExpression)fieldInitializationExpression.Initializer;
-                                if (!PostProcessAssignmentExpression(subInitializer))
-                                {
-                                    return false;
-                                }
+                                PostProcessAssignmentExpression(subInitializer);
                             }
                         }
                         break;
@@ -1268,8 +1267,8 @@ namespace Nebula.Core.Compilation.AST.Binding
 
             if(createNewScope)
             {
-            //Block of codes have a new scope
-            _currentScope = new(_currentScope);
+                //Block of codes have a new scope
+                _currentScope = new(_currentScope);
             }
 
             foreach (Statement? s in node.Statements)
