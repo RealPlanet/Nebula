@@ -26,6 +26,12 @@ namespace Nebula.Core.Compilation.AST.Symbols
             }
         }
 
+        public bool Is(AttributeType type)
+        {
+            return IsMethodAttribute
+                && (AttributeType)Attribute! == type;
+        }
+
         private static readonly Dictionary<string, AttributeSymbol> _symbols = new(StringComparer.OrdinalIgnoreCase)
         {
             { AttributeType.AutoExec.ToString(), new(AttributeType.AutoExec.ToString(), false, false)},
