@@ -2,6 +2,7 @@
 using Nebula.Core.Compilation.AST.Symbols;
 using Nebula.Core.Compilation.AST.Tree.Base;
 using System;
+using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.AST.Tree.Expression
 {
@@ -34,6 +35,11 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression
             }
 
             ConstantValue = new(value);
+        }
+
+        public override IEnumerable<AbstractNode> GetChildren()
+        {
+            yield break;
         }
     }
 }

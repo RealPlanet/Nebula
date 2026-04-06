@@ -3,6 +3,7 @@ using Nebula.Core.Compilation.AST.Binding;
 using Nebula.Core.Compilation.AST.Symbols;
 using Nebula.Core.Compilation.AST.Tree.Base;
 using Nebula.Core.Compilation.AST.Tree.Operators;
+using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.AST.Tree.Expression
 {
@@ -10,7 +11,8 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression
     /// An expression which takes two generic BoundExpression nodes and an operator node and produces a result.<br/>
     /// For example: 1 + 1.
     /// </summary>
-    public sealed class AbstractBinaryExpression : AbstractExpression
+    public sealed class AbstractBinaryExpression 
+        : AbstractExpression
     {
         public override AbstractNodeType Type => AbstractNodeType.BinaryExpression;
         public override TypeSymbol ResultType => Operator.ResultType;
@@ -39,6 +41,12 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression
             Right = right;
             // Check if this expression can be folded into a constant
             ConstantValue = ConstantFolding.Fold(left, op, right);
+        }
+
+        public override IEnumerable<AbstractNode> GetChildren()
+        {
+            yield return Left;
+            yield return Right;
         }
     }
 }

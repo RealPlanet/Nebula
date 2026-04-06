@@ -475,7 +475,7 @@ namespace Nebula.Core.Compilation.Lowering
                 return node;
             }
 
-            return new AbstractNotifyStatement(node.OriginalNode, node.BundleToNotifyFrom, rewrittenExpression);
+            return new AbstractNotifyStatement(node.OriginalNode, node.ObjectToNotifyFrom, rewrittenExpression);
         }
 
         protected virtual AbstractWaitNotificationStatement RewriteWaitNotificationStatement(AbstractWaitNotificationStatement node)
@@ -486,7 +486,7 @@ namespace Nebula.Core.Compilation.Lowering
                 return node;
             }
 
-            return new AbstractWaitNotificationStatement(node.OriginalNode, node.BundleToWaitOn, rewrittenExpression);
+            return new AbstractWaitNotificationStatement(node.OriginalNode, node.ObjectToWait, rewrittenExpression);
         }
 
         private AbstractEndOnNotificationStatement RewriteEndOnNotificationStatement(AbstractEndOnNotificationStatement node)

@@ -1,5 +1,6 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Core.Compilation.AST.Tree.Base;
+using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.AST.Tree.Statements.ControlFlow
 {
@@ -16,6 +17,16 @@ namespace Nebula.Core.Compilation.AST.Tree.Statements.ControlFlow
             Condition = condition;
             ThenStatement = thenStatement;
             ElseStatement = elseStatement;
+        }
+
+        public override IEnumerable<AbstractNode> GetChildren()
+        {
+            yield return Condition;
+            yield return ThenStatement;
+            if (ElseStatement != null)
+            {
+                yield return ElseStatement;
+            }
         }
     }
 }

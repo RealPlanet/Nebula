@@ -1,6 +1,7 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Core.Compilation.AST.Symbols;
 using Nebula.Core.Compilation.AST.Tree.Base;
+using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.AST.Tree.Expression.Bundles
 {
@@ -20,6 +21,12 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression.Bundles
             ArrayVariable = arrayVariable;
             IndexExpression = indexExpression;
             Expression = expression;
+        }
+
+        public override IEnumerable<AbstractNode> GetChildren()
+        {
+            yield return IndexExpression;
+            yield return Expression;
         }
     }
 }

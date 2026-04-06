@@ -1,5 +1,6 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Core.Compilation.AST.Tree.Base;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 
 namespace Nebula.Core.Compilation.AST.Tree.Statements
@@ -13,6 +14,14 @@ namespace Nebula.Core.Compilation.AST.Tree.Statements
             : base(syntax)
         {
             Statements = statements;
+        }
+
+        public override IEnumerable<AbstractNode> GetChildren()
+        {
+            foreach(var statement in Statements)
+            {
+                yield return statement;
+            }
         }
     }
 

@@ -3,6 +3,7 @@ using Nebula.Core.Compilation.AST.Binding;
 using Nebula.Core.Compilation.AST.Symbols;
 using Nebula.Core.Compilation.AST.Tree.Base;
 using Nebula.Core.Compilation.AST.Tree.Operators;
+using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.AST.Tree.Expression
 {
@@ -21,6 +22,11 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression
             Operator = op;
             Operand = operand;
             ConstantValue = ConstantFolding.Fold(op, operand);
+        }
+
+        public override IEnumerable<AbstractNode> GetChildren()
+        {
+            yield return Operand;
         }
     }
 }
