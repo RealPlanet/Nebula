@@ -1,5 +1,6 @@
 ﻿using Nebula.Core.Compilation.AST.Tree.Base;
 using Nebula.Core.Compilation.CST.Tree.Statements;
+using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.AST.Tree
 {
@@ -14,6 +15,11 @@ namespace Nebula.Core.Compilation.AST.Tree
              : base(namespaceStatement)
         {
             Text = namespaceStatement.Namespace.Text.Trim('"');
+        }
+
+        public override IEnumerable<AbstractNode> GetChildren()
+        {
+            yield break;
         }
     }
 }

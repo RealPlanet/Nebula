@@ -45,7 +45,7 @@ namespace Nebula.Core.Compilation.AST.Binding.Referencing
 
         internal bool TryGetGlobalVariable(string @namespace, string variableName, [NotNullWhen(true)] out VariableSymbol? variable)
         {
-            if(AllPrograms.TryGetValue(@namespace, out var program))
+            if (AllPrograms.TryGetValue(@namespace, out var program))
             {
                 variable = program.Globals.Keys.FirstOrDefault(f => f.Name == variableName);
                 return variable != null;
@@ -62,9 +62,9 @@ namespace Nebula.Core.Compilation.AST.Binding.Referencing
             return false;
         }
 
-        public bool TryGetBundle(string @namespace, string bundleName, out BundleSymbol? bundle)
+        public bool TryGetBundle(string @namespace, string bundleName, [NotNullWhen(true)] out BundleSymbol? bundle)
         {
-            if (AllPrograms.TryGetValue(@namespace, out AbstractProgram? program) 
+            if (AllPrograms.TryGetValue(@namespace, out AbstractProgram? program)
                 && program.Bundles.TryGetValue(bundleName, out bundle))
             {
                 return true;

@@ -1,4 +1,5 @@
 ﻿using Nebula.Commons.Syntax;
+using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.AST.Tree.Base
 {
@@ -14,5 +15,7 @@ namespace Nebula.Core.Compilation.AST.Tree.Base
         {
             OriginalNode = node;
         }
+
+        public abstract IEnumerable<AbstractNode> GetChildren();
     }
 }

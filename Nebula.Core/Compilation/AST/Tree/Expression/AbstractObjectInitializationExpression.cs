@@ -1,6 +1,7 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Core.Compilation.AST.Symbols;
 using Nebula.Core.Compilation.AST.Tree.Base;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 
 namespace Nebula.Core.Compilation.AST.Tree.Expression
@@ -27,6 +28,14 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression
         public void SetAllocationResult(TypeSymbol result)
         {
             _internalAllocationType = result;
+        }
+
+        public override IEnumerable<AbstractNode> GetChildren()
+        {
+            foreach(var field in FieldExpressions)
+            {
+                yield return field;
+            }
         }
     }
 }

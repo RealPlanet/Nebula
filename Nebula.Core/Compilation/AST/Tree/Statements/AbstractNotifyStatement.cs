@@ -1,5 +1,6 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Core.Compilation.AST.Tree.Base;
+using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.AST.Tree.Statements
 {
@@ -8,14 +9,20 @@ namespace Nebula.Core.Compilation.AST.Tree.Statements
     {
         public override AbstractNodeType Type => AbstractNodeType.NotifyStatement;
 
-        public AbstractExpression BundleToNotifyFrom { get; }
+        public AbstractExpression ObjectToNotifyFrom { get; }
         public AbstractExpression NotifyExpression { get; }
 
         public AbstractNotifyStatement(Node syntax, AbstractExpression bundleNotifier, AbstractExpression notifyExpr)
             : base(syntax)
         {
-            BundleToNotifyFrom = bundleNotifier;
+            ObjectToNotifyFrom = bundleNotifier;
             NotifyExpression = notifyExpr;
+        }
+
+        public override IEnumerable<AbstractNode> GetChildren()
+        {
+            yield return ObjectToNotifyFrom;
+            yield return NotifyExpression;
         }
     }
 
