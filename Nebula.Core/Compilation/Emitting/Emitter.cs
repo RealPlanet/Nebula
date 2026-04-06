@@ -327,7 +327,7 @@ namespace Nebula.Core.Compilation.Emitting
 
         private void EmitWaitNotificationStatement(NILProcessor processor, AbstractWaitNotificationStatement node)
         {
-            EmitExpression(processor, node.BundleToWaitOn, node.OriginalNode);
+            EmitExpression(processor, node.ObjectToWait, node.OriginalNode);
             EmitExpression(processor, node.NotifyExpression, node.OriginalNode);
             processor.Emit(InstructionOpcode.Wait_n, node.OriginalNode);
         }
@@ -341,7 +341,7 @@ namespace Nebula.Core.Compilation.Emitting
 
         private void EmitNotifyStatement(NILProcessor processor, AbstractNotifyStatement node)
         {
-            EmitExpression(processor, node.BundleToNotifyFrom, node.OriginalNode);
+            EmitExpression(processor, node.ObjectToNotifyFrom, node.OriginalNode);
             EmitExpression(processor, node.NotifyExpression, node.OriginalNode);
             processor.Emit(InstructionOpcode.Notify, node.OriginalNode);
         }

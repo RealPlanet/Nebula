@@ -2,6 +2,7 @@
 using Nebula.Core.Compilation.AST.Bundle;
 using Nebula.Core.Compilation.AST.Symbols;
 using Nebula.Core.Compilation.AST.Tree.Base;
+using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.AST.Tree.Expression.Bundles
 {
@@ -21,6 +22,12 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression.Bundles
             TargetExpression = targetExpression;
             Field = field;
             Expression = expression;
+        }
+
+        public override IEnumerable<AbstractNode> GetChildren()
+        {
+            yield return TargetExpression;
+            yield return Expression;
         }
     }
 }

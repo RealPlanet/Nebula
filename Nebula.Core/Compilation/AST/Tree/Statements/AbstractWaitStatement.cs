@@ -1,5 +1,6 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Core.Compilation.AST.Tree.Base;
+using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.AST.Tree.Statements
 {
@@ -14,6 +15,11 @@ namespace Nebula.Core.Compilation.AST.Tree.Statements
             : base(syntax)
         {
             TimeExpression = time;
+        }
+
+        public override IEnumerable<AbstractNode> GetChildren()
+        {
+            yield return TimeExpression;
         }
     }
 }
