@@ -159,7 +159,7 @@ namespace Nebula.Core.Compilation.AST.Binding
                     }
                     else
                     {
-                        body = BindStatement(declaration.Declaration!.Body);
+                        body = BindBlockStatement(declaration.Declaration!.Body, createNewScope: false);
                     }
 
                     AbstractBlockStatement loweredBody = lowerer.Lower(declaration, body);
@@ -1262,17 +1262,22 @@ namespace Nebula.Core.Compilation.AST.Binding
             return new AbstractReturnStatement(syntax, expression);
         }
 
-        private AbstractBlockStatement BindBlockStatement(BlockStatement node)
+        private AbstractBlockStatement BindBlockStatement(BlockStatement node, bool createNewScope = true)
         {
             ImmutableArray<AbstractStatement>.Builder statements = ImmutableArray.CreateBuilder<AbstractStatement>();
 
+            if(createNewScope)
+            {
             //Block of codes have a new scope
             _currentScope = new(_currentScope);
+            }
+
             foreach (Statement? s in node.Statements)
             {
                 AbstractStatement? statement = BindStatement(s);
                 statements.Add(statement);
             }
+
             _currentScope = _currentScope.Parent!;
 
             return new AbstractBlockStatement(node, statements.ToImmutable());
