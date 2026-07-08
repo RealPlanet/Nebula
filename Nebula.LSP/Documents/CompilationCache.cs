@@ -13,7 +13,7 @@ using System.Linq;
 
 namespace Nebula.LSP.Documents
 {
-    internal class CompilationCache
+    public sealed class CompilationCache
     {
         public IReadOnlyList<AbstractProgram> Programs => _programs.Values.ToList();
         public IReadOnlyList<CompilationUnit> ProgramTrees => _programTrees.Values.ToList();

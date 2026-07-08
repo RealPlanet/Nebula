@@ -1,7 +1,6 @@
 ﻿
 
 using MediatR;
-using Nebula.Commons.Text;
 using Nebula.LSP.Documents;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;

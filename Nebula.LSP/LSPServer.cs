@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Nebula.LSP.Documents;
 using Nebula.LSP.Handlers;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -6,7 +7,6 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Server;
 using Serilog;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,21 +20,25 @@ namespace Nebula.LSP
 
         public LSPServer(Stream input, Stream output, Serilog.ILogger logger)
         {
-            _logger = logger;
+            LPSLogger.Logger = _logger = logger;
             _logger.Information("Initializing LSPServer");
 
             _internalServer = LanguageServer.Create(o =>
                 o
                 .WithInput(input)
                 .WithOutput(output)
-                .ConfigureLogging(x => x.AddSerilog(logger))
+                .ConfigureLogging(x =>
+                {
+                    x.AddSerilog(logger)
+                    .AddLanguageProtocolLogging()
+                    .SetMinimumLevel(LogLevel.Debug);
+                })
                 .WithServices(ConfigureServices)
                 .WithHandler<TextDocumentHandler>()
                 .WithHandler<CompletionHandler>()
                 .WithHandler<SymbolHandler>()
                 .OnInitialize(InitializeLSPAsync)
                 );
-
         }
 
         private async Task InitializeLSPAsync(ILanguageServer server, InitializeParams request, CancellationToken cancellationToken)

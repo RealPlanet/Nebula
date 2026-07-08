@@ -1,6 +1,7 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
 using Nebula.Core.Compilation;
+using Nebula.Core.Compilation.AST.Tree.Base;
 using Nebula.Core.Compilation.CST.Tree;
 using Nebula.Core.Compilation.CST.Tree.Declaration;
 using Nebula.Core.Compilation.CST.Tree.Declaration.Bundle;
@@ -9,13 +10,29 @@ using Nebula.Core.Compilation.CST.Tree.Expressions;
 using Nebula.Core.Compilation.CST.Tree.Statements;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.Linq;
 
 namespace Nebula.LSP
 {
     public static class Extensions
     {
+        public static bool FindNodePathToCursor(this AbstractNode node, TextSpan cursor, List<AbstractNode> path)
+        {
+            if (!node.OriginalNode.Span.OverlapsWith(cursor))
+                return false;
+
+            path.Add(node);
+            foreach (var child in node.GetChildren())
+            {
+                if(child.FindNodePathToCursor(cursor, path))
+                {
+                    return true;
+                }
+            }
+
+            return true;
+        }
+
         public static Range ToRange(this TextLocation location)
         {
             return new(location.StartLine, location.StartCharacter, location.EndLine, location.EndCharacter);
@@ -41,30 +58,32 @@ namespace Nebula.LSP
 
         public static DocumentSymbol[] ToSymbol(this BinaryExpression declaration)
         {
-            var symbols = new List<DocumentSymbol>();
-
-            symbols.Add(new DocumentSymbol
+            var symbols = new List<DocumentSymbol>
             {
-                Kind = SymbolKind.Operator,
-                Name = declaration.Operator.Text,
-                Range = declaration.Operator.Location.ToRange(),
-                SelectionRange = declaration.Operator.Location.ToRange(),
-            });
+                new DocumentSymbol
+                {
+                    Kind = SymbolKind.Operator,
+                    Name = declaration.Operator.Text,
+                    Range = declaration.Operator.Location.ToRange(),
+                    SelectionRange = declaration.Operator.Location.ToRange(),
+                }
+            };
 
             return symbols.ToArray();
         }
 
         public static DocumentSymbol[] ToSymbol(this UnaryExpression declaration)
         {
-            var symbols = new List<DocumentSymbol>();
-
-            symbols.Add(new DocumentSymbol
+            var symbols = new List<DocumentSymbol>
             {
-                Kind = SymbolKind.Operator,
-                Name = declaration.Operator.Text,
-                Range = declaration.Operator.Location.ToRange(),
-                SelectionRange = declaration.Operator.Location.ToRange(),
-            });
+                new DocumentSymbol
+                {
+                    Kind = SymbolKind.Operator,
+                    Name = declaration.Operator.Text,
+                    Range = declaration.Operator.Location.ToRange(),
+                    SelectionRange = declaration.Operator.Location.ToRange(),
+                }
+            };
 
             return symbols.ToArray();
         }

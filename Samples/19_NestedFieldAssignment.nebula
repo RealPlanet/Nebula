@@ -19,7 +19,9 @@ func void main() autoexec
         child = {
             child = {
                 child = {
-                    value = 10
+                    value = 10,
+                    child = {
+                    }
                 }
             }
         }

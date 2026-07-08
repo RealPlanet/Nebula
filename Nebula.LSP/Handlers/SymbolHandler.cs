@@ -1,14 +1,8 @@
-﻿using MediatR;
-using Nebula.Core.Compilation;
-using Nebula.Core.Compilation.CST.Tree.Declaration;
+﻿using Nebula.Core.Compilation;
 using Nebula.LSP.Documents;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
-using OmniSharp.Extensions.LanguageServer.Protocol.General;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 

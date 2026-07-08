@@ -6,7 +6,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Nebula.LSP.Documents
 {
