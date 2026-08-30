@@ -49,6 +49,7 @@ namespace nebula
 		State Run();
 		State Pause();
 		State Stop();
+		State Resume();
 		void Reset();
 
 		// Native functions are responsible to fetch the data from the parent data stack

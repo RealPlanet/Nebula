@@ -16,6 +16,4 @@ namespace nebula {
 		void NotifyScriptUnloaded(const std::string& scriptSource);
 		ScriptDebugInformation* GetDebugInformationForScript(const std::string& scriptSource);
 	};
-
-
 }
