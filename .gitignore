@@ -359,10 +359,6 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
-# Fody - auto-generated XML schema
-FodyWeavers.xsd
 OutputCompile
 Nebula.Compiler/Properties/launchSettings.json
-Nebula.Editor/**
 .idea
-Samples_TODO

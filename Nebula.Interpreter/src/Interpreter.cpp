@@ -70,6 +70,17 @@ Interpreter::State Interpreter::Stop()
 	return GetState();
 }
 
+Interpreter::State nebula::Interpreter::Resume()
+{
+	if (GetState() != State::Paused)
+	{
+		return GetState();
+	}
+
+	SetState(State::Running);
+	return GetState();
+}
+
 void Interpreter::Reset()
 {
 	m_Threads.Clear();
