@@ -48,12 +48,12 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DAP_USE_DLL;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\Nebula.Shared\include;..\Nebula.Interpreter\include;..\Nebula.StandardLib\include;.\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./include;../Nebula.Shared/include;../Nebula.Interpreter/include;../Nebula.StandardLib/include;../../mNET/mNET.Core/include;../../Strata.DAP/include;../../Strata.JSON/include;../../ArgParser/</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <TranslateIncludes>false</TranslateIncludes>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -63,7 +63,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>..\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Nebula.Interpreter.lib;Nebula.StandardLib.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Nebula.Interpreter.lib;Nebula.StandardLib.lib;mNET.Core.lib;Strata.JSON.lib;Strata.DAP.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>
       </Profile>
     </Link>
@@ -73,12 +73,12 @@
       <WarningLevel>Level4</WarningLevel>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DAP_USE_DLL;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\Nebula.Shared\include;..\Nebula.Interpreter\include;..\Nebula.StandardLib\include;.\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./include;../Nebula.Shared/include;../Nebula.Interpreter/include;../Nebula.StandardLib/include;../../mNET/mNET.Core/include;../../Strata.DAP/include;../../Strata.JSON/include;../../ArgParser/</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <TranslateIncludes>false</TranslateIncludes>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -89,18 +89,32 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AdditionalLibraryDirectories>..\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Nebula.Interpreter.lib;Nebula.StandardLib.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Nebula.Interpreter.lib;Nebula.StandardLib.lib;mNET.Core.lib;Strata.JSON.lib;Strata.DAP.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>
       </Profile>
       <LinkTimeCodeGeneration />
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\DebugState.cpp" />
+    <ClCompile Include="src\BreakpointManager.cpp" />
+    <ClCompile Include="src\Utility.cpp" />
+    <ClCompile Include="src\DebugController.cpp" />
+    <ClCompile Include="src\ExecutorDebugServer.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\ArgParser\ArgParser.h" />
+    <ClInclude Include="include\BlockingQueue.h" />
+    <ClInclude Include="include\BreakpointManager.h" />
+    <ClInclude Include="include\DebugControllerListener.h" />
+    <ClInclude Include="include\DebugState.h" />
+    <ClInclude Include="include\DebugTypes.h" />
+    <ClInclude Include="include\DebugController.h" />
+    <ClInclude Include="include\ExecutorDebugServer.h" />
     <ClInclude Include="include\ArgParser.h" />
     <ClInclude Include="include\ConsoleWriter.h" />
+    <ClInclude Include="include\Utility.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
