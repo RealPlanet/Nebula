@@ -54,8 +54,6 @@ namespace nebula
         return true;
     }
 
-    TBundle* GetBundle(const DataStackVariant& v);
-
     inline std::string ToString(const DataStackVariant& var)
     {
         //if (std::holds_alternative<TByte>(var))

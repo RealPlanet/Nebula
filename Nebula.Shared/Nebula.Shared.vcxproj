@@ -11,20 +11,28 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\DebugBundleDefinition.h" />
     <ClInclude Include="include\DebuggerDefinitions.h" />
     <ClInclude Include="include\DebugServer.h" />
     <ClInclude Include="include\DiagnosticReport.h" />
     <ClInclude Include="include\ErrorCallStack.h" />
     <ClInclude Include="include\Instruction.h" />
     <ClInclude Include="include\InstructionDefs.h" />
+    <ClInclude Include="include\DebugFunction.h" />
     <ClInclude Include="include\interfaces\IGCObject.h" />
     <ClInclude Include="include\interfaces\INotificationListener.h" />
     <ClInclude Include="include\interfaces\IScriptParser.h" />
     <ClInclude Include="include\interfaces\IStreamWrapper.h" />
     <ClInclude Include="include\LanguageTypes.h" />
+    <ClInclude Include="include\DebugLine.h" />
+    <ClInclude Include="include\DebugFile.h" />
+    <ClInclude Include="include\SymbolsSerializer.h" />
     <ClInclude Include="include\Utility.h" />
+    <ClInclude Include="include\DebugVariable.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\DebugFile.cpp" />
+    <ClCompile Include="src\DebugFunction.cpp" />
     <ClCompile Include="src\DebugServer.cpp" />
     <ClCompile Include="src\DiagnosticReport.cpp" />
     <ClCompile Include="src\ErrorCallStack.cpp" />
