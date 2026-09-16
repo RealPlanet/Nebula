@@ -4,6 +4,7 @@
 #include <crtdbg.h>
 
 #include <iostream>
+#include <filesystem>
 #include <memory>
 #include <vector>
 #include <string>
@@ -22,19 +23,40 @@
 #include "DebuggerDefinitions.h"
 #include "DebugServer.h"
 #include "DefaultDebugServer.h"
-// Is marked as unused but is actually used for the declartion of some global functions
+// Is marked as unused but is actually used for the declaration of some global functions
 #include "NebulaStandardLib.h"
+#include "ExecutorDebugServer.h"
 
 using namespace nebula::frontend;
 using namespace nebula;
 
-std::vector<std::string> g_inputScripts = {};
-std::vector<std::string> g_inputBindings = {};
+const std::string g_nebulaExtension = ".neb";
+std::vector<std::filesystem::path> g_inputScripts = {};
+std::vector<std::filesystem::path> g_inputBindings = {};
+bool g_waitForDebuggerConnection{ false };
 
-static void AddToScripts(const std::string& path) {
-	// TODO :: Validate
-	g_inputScripts.push_back(path);
+static void AddToScripts(const std::filesystem::path& path)
+{
+	if (!std::filesystem::exists(path))
+	{
+		return;
+	}
+
+	if (std::filesystem::is_directory(path))
+	{
+		for (auto& file : std::filesystem::recursive_directory_iterator(path))
+		{
+			AddToScripts(file);
+		}
+	}
+
+	if (std::filesystem::is_regular_file(path)
+		&& path.extension() == g_nebulaExtension)
+	{
+		g_inputScripts.push_back(path);
+	}
 }
+
 static void AddToBindings(const std::string& path) {
 	// TODO :: Validate
 	g_inputBindings.push_back(path);
@@ -59,15 +81,16 @@ static void BindStandardLibFunctions(Interpreter& vm)
 	}
 }
 
-static void BindNativeFunctions(Interpreter& vm, const std::string& dll);
+static void BindNativeFunctions(Interpreter& vm, const std::filesystem::path& dll);
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-static void BindNativeFunctions(Interpreter& vm, const std::string& dll)
+static void BindNativeFunctions(Interpreter& vm, const std::filesystem::path& dll)
 {
 	CHAR buffer[512];
-	GetFullPathNameA(dll.data(), 512, buffer, nullptr);
+	GetFullPathNameA(dll.string().data(), 512, buffer, nullptr);
 	HMODULE ass = LoadLibraryA(buffer);
 	if (ass != NULL)
 	{
@@ -118,13 +141,18 @@ static int LoadInputScripts(std::vector< std::shared_ptr<Script>>& loadedScripts
 	bool foundError = false;
 	for (auto& file : g_inputScripts)
 	{
-		if (file.ends_with(".neb"))
+		if (!std::filesystem::exists(file))
 		{
-			ScriptLoadResult scriptLoadResult = Script::FromFile(file);
+			continue;
+		}
 
+		if (file.has_extension()
+			&& file.extension() == ".neb")
+		{
+			ScriptLoadResult scriptLoadResult = Script::FromFile(file.string());
 			if (scriptLoadResult.ParsingReport.Errors().size() > 0)
 			{
-				std::string errMessage = std::format("Errors while loading script {}", file.data());
+				std::string errMessage = std::format("Errors while loading script {}", file.string());
 				writer::ConsoleWrite(errMessage, writer::Code::FG_RED);
 				PrintReport(scriptLoadResult.ParsingReport);
 				foundError = true;
@@ -143,6 +171,44 @@ static int LoadInputScripts(std::vector< std::shared_ptr<Script>>& loadedScripts
 	return !foundError;
 }
 
+// Source - https://stackoverflow.com/a/20387632
+// Posted by Ivan Krivyakov
+// Retrieved 2026-09-13, License - CC BY-SA 3.0
+
+bool launchDebugger()
+{
+	// Get System directory, typically c:\windows\system32
+	std::wstring systemDir(MAX_PATH + 1, '\0');
+	UINT nChars = GetSystemDirectoryW(&systemDir[0], systemDir.length());
+	if (nChars == 0) return false; // failed to get system directory
+	systemDir.resize(nChars);
+
+	// Get process ID and create the command line
+	DWORD pid = GetCurrentProcessId();
+	std::wostringstream s;
+	s << systemDir << L"\\vsjitdebugger.exe -p " << pid;
+	std::wstring cmdLine = s.str();
+
+	// Start debugger process
+	STARTUPINFOW si;
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+
+	PROCESS_INFORMATION pi;
+	ZeroMemory(&pi, sizeof(pi));
+
+	if (!CreateProcessW(NULL, &cmdLine[0], NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) return false;
+
+	// Close debugger process handles to eliminate resource leak
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
+
+	// Wait for the debugger to attach
+	while (!IsDebuggerPresent()) Sleep(100);
+
+	return true;
+}
+
 static int ExecuteVM() {
 
 	int executionResult = -1;
@@ -151,9 +217,10 @@ static int ExecuteVM() {
 		// Setup interpreter and bind native functions
 		// Might be useful to have them available even if we haven't started the VM (Load time caching ecc..)
 		Interpreter vm;
-		DebugServer::RegisterDebugServer(new DefaultDebugServer());
-		BindStandardLibFunctions(vm);
+		debugger::ExecutorDebugServer* debugServer = new nebula::debugger::ExecutorDebugServer(&vm);
+		nebula::debugger::DebugServer::RegisterDebugServer(debugServer);
 
+		BindStandardLibFunctions(vm);
 		for (auto& file : g_inputBindings)
 		{
 			BindNativeFunctions(vm, file);
@@ -190,7 +257,7 @@ static int ExecuteVM() {
 
 				std::cout << ">------- Begin execution ---------\n";
 
-				vm.InitAndRun();
+				vm.InitAndRun(g_waitForDebuggerConnection);
 				vm.Wait();
 
 				auto finish = std::chrono::high_resolution_clock::now();
@@ -213,9 +280,17 @@ static int ExecuteVM() {
 			}
 		}
 
+		// If we are debugging we need to wait for the debugger thread to finish
+		// For example during a terminate request we will stop the main thread which
+		// will free the server while its doing work
+		while (debugServer->IsDebugging())
+		{
+			std::this_thread::sleep_for(std::chrono::seconds{ 1 });
+		}
+
+		nebula::debugger::DebugServer::RegisterDebugServer(nullptr);
 	}
 
-	DebugServer::RegisterDebugServer(nullptr);
 	return executionResult;
 }
 
@@ -227,19 +302,22 @@ int main(int argc, char* argv[]) {
 
 #endif // DEBUG
 
+	launchDebugger();
+
 	planet::argparser::ArgParser argParser([](const std::string& err) {
 		writer::ConsoleWrite(err + '\n', writer::Code::BG_RED);
 		});
 
-	argParser.RegisterArgument("s|script=", AddToScripts);
+	argParser.RegisterArgument("s|script=", [](const auto& arg) { AddToScripts(std::filesystem::path{ arg }); });
 	argParser.RegisterArgument("b|binding=", AddToBindings);
+	argParser.RegisterArgument("wait_for_debugger", [](const std::string&) { g_waitForDebuggerConnection = true; });
+
 	if (!argParser.Parse(argc, argv)) {
 		writer::ConsoleWrite("Could not parse program arguments!", writer::Code::BG_RED);
 		return -1;
 	}
 
 	/* DO NOT DUMP MEMORY HERE OTHERWISE STATIC STUFF WILL BE REPORTED */
-
 	int result = ExecuteVM();
 	return result;
 }
