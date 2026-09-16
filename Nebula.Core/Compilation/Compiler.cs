@@ -72,9 +72,6 @@ namespace Nebula.Core.Compilation
             result.Report.Append(bindingReport);
             if (bindingReport.HasErrors)
             {
-                ReportMessage firstError = bindingReport.Errors.First();
-                // TODO Fix
-                //result.FailedSourcePath = firstError.Location.Text?.FileName ?? throw new NullReferenceException();
                 return false;
             }
 

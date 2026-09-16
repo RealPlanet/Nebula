@@ -137,10 +137,15 @@ namespace Nebula.Core.Reporting
             string message = string.Format(template, name);
             r.PushError(message, location, code.ToString());
         }
+        public static void ReportUndefinedGlobalVariable(this Report r, TextLocation location, string @namespace, string name)
+        {
+            (EBinderMessages code, string template) = BinderMessagesProvider.GlobalVariableDoesNotExists;
+            string message = string.Format(template, name, @namespace);
+            r.PushError(message, location, code.ToString());
+        }
         public static void ReportPrimitiveTypesDontHaveFields(this Report r, string variable, TextLocation location)
         {
-            // todo
-            (EBinderMessages code, string template) = BinderMessagesProvider.AllPathsMustReturn;
+            (EBinderMessages code, string template) = BinderMessagesProvider.PrimitiveTypeDoesNotHaveFields;
             string message = string.Format(template, variable.ToString());
             r.PushError(message, location, code.ToString());
         }

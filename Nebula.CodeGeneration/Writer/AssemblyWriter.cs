@@ -120,7 +120,6 @@ namespace Nebula.CodeGeneration.Writer
                     Instruction inst = func.Body.Instructions[i];
                     TextSpan instSpan = inst.OriginalNode?.Span ?? default;
                     int lineNumber = assembly.SourceCode.GetLineIndex(instSpan.Start);
-
                     if (lineNumber != lastLineNumber)
                     {
                         dbgFunc.Lines.Add(new(lineNumber, i));

@@ -368,14 +368,14 @@ namespace Nebula.Core.Compilation.AST.Binding
                     return symbol;
                 }
 
-                throw new NotImplementedException("Report this error");
+                _binderReport.ReportUndefinedGlobalVariable(location, @namespace, name);
+                return null;
             }
 
             switch (_currentScope.TryLookupSymbol(name))
             {
                 case VariableSymbol variable:
                     return variable;
-
                 case null:
                     _binderReport.ReportUndefinedVariable(location, name);
                     return null;
@@ -1294,7 +1294,7 @@ namespace Nebula.Core.Compilation.AST.Binding
             return new AbstractExpressionStatement(node, expression);
         }
 
-        private AbstractStatement BindWaitStatement(WaitStatement expr)
+        private AbstractWaitStatement BindWaitStatement(WaitStatement expr)
         {
             AbstractExpression timeExpr = BindExpression(expr.Time, canBeVoid: false);
             if (timeExpr is not AbstractErrorExpression &&
