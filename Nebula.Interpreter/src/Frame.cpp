@@ -102,11 +102,15 @@ Frame::Status nebula::Frame::RunToCompletion(Interpreter* interpreter)
     return status;
 }
 
-const std::string& Frame::Namespace()
+const std::string& Frame::Namespace()  const
 {
     return m_FunctionDefinition->Namespace();
 }
 
+const std::string& Frame::FunctionName() const
+{
+    return m_FunctionDefinition->Name();
+}
 
 void Frame::SetScheduledSleep(const size_t& amount)
 {

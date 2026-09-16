@@ -231,7 +231,7 @@ int* Interpreter_GetNextOpcodeForAllThreads(nebula::Interpreter* handle, int* ar
 		return nullptr;
 	}
 
-	auto& threads = handle->GetThreadMap();
+	auto& threads = handle->GetThreads();
 
 	size_t size = threads.Count();
 	int* allOpcodes = new int[size];
@@ -329,7 +329,7 @@ long Interpreter_GetThreadCount(nebula::Interpreter* handle)
 		return -1;
 	}
 
-	return (int)handle->GetThreadMap().Count();
+	return (int)handle->GetThreads().Count();
 }
 
 int Interpreter_GetState(nebula::Interpreter* handle)
@@ -349,7 +349,7 @@ int Interpreter_AnyFrameJustStarted(nebula::Interpreter* handle, const char* ns,
 		return -1;
 	}
 
-	const nebula::ThreadMap& threads = handle->GetThreadMap();
+	const nebula::ThreadMap& threads = handle->GetThreads();
 
 	for (int i = 0; i < threads.Count(); i++)
 	{
@@ -382,7 +382,7 @@ int Interpreter_AnyFrameAt(nebula::Interpreter* handle, const char* ns, const ch
 		return -1;
 	}
 
-	const nebula::ThreadMap& threads = handle->GetThreadMap();
+	const nebula::ThreadMap& threads = handle->GetThreads();
 
 	for (int i = 0; i < threads.Count(); i++)
 	{
@@ -415,7 +415,7 @@ int Interpreter_GetCurrentOpcodeIndexOfThread(nebula::Interpreter* handle, int t
 		return -1;
 	}
 
-	const nebula::ThreadMap& threads = handle->GetThreadMap();
+	const nebula::ThreadMap& threads = handle->GetThreads();
 
 	if (threadId < 0 || threadId >= threads.Count())
 	{
@@ -440,7 +440,7 @@ const nebula::CallStack* Interpreter_GetCallStackOfThread(nebula::Interpreter* h
 		return nullptr;
 	}
 
-	auto& threadMap = handle->GetThreadMap();
+	auto& threadMap = handle->GetThreads();
 	if (threadId < 0 || threadId >= threadMap.Count())
 	{
 		return nullptr;

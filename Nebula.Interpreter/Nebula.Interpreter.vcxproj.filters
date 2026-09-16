@@ -17,7 +17,6 @@
     <ClInclude Include="include\InterpreterMemory.h" />
     <ClInclude Include="include\VariantArray.h" />
     <ClInclude Include="include\DefaultDebugServer.h" />
-    <ClInclude Include="thirdparty\json.hpp" />
     <ClInclude Include="include\Variable.h" />
   </ItemGroup>
   <ItemGroup>

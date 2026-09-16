@@ -16,9 +16,12 @@
 namespace nebula
 {
 	// Function pointer definition to bind Nebula function calls to C++ calls
-	using NativeFunctionCallback = ::std::function<InstructionErrorCode(Interpreter*, Frame*)>;
+	using NativeFunctionDelegate = ::std::function<InstructionErrorCode(Interpreter*, Frame*)>;
+	using InterpreterExitDelegate = std::function<void()>;
+
 	using NativeFunctionCallbackPtr = InstructionErrorCode(*)(Interpreter*, Frame*);
-	using InterpreterExitCallbackPtr = void(*)();
+	using ScriptMap = std::map<const std::string, std::shared_ptr<Script>>;
+
 	class IStreamWrapper;
 
 	// Core of the virtual machine
@@ -43,7 +46,7 @@ namespace nebula
 
 	public:
 		State GetState() const { return m_CurrentState; }
-		State Wait() { m_IsVMRunning.wait(true); return GetState(); }
+		State Wait() { m_running.wait(true); return GetState(); }
 		State InitAndRun(bool startPaused = false) { Init(startPaused); return Run(); }
 		State Init(bool startPaused = false);
 		State Run();
@@ -53,11 +56,13 @@ namespace nebula
 		void Reset();
 
 		// Native functions are responsible to fetch the data from the parent data stack
-		bool BindNativeFunction(const std::string& name, const NativeFunctionCallback callback);
-		bool BindTypeFunction(const std::string& name, DataStackVariantIndex type, const NativeFunctionCallback callback);
+		bool BindNativeFunction(const std::string& name, const NativeFunctionDelegate callback);
+		bool BindTypeFunction(const std::string& name, DataStackVariantIndex type, const NativeFunctionDelegate callback);
 		bool AddScript(std::shared_ptr<Script> script);
 		bool SetStandardOutput(IStreamWrapper* stream);
-		bool SetExitCallback(InterpreterExitCallbackPtr callbackPtr);
+		// Returns the previous standard output and sets the new one
+		IStreamWrapper* SwapStandardOutput(IStreamWrapper* stream);
+		bool SetExitCallback(InterpreterExitDelegate callbackPtr);
 		bool ClearStandardOutput();
 
 		bool Step();
@@ -65,11 +70,14 @@ namespace nebula
 		// Getters
 	public:
 		const size_t GetCurrentThreadId() const { return m_CurrentThreadIndex; }
+		const ThreadMap& GetThreads() const { return m_Threads; }
+		CallStack& GetThread(size_t index) { return m_Threads.At(index); }
+		const CallStack& GetThread(size_t index) const { return m_Threads.At(index); }
 
-		const ThreadMap& GetThreadMap() { return m_Threads; }
 		IStreamWrapper* StandardOutput() { return m_pStandardOutput; }
 		shared::ErrorCallStack* GetFatalErrorCallstack() { return m_LastErrorCallstack; }
 
+		const ScriptMap& GetLoadedScripts() const { return m_Scripts; }
 	private:
 		bool CheckAndSetExitState();
 
@@ -82,8 +90,8 @@ namespace nebula
 
 		const Function* GetFunction(const std::string&, const std::string&) const;
 		const BundleDefinition* GetBundleDefinition(const std::string&, const std::string&) const;
-		const NativeFunctionCallback* GetNativeFunction(const std::string&) const;
-		const NativeFunctionCallback* GetTypeFunction(DataStackVariantIndex, const std::string&) const;
+		const NativeFunctionDelegate* GetNativeFunction(const std::string&) const;
+		const NativeFunctionDelegate* GetTypeFunction(DataStackVariantIndex, const std::string&) const;
 
 		/// <summary>
 		/// Thread map can be re-allocated at any time, do not store a ptr to the current callstack
@@ -91,24 +99,24 @@ namespace nebula
 		/// <returns></returns>
 		CallStack* GetCurrentCallstack();
 	private:
-		std::map<const std::string, NativeFunctionCallback> m_NativeFunctions{};
-		std::map<const DataStackVariantIndex, std::map < const std::string, NativeFunctionCallback>> m_TypeNativeFunctions;
+		std::map<const std::string, NativeFunctionDelegate> m_NativeFunctions{};
+		std::map<const DataStackVariantIndex, std::map < const std::string, NativeFunctionDelegate>> m_TypeNativeFunctions;
 
-		std::map<const std::string, std::shared_ptr<Script>> m_Scripts{};
-
-		ThreadMap m_Threads;
+		ScriptMap m_Scripts{};
+		ThreadMap m_Threads{};
 		size_t m_CurrentThreadIndex{ 0 };
 
 		State m_CurrentState{ State::Paused };
 		bool m_StartedOnce{ false };
-		std::atomic_flag m_IsVMRunning = ATOMIC_FLAG_INIT;
+		std::atomic_flag m_running = ATOMIC_FLAG_INIT;
+		std::atomic_flag m_paused = ATOMIC_FLAG_INIT;
 		shared::ErrorCallStack* m_LastErrorCallstack;
 
 		int m_MaxExecutionTime = 10;// Milliseconds
 		std::chrono::steady_clock::time_point m_LastSchedulingUpdate{};
 
 		IStreamWrapper* m_pStandardOutput;
-		InterpreterExitCallbackPtr m_fExitCallback;
+		InterpreterExitDelegate m_fExitCallback;
 		InterpreterMemory m_Memory;
 	};
 }

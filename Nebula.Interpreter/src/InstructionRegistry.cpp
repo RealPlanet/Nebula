@@ -592,7 +592,7 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 			}
 
 			/* TODO :: Built in should be able to be thread too! */
-			const NativeFunctionCallback* nativeFuncPtr = interpreter->GetNativeFunction(funcName);
+			const NativeFunctionDelegate* nativeFuncPtr = interpreter->GetNativeFunction(funcName);
 			[[unlikely]]
 			if (nativeFuncPtr == nullptr)
 			{

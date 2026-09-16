@@ -11,7 +11,7 @@ constexpr size_t g_MinGCThreshold = 128;
 
 static void GatherStackRoots(Interpreter* vm, std::vector<AllocableObjectPtr>& foundRoots)
 {
-    const ThreadMap& tm = vm->GetThreadMap();
+    const ThreadMap& tm = vm->GetThreads();
     size_t threadCount = tm.Count();
     for (int i = 0; i < threadCount; i++)
     {
