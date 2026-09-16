@@ -1,84 +1,151 @@
-#include <string>
-#include <filesystem>
-#include <fstream>
-#include <map>	
-#include <vector>
-
+#include "DebugFile.h"
 #include "DebugServer.h"
 #include "DefaultDebugServer.h"
+#include "Script.h"
 
-#include "json.hpp"
+#include <cassert>
+#include <filesystem>
+#include <string>
+#include <unordered_map>
+#include <utility>
 
-using json = nlohmann::json;
+#include "json.h"
+#include "json_serialization.h"
+// Despite compiler message we NEED this header for the implementation of the JSerializer classes
+#include "SymbolsSerializer.h" // VCIC-Excluded 
+
 using namespace nebula;
+using namespace nebula::debugger;
 
-static void from_json(const json& j, LineDebugInformation& p) {
-	size_t lineNumber = j.at("LineNumber");
-	size_t startOpcode = j.at("StartOpcodeOfLine");
+void DefaultDebugServer::UnregisterScript(const Script* script)
+{
+	assert(script);
+	if (!script)
+	{
+		return;
+	}
 
-	p.SetOpcode(startOpcode);
-	p.SetLineNumber(lineNumber);
+	m_debugSymbols.erase(script->Namespace());
+	m_loadedScripts.erase(script->Namespace());
 }
 
-void DefaultDebugServer::NotifyScriptUnloaded(const std::string& scriptSource)
+void DefaultDebugServer::RegisterScript(const Script* script)
 {
-	auto it = m_DebugCache.find(scriptSource);
-	if (it != m_DebugCache.end())
+	assert(script);
+	if (!script)
 	{
-		delete it->second;
-		m_DebugCache.erase(it);
+		return;
 	}
+
+	m_loadedScripts.insert_or_assign(script->Namespace(), script);
 }
 
-ScriptDebugInformation* DefaultDebugServer::GetDebugInformationForScript(const std::string& scriptSource)
+void DefaultDebugServer::UnloadAll()
 {
-	auto it = m_DebugCache.find(scriptSource);
-	if (it != m_DebugCache.end())
+	m_debugSymbols.clear();
+	m_loadedScripts.clear();
+}
+
+DebugFilePtr DefaultDebugServer::LoadScriptFileFromDisk(const std::string& namespace_)
+{
+	auto it = m_loadedScripts.find(namespace_);
+	if (it == m_loadedScripts.end())
 	{
-		return it->second;
+		return nullptr;
 	}
+
+	assert(it->second);
+
+	std::filesystem::path path = { it->second->GetSourcePath() };
+	path = path.replace_extension(NEBULA_DEBUG_SYMBOL_EXTENSION);
 
 	// Must be on disk file that we can access
-	if (!std::filesystem::exists(scriptSource)) {
+	// If the source path is on network this should still work...
+	if (!std::filesystem::exists(path))
+	{
 		return nullptr;
 	}
 
-	std::filesystem::path path = { scriptSource };
-	path = path.replace_extension(".ndbg");
+	DebugFilePtr filePtr{ nullptr };
+	try
+	{
+		// Must be a json file
+		auto data = strata::json::json_parser::from_file(path);
+		auto insertIt = m_debugSymbols.insert(
+			std::make_pair(namespace_, strata::json::serialization::Deserialize<symbols::DebugFile>(data)));
 
-	// Must be on disk file that we can access for debug information
-	if (!std::filesystem::exists(path)) {
-		return nullptr;
-	}
-
-	std::ifstream f(path);
-	json data = json::parse(f);
-	f.close();
-
-	ScriptDebugInformation* dbgInfo = new ScriptDebugInformation();
-	m_DebugCache[scriptSource] = dbgInfo;
-
-	dbgInfo->SetOriginalFileName(data["OriginalFileName"]);
-	dbgInfo->SetFullPath(data["OriginalFileFullName"]);
-	auto& functions = data["Functions"];
-	for (auto& funcData : functions) {
-		std::string funcName = funcData["Name"];
-		std::vector<json> jsonLines = funcData["Lines"];
-		std::vector<LineDebugInformation> lines = {};
-
-		for (auto& j : jsonLines) {
-			LineDebugInformation line;
-			from_json(j, line);
-			lines.push_back(line);
+		if (!insertIt.second)
+		{
+			// TODO report?
+			return nullptr;
 		}
 
-		size_t lineNumber = funcData["LineNumber"];
-		size_t endLineNumber = funcData["EndLineNumber"];
-		size_t instructionCount = funcData["InstructionCount"];
-
-		dbgInfo->AddFunctionInformation(FunctionDebugInformation{ funcName, lineNumber, endLineNumber, instructionCount, lines });
+		filePtr = &(insertIt.first)->second;
 	}
-	data.clear();
-	return dbgInfo;
+	catch (...)
+	{
+		// TODO :: Report maybe? Malformed json...
+		return nullptr;
+	}
+
+	assert(filePtr);
+
+	// The debug symbols contain the md5 hash of the compiled script.
+	// If they differ the files are not compatible
+	auto& md5Debug = filePtr->md5Hash;
+	// TODO Until MD5 code we always return true here
+	auto& scriptMd5 = filePtr->md5Hash;
+
+	if (md5Debug != scriptMd5)
+	{
+		m_debugSymbols.erase(namespace_);
+		return nullptr;
+	}
+
+	return filePtr;
 }
 
+DebugFilePtr DefaultDebugServer::GetScript(const std::string& namespace_)
+{
+	auto it = m_debugSymbols.find(namespace_);
+	if (it != m_debugSymbols.end())
+	{
+		return &it->second;
+	}
+
+	return LoadScriptFileFromDisk(namespace_);
+}
+
+DebugBundleDefinitionPtr DefaultDebugServer::GetBundle(const std::string& namespace_, const std::string& type)
+{
+	auto scriptInfo = GetScript(namespace_);
+	if (!scriptInfo)
+	{
+		return nullptr;
+	}
+
+	auto it = scriptInfo->bundles.find(type);
+	if (it == scriptInfo->bundles.end())
+	{
+		return nullptr;
+	}
+
+	return &it->second;
+}
+
+DebugFunctionPtr DefaultDebugServer::GetFunction(const std::string& namespace_, const std::string& functionName)
+{
+	auto scriptInfo = GetScript(namespace_);
+	if (!scriptInfo)
+	{
+		return nullptr;
+	}
+
+	auto it = scriptInfo->functions.find(functionName);
+	if (it == scriptInfo->functions.end())
+	{
+		return nullptr;
+	}
+
+	return &it->second;
+}

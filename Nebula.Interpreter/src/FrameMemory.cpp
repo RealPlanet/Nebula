@@ -57,7 +57,7 @@ const Variable& FrameMemory::ParamAt(size_t i) const
     return m_Variables[i];
 }
 
-bool Variable::SetValue(DataStackVariant& val)
+bool Variable::SetValue(const DataStackVariant& val)
 {
     if (Type() != val.index())
         return false;
