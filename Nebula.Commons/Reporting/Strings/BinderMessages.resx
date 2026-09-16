@@ -210,7 +210,15 @@
     <comment>E</comment>
   </data>
   <data name="VariableDoesNotExists" xml:space="preserve">
-    <value>Variable name does not exist '{0}'.</value>
+    <value>Variable '{0}' does not exist.</value>
+    <comment>E</comment>
+  </data>
+  <data name="GlobalVariableDoesNotExists" xml:space="preserve">
+    <value>Global variable '{0}' does not exist in namespace '{1}'. Did you forget an import?</value>
+    <comment>E</comment>
+  </data>
+  <data name="PrimitiveTypeDoesNotHaveFields" xml:space="preserve">
+    <value>Primitive type '{0}' does not have fields</value>
     <comment>E</comment>
   </data>
   <data name="VariableDoesNotHaveAnyFields" xml:space="preserve">

@@ -104,24 +104,23 @@ namespace Nebula.Core.Compilation.Emitting
 
             if (_options.ReadableBytecode)
             {
-                using (FileStream output = File.Create(outputFilePath))
-                using (FileStream outputDbg = File.Create(outputDbgFilePath))
-                using (StreamWriter writer = new(output))
-                using (StreamWriter dbgWriter = new(outputDbg))
+                using FileStream output = File.Create(outputFilePath);
+                using FileStream outputDbg = File.Create(outputDbgFilePath);
+                using StreamWriter writer = new(output);
+                using StreamWriter dbgWriter = new(outputDbg);
+
+                _currentContext.Assembly.Write(writer);
+                output.Flush();
+                output.Position = 0;
+                string md5Checksum = string.Empty;
+                using (MD5 md5 = MD5.Create())
                 {
-                    _currentContext.Assembly.Write(writer);
-                    output.Flush();
-                    output.Position = 0;
-                    string md5Checksum = string.Empty;
-                    using (MD5 md5 = MD5.Create())
-                    {
 
-                        md5Checksum = BitConverter.ToString(md5.ComputeHash(output)).Replace("-", "").ToLowerInvariant();
-                    }
-
-                    Debug.Assert(!string.IsNullOrEmpty(md5Checksum));
-                    _currentContext.Assembly.WriteDebuggingInfo(dbgWriter, md5Checksum);
+                    md5Checksum = BitConverter.ToString(md5.ComputeHash(output)).Replace("-", "").ToLowerInvariant();
                 }
+
+                Debug.Assert(!string.IsNullOrEmpty(md5Checksum));
+                _currentContext.Assembly.WriteDebuggingInfo(dbgWriter, md5Checksum);
             }
             else
             {
@@ -750,7 +749,6 @@ namespace Nebula.Core.Compilation.Emitting
 
         private void EmitVariableExpression(NILProcessor processor, AbstractVariableExpression node, Node originalStatement)
         {
-            // TODO :: Rethink how variables vs bundles are handled to simplify the instruction set
             switch (node.Variable)
             {
                 case ParameterSymbol parameter:
