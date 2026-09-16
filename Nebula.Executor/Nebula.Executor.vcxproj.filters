@@ -2,9 +2,64 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\ExecutorDebugServer.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DebugController.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BreakpointManager.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Utility.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DebugState.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\ConsoleWriter.h" />
-    <ClInclude Include="include\ArgParser.h" />
+    <ClInclude Include="include\ArgParser.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ConsoleWriter.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\BlockingQueue.h">
+      <Filter>Headers\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DebugState.h">
+      <Filter>Headers\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="include\BreakpointManager.h">
+      <Filter>Headers\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DebugController.h">
+      <Filter>Headers\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DebugTypes.h">
+      <Filter>Headers\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ExecutorDebugServer.h">
+      <Filter>Headers\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Utility.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DebugControllerListener.h">
+      <Filter>Headers\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ArgParser\ArgParser.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{6f9edadb-a41e-400f-ad7b-29ac30a96247}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{b38d62e5-65b9-41bf-bd9b-92bf796442f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Debugger">
+      <UniqueIdentifier>{98436ec0-06f2-4f35-b2ab-f1c96c626d8a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
