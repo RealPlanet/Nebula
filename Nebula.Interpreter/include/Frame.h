@@ -47,7 +47,8 @@ namespace nebula
 		inline const Function* GetFunction() const { return m_FunctionDefinition; }
 		inline InstructionErrorCode GetLastError() const { return m_LastErrorCode; }
 		inline size_t NextInstructionIndex() const { return m_NextInstructionIndex; }
-		const std::string& Namespace();
+		const std::string& Namespace() const;
+		const std::string& FunctionName() const;
 
 	public:
 		void SetScheduledSleep(const size_t& amount);
