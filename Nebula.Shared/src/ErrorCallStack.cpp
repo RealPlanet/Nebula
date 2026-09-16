@@ -10,7 +10,7 @@
 using namespace nebula::shared;
 
 static inline std::string get_line_at(std::ifstream& stream, size_t line, std::string& prev, std::string& next) {
-	while (line-- > 1) {
+	while (line-- > 0) {
 		std::getline(stream, prev);
 	}
 
@@ -25,8 +25,8 @@ static inline std::string get_line_at(std::ifstream& stream, size_t line, std::s
 	return l;
 }
 
-ErrorCallStackLine::ErrorCallStackLine(const std::string& scriptSource, const std::string& funcName, size_t instNumber, const std::string& scriptText)
-	: m_ScriptSource{ scriptSource }, m_FunctionName{ funcName }, m_InstructionNumber{ instNumber }, m_ScriptLine{ scriptText }
+ErrorCallStackLine::ErrorCallStackLine(const std::string& scriptSource, const std::string& namespace_, const std::string& funcName, size_t instNumber, const std::string& scriptText)
+	: m_ScriptSource{ scriptSource }, m_Namespace{ namespace_ }, m_FunctionName{funcName}, m_InstructionNumber{instNumber}, m_ScriptLine{scriptText}
 {
 }
 
@@ -58,15 +58,14 @@ std::string ErrorCallStack::GetAsText() const
 			continue;
 		}
 
-		std::string labelCountPrefix = std::format("+ @{}", line.GetInstructionNumber());
+
 		if (i == m_Lines.size() - 1)
 		{
-			// Root of call stack
-			ss << rootPrefix << labelCountPrefix << "::" << line.GetText() << "" << "\n";
+			ss << rootPrefix + GetBytecodeErrorString(i);
 			continue;
 		}
 
-		strLine = std::format("{}::{}\n", labelCountPrefix, line.GetText());
+		strLine = GetBytecodeErrorString(i);
 		strLine.insert(0, rootPrefixCount, ' ');
 		ss << strLine;
 	}
@@ -75,20 +74,35 @@ std::string ErrorCallStack::GetAsText() const
 	return ss.str();
 }
 
+std::string ErrorCallStack::GetBytecodeErrorString(size_t lineIndex) const
+{
+	auto& line = m_Lines[lineIndex];
+	std::string labelCountPrefix = std::format("+ @{}", line.GetInstructionNumber());
+	if (lineIndex == m_Lines.size() - 1)
+	{
+		// Root of call stack
+		return labelCountPrefix + "::" + line.GetText() + "\n";
+	}
+
+	return std::format("{}::{}\n", labelCountPrefix, line.GetText());
+}
+
 bool ErrorCallStack::GetErrorCallStackLineFromDbgFile(const ErrorCallStackLine& line, std::string* outTextLine) const
 {
-	if (DebugServer::Instance() == nullptr)
+	if (debugger::DebugServer::Instance() == nullptr)
 	{
 		return false;
 	}
 
-	ScriptDebugInformation* debugInformation = DebugServer::Instance()->GetDebugInformationForScript(line.GetScriptSource());
+	auto& namespace_ = line.GetFunctionNamespace();
+	auto debugInformation = debugger::DebugServer::Instance()->GetScript(namespace_);
 	if (debugInformation == nullptr)
 	{
 		return false;
 	}
 
-	FunctionDebugInformation* functionInformation = debugInformation->GetFunctionInformation(line.GetFunctionName());
+	auto& funcName = line.GetFunctionName();
+	auto functionInformation = debugInformation->GetFunctionInformation(funcName);
 	if (functionInformation == nullptr)
 	{
 		return false;
@@ -96,15 +110,16 @@ bool ErrorCallStack::GetErrorCallStackLineFromDbgFile(const ErrorCallStackLine& 
 
 	size_t instructionOpcode = line.GetInstructionNumber();
 	size_t lineInfo = functionInformation->GetLineFromOpcode(instructionOpcode);
-	if (lineInfo == FunctionDebugInformation::NoLineInfo)
+	if (lineInfo == debugger::symbols::DebugFunction::NoLineInfo)
 	{
 		return false;
 	}
 
 	std::stringstream ss;
-	ss << std::format("At line {} in function '{}' of script '{}': \n", lineInfo, line.GetFunctionName(), debugInformation->GetOriginalFileName());
+	ss << std::format("At line {} in function '{}' of script '{}': \n",
+		lineInfo, line.GetFunctionName(), debugInformation->originalFileName);
 
-	std::ifstream f(debugInformation->GetFullPath());
+	std::ifstream f(debugInformation->originalFileFullName);
 	if (f.is_open())
 	{
 		std::string prev, next;
@@ -126,4 +141,9 @@ bool ErrorCallStack::GetErrorCallStackLineFromDbgFile(const ErrorCallStackLine& 
 
 	*outTextLine = ss.str();
 	return true;
+}
+
+std::string ErrorCallStack::GetReadableError() const
+{
+	return InstructionErrorCodeToString(m_ErrorCode);
 }

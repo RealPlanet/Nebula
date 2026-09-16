@@ -1,30 +1,95 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Internal">
+    <Filter Include="Debug">
       <UniqueIdentifier>{ff39d2a4-d513-40cb-898f-68719125aa24}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{c5567510-6c7f-4c7d-a15a-e0da45912b73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Interfaces">
+      <UniqueIdentifier>{f0a4aba9-0638-42ff-9a64-fbdfb8f35e7a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{42012b08-9c40-4f6e-8a1d-baaaf43bb86b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Utility.h" />
-    <ClInclude Include="include\DebuggerDefinitions.h" />
-    <ClInclude Include="include\DebugServer.h" />
-    <ClInclude Include="include\DiagnosticReport.h" />
-    <ClInclude Include="include\ErrorCallStack.h" />
-    <ClInclude Include="include\Instruction.h" />
-    <ClInclude Include="include\InstructionDefs.h" />
-    <ClInclude Include="include\LanguageTypes.h" />
-    <ClInclude Include="include\interfaces\IStreamWrapper.h" />
-    <ClInclude Include="include\interfaces\IGCObject.h" />
-    <ClInclude Include="include\interfaces\INotificationListener.h" />
-    <ClInclude Include="include\interfaces\IScriptParser.h" />
+    <ClInclude Include="include\DebugFunction.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DebugServer.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DebuggerDefinitions.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DebugLine.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DebugFile.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DebugVariable.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="include\interfaces\IGCObject.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="include\interfaces\INotificationListener.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="include\interfaces\IStreamWrapper.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DiagnosticReport.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ErrorCallStack.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Instruction.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\InstructionDefs.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LanguageTypes.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\interfaces\IScriptParser.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DebugBundleDefinition.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SymbolsSerializer.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\LanguageTypes.cpp" />
-    <ClCompile Include="src\DebugServer.cpp" />
-    <ClCompile Include="src\DiagnosticReport.cpp" />
-    <ClCompile Include="src\ErrorCallStack.cpp" />
-    <ClCompile Include="src\IGCObject.cpp" />
-    <ClCompile Include="src\INotificationListener.cpp" />
+    <ClCompile Include="src\DiagnosticReport.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DebugServer.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DebugFunction.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ErrorCallStack.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\IGCObject.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\INotificationListener.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LanguageTypes.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DebugFile.cpp" />
   </ItemGroup>
 </Project>
