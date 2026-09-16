@@ -20,9 +20,9 @@ namespace Nebula.Interop.SafeHandles
         public IReadOnlyDictionary<string, BundleDefinition> Bundles => _bundles;
         public IReadOnlyDictionary<string, Function> Functions => _functions;
 
-        private readonly Dictionary<string, BundleDefinition> _bundles = new Dictionary<string, BundleDefinition>();
-        private readonly Dictionary<string, Function> _functions = new Dictionary<string, Function>();
-        private readonly Dictionary<string, VariableDefinition> _globals = new Dictionary<string, VariableDefinition>();
+        private readonly Dictionary<string, BundleDefinition> _bundles = new();
+        private readonly Dictionary<string, Function> _functions = new();
+        private readonly Dictionary<string, VariableDefinition> _globals = new();
 
         private Script(IntPtr handle)
             : base(true)
@@ -69,7 +69,7 @@ namespace Nebula.Interop.SafeHandles
             for (int i = 0; i < count; i++)
             {
                 IntPtr itemHandle = rawPtrs[i];
-                VariableDefinition global = new VariableDefinition(Namespace, itemHandle, i);
+                VariableDefinition global = new(Namespace, itemHandle, i);
                 _globals.Add(global.Name, global);
             }
         }
@@ -86,7 +86,7 @@ namespace Nebula.Interop.SafeHandles
             for (int i = 0; i < count; i++)
             {
                 IntPtr itemHandle = rawPtrs[i];
-                BundleDefinition bundleDef = new BundleDefinition(Namespace, itemHandle);
+                BundleDefinition bundleDef = new(Namespace, itemHandle);
                 _bundles.Add(bundleDef.Name, bundleDef);
             }
         }
@@ -102,7 +102,7 @@ namespace Nebula.Interop.SafeHandles
             for (int i = 0; i < count; i++)
             {
                 IntPtr itemHandle = rawPtrs[i];
-                Function func = new Function(itemHandle);
+                Function func = new(itemHandle);
                 _functions.Add(func.Name, func);
             }
         }

@@ -30,7 +30,7 @@ namespace Nebula.Interop.Structures
                     case TypeIdentifier.Bundle:
                         {
                             IntPtr ptr = NativeMethods.DataStackVariant_GetBundleValue(_borrowedHandle);
-                            Bundle bundle = new Bundle(ptr);
+                            Bundle bundle = new(ptr);
                             return bundle;
                         }
                     case TypeIdentifier.Array:

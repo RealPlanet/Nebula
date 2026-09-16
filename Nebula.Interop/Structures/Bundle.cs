@@ -9,7 +9,7 @@ namespace Nebula.Interop.Structures
     {
         public IReadOnlyList<Variable> Fields => _fields;
 
-        private readonly List<Variable> _fields = new List<Variable>();
+        private readonly List<Variable> _fields = new();
 
         public Bundle(IntPtr instance)
         {
@@ -17,7 +17,7 @@ namespace Nebula.Interop.Structures
             for (int i = 0; i < fieldCount; i++)
             {
                 IntPtr bundleVariable = NativeMethods.Bundle_GetField(instance, i);
-                BundleVariable variable = new BundleVariable(bundleVariable);
+                BundleVariable variable = new(bundleVariable);
                 _fields.Add(variable);
             }
         }

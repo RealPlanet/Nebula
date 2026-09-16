@@ -19,9 +19,9 @@ namespace Nebula.Interop.Structures
         public IReadOnlyList<FunctionAttribute> Attributes => _attributes;
         public IReadOnlyList<Instruction> Instructions => _instructions;
 
-        private readonly List<FunctionParameter> _parameters = new List<FunctionParameter>();
-        private readonly List<FunctionAttribute> _attributes = new List<FunctionAttribute>();
-        private readonly List<Instruction> _instructions = new List<Instruction>();
+        private readonly List<FunctionParameter> _parameters = new();
+        private readonly List<FunctionAttribute> _attributes = new();
+        private readonly List<Instruction> _instructions = new();
         private readonly IntPtr _borrowedHandle;
 
         public Function(IntPtr handle)

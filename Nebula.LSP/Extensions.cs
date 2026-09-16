@@ -60,8 +60,7 @@ namespace Nebula.LSP
         {
             var symbols = new List<DocumentSymbol>
             {
-                new DocumentSymbol
-                {
+                new() {
                     Kind = SymbolKind.Operator,
                     Name = declaration.Operator.Text,
                     Range = declaration.Operator.Location.ToRange(),
@@ -76,8 +75,7 @@ namespace Nebula.LSP
         {
             var symbols = new List<DocumentSymbol>
             {
-                new DocumentSymbol
-                {
+                new() {
                     Kind = SymbolKind.Operator,
                     Name = declaration.Operator.Text,
                     Range = declaration.Operator.Location.ToRange(),

@@ -56,7 +56,7 @@ namespace Nebula.LSP
 
                     foreach (var file in allFiles)
                     {
-                        Uri tempUri = new Uri(file);
+                        Uri tempUri = new(file);
                         var contents = await File.ReadAllTextAsync(file, cancellationToken);
                         library.AddDocument(new NebulaDocument("nebula", tempUri, 0, contents));
                     }

@@ -202,7 +202,7 @@ namespace Nebula.Core.Compilation.AST.Binding
 
             if (_currentUnit.Globals.Count > 0)
             {
-                Scope functionScope = new Scope(_currentScope);
+                Scope functionScope = new(_currentScope);
 
                 const string ctorName = "0__script_static_ctor__0";
                 FunctionSymbol funcSymbol = new(ctorName,
@@ -613,7 +613,7 @@ namespace Nebula.Core.Compilation.AST.Binding
             ImmutableArray<AttributeSymbol>.Builder attributes = ImmutableArray.CreateBuilder<AttributeSymbol>();
             HashSet<string> seenNames = new();
 
-            Scope functionScope = new Scope(_currentScope);
+            Scope functionScope = new(_currentScope);
 
             foreach (Parameter parameter in function.Parameters)
             {
@@ -797,7 +797,7 @@ namespace Nebula.Core.Compilation.AST.Binding
                         variable = variableExpression.Variable;
                         break;
                     }
-                case AbstractErrorExpression errorExpression:
+                case AbstractErrorExpression:
                     {
                         return new AbstractErrorExpression(assignmentExpression);
                     }
