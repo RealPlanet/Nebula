@@ -39,7 +39,6 @@
     <Project Path="Nebula.SourceGeneration/Nebula.SourceGeneration.csproj" />
   </Folder>
   <Folder Name="/Frontend/">
-    <Project Path="../Nebula.Debugger/Nebula.Debugger.vcxproj" Id="ff596165-3a79-4980-a71b-655e793594e1" />
     <Project Path="Nebula.Compiler/Nebula.Compiler.csproj">
       <Platform Project="x64" />
     </Project>

@@ -9,6 +9,8 @@
 
   <ItemGroup>
       <ProjectReference Include="..\Nebula.Commons\Nebula.Commons.csproj" />
+      <ProjectReference Include="..\Nebula.Exports\Nebula.Exports.vcxproj" />
+      <ProjectReference Include="..\Nebula.Interop\Nebula.Interop.csproj" />
   </ItemGroup>
 
 </Project>
