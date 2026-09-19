@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "LanguageTypes.h"
+#include "Variable.h"
 #include "interfaces/IGCObject.h"
 
 namespace nebula
@@ -29,25 +30,6 @@ namespace nebula
         BundleFields m_Fields;
     };
 
-    // In memory rapresentation of a bundle field
-    class BundleField
-    {
-    public:
-        BundleField(const std::string& name, DataStackVariantIndex fieldType);
-
-        const std::string& Name() { return m_Name; }
-        DataStackVariantIndex FieldType() const { return m_AcceptedType; };
-        const DataStackVariant& FieldValue() const { return m_Value; }
-        DataStackVariant& FieldValue() { return m_Value; }
-
-        bool SetValue(DataStackVariant&, bool allowTypeMismatch = false);
-
-    private:
-        std::string				m_Name;
-        DataStackVariant		m_Value;
-        DataStackVariantIndex	m_AcceptedType{ _UnknownType };
-    };
-
     // In memory rapresentation of a bundle
     class Bundle
         : public IGCObject
@@ -60,7 +42,7 @@ namespace nebula
         size_t FieldCount() const { return m_Fields.size(); }
 
         DataStackVariant& Get(int index);
-        DataStackVariant& GetByName(const std::string& name);
+        Variable& GetVariable(int index);
 
         bool SetAt(int index, DataStackVariant& data);
         void ClearFields() { m_Fields.clear(); }
@@ -68,7 +50,7 @@ namespace nebula
     private:
         Bundle();
         std::string m_Name;
-        std::vector<BundleField> m_Fields;
+        std::vector<Variable> m_Fields;
     };
 }
 
