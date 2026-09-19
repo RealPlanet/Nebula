@@ -97,53 +97,20 @@ namespace nebula::debugger
 			ArrayElement,
 		};
 
-		enum class Type
-		{
-			Int,
-			Bool,
-			Float,
-			String,
-			Object,
-			Array,
-		};
-
-
+		// Variable reference if this variable holds child variables
 		VariableId reference;
-		Type internalType;
-		Scope generalScope;
-
-		std::string name;
-		std::string value;
-		std::string displayType;
-
+		// The scope of this variable, if it is a local, parameter or something else..
+		Scope scope;
+		// The read debug information
+		const nebula::debugger::symbols::DebugVariable* debugInformation;
+		// If this value can be changed by a debugger, for now only primitives are allowed
 		bool canChangeValueByDebugger;
 
 		nebula::Variable* originalVariable;
-		const nebula::debugger::symbols::DebugVariable* debugInformation;
 
-		inline bool OverrideValue(const std::string&, const std::string& valueToSet) {
-			switch (internalType)
-			{
-				// TODO
-				//case nebula::DataStackVariantIndex::_TypeInt32
-				//{
-				//
-				//}
-				//case nebula::DataStackVariantIndex::_Float:
-				//{
-				//
-				//}
-			case Type::String:
-			{
-				return originalVariable->SetValue(nebula::DataStackVariant{ valueToSet });
-			}
-			case Type::Array:
-			case Type::Object:
-			{
-				return false;
-			}
-			}
-		}
+		bool OverrideValue(const std::string& valueToSet, std::string& reason);
+		std::string GetDisplayValue() const;
+		std::string GetDisplayType() const;
 	};
 
 	struct DebugSource
