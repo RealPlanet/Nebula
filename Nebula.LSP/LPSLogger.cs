@@ -2,6 +2,6 @@
 {
     public static class LPSLogger
     {
-        public static Serilog.ILogger Logger { get; set; }
+        public static Serilog.ILogger Logger { get; set; } = null!;
     }
 }
