@@ -62,6 +62,7 @@ namespace Nebula.CodeGeneration.Writer
                         Name = field.Name,
                         SourceNamespace = field.SourceNamespace,
                         SourceType = field.SourceTypeName,
+                        InternalType = field.VariableType.ToString(),
                     });
                 }
             }
@@ -98,6 +99,7 @@ namespace Nebula.CodeGeneration.Writer
                         Name = p.Name,
                         SourceNamespace = p.SourceNamespace,
                         SourceType = p.SourceTypeName,
+                        InternalType = p.VariableType.ToString(),
                     });
                 }
 
@@ -106,6 +108,7 @@ namespace Nebula.CodeGeneration.Writer
                     DebugVariable dbgVariable = new()
                     {
                         Name = v.Name,
+                        InternalType = v.VariableType.ToString(),
                         SourceNamespace = v.SourceNamespace,
                         SourceType = v.SourceTypeName,
                     };

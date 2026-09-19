@@ -186,12 +186,13 @@ namespace Nebula.Core.Compilation.Emitting
             VariableDefinition GenerateVariableDefinition(int globalCount, VariableSymbol variable)
             {
                 TypeReference typeReference = _knownTypes[variable.Type.BaseType];
-                VariableDefinition variableDefinition = new(typeReference, variable.Namespace, variable.Name, globalCount);
-                if (variable.Type is ObjectTypeSymbol objSymbol)
-                {
-                    variableDefinition.SourceNamespace = objSymbol.Namespace;
-                    variableDefinition.SourceTypeName = objSymbol.Name;
-                }
+                variable.Type.GetTypeInformation(out var namespaceOfType, out var sourceTypeName);
+                VariableDefinition variableDefinition = new(typeReference,
+                                                            namespaceOfType,
+                                                            sourceTypeName,
+                                                            variable.Namespace,
+                                                            variable.Name,
+                                                            globalCount);
 
                 return variableDefinition;
             }
@@ -218,12 +219,12 @@ namespace Nebula.Core.Compilation.Emitting
             foreach (ParameterSymbol? parameter in declaration.Parameters)
             {
                 TypeReference? parameterType = _knownTypes[parameter.Type.BaseType];
-                ParameterDefinition parameterDefinition = new(parameterType, parameter.Name, method.Parameters.Count);
-                if (parameter.Type is ObjectTypeSymbol objSymbol)
-                {
-                    parameterDefinition.SourceNamespace = objSymbol.Namespace;
-                    parameterDefinition.SourceTypeName = objSymbol.Name;
-                }
+                parameter.Type.GetTypeInformation(out var @namespace, out var sourceTypeName);
+                ParameterDefinition parameterDefinition = new(parameterType,
+                                                              @namespace,
+                                                              sourceTypeName,
+                                                              parameter.Name,
+                                                              method.Parameters.Count);
 
                 method.Parameters.Add(parameterDefinition);
                 _currentContext.Parameters.Add(parameter, parameterDefinition);
@@ -240,13 +241,12 @@ namespace Nebula.Core.Compilation.Emitting
             foreach (AbstractBundleField field in value.Fields)
             {
                 TypeReference? fieldType = _knownTypes[field.FieldType.BaseType];
-                ParameterDefinition fieldDef = new(fieldType, field.FieldName, bundle.Fields.Count);
-                if (field.FieldType is ObjectTypeSymbol objSymbol)
-                {
-                    fieldDef.SourceNamespace = objSymbol.Namespace;
-                    fieldDef.SourceTypeName = objSymbol.Name;
-                }
-
+                field.FieldType.GetTypeInformation(out var typeNamespace, out var typeName);
+                ParameterDefinition fieldDef = new(fieldType,
+                                                   typeNamespace,
+                                                   typeName,
+                                                   field.FieldName,
+                                                   bundle.Fields.Count);
                 bundle.Fields.Add(fieldDef);
             }
 
@@ -392,13 +392,13 @@ namespace Nebula.Core.Compilation.Emitting
         {
             TypeReference typeReference = _knownTypes[node.Variable.Type.BaseType];
 
-            VariableDefinition variableDefinition = new(typeReference, node.Variable.Namespace, node.Variable.Name, processor.Body.Variables.Count);
-
-            if (node.Variable.Type is ObjectTypeSymbol objSymbol)
-            {
-                variableDefinition.SourceNamespace = objSymbol.Namespace;
-                variableDefinition.SourceTypeName = objSymbol.Name;
-            }
+            node.Variable.Type.GetTypeInformation(out var typeNamespace, out var typeName);
+            VariableDefinition variableDefinition = new(typeReference,
+                                                        typeNamespace,
+                                                        typeName,
+                                                        node.Variable.Namespace,
+                                                        node.Variable.Name,
+                                                        processor.Body.Variables.Count);
 
             _currentContext.Locals.Add(node.Variable, variableDefinition);
             processor.Body.Variables.Add(variableDefinition);
