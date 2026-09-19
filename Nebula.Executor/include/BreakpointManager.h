@@ -6,14 +6,20 @@
 #include "DebugTypes.h"
 
 #include <string>
-#include <shared_mutex>
 #include <unordered_map>
 #include <unordered_set>
+#include <mutex>
 
 namespace nebula::debugger
 {
 	class BreakpointManager
 	{
+		using mutex = std::recursive_mutex;
+		using bpm_lock = std::scoped_lock<mutex>;
+
+		using bp_set = std::unordered_set<BreakpointInformation>;
+		using bp_map = std::unordered_map<std::string, std::unordered_set<BreakpointInformation>>;
+
 	public:
 		void AddFunctionBreakpoint(const BreakpointInformation& breakpointInfo);
 		void AddBreakpoint(const BreakpointInformation& breakpointInfo);
@@ -21,14 +27,14 @@ namespace nebula::debugger
 		void ClearBreakpoints(const std::string& _namespace);
 		void ClearBreakpoints();
 
-		std::scoped_lock<std::shared_mutex> Lock() const { return std::scoped_lock<std::shared_mutex>{ m_mutex }; }
+		mutex& GetMutex() const { return m_mutex; }
+		const bp_set& GetFunctionBreakpoints() const;
+		const bp_map& GetBreakpoints() const;
 
-		const std::unordered_set<BreakpointInformation>& GetFunctionBreakpoints() const { return m_functionBreakpoints; }
-		const std::unordered_map<std::string, std::unordered_set<BreakpointInformation>>& GetBreakpoints() const { return m_breakpoints; }
 	private:
-		mutable std::shared_mutex m_mutex;
-		std::unordered_set<BreakpointInformation> m_functionBreakpoints;
-		std::unordered_map<std::string, std::unordered_set<BreakpointInformation>> m_breakpoints;
+		mutable mutex m_mutex;
+		bp_set m_functionBreakpoints;
+		bp_map m_breakpoints;
 	};
 } // namespace nebula::debugger
 

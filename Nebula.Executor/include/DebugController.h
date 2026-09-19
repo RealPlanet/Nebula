@@ -52,6 +52,7 @@ namespace nebula::debugger
 		void ProcessStepIn(ThreadId thread);
 		void ProcessContinue(ThreadId thread);
 		bool Step();
+		void CheckInterpreterExited();
 
 		void StepLine(ThreadId threadId);
 		void StepOverFunctionCall(ThreadId threadId, Frame* ourFrame, size_t callstackIndex);

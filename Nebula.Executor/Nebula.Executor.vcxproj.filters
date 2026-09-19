@@ -17,6 +17,7 @@
     <ClCompile Include="src\DebugState.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="src\DebugTypes.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\ArgParser.h">

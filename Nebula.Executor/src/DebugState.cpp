@@ -8,6 +8,7 @@
 #include "DebugFile.h"
 #include "DebugFunction.h"
 #include "DebugVariable.h"
+#include "VariantArray.h"
 
 #include <algorithm>
 #include <cassert>
@@ -81,7 +82,7 @@ const DebugSource* DebugState::GetSource(const std::string& namespace_) const
 	return &it->second;
 }
 
-const DebugSource* nebula::debugger::DebugState::GetSourceByPath(const std::string& path) const
+const DebugSource* DebugState::GetSourceByPath(const std::string& path) const
 {
 	if (path == "")
 	{
@@ -262,7 +263,7 @@ const std::vector<DebugScope>& DebugState::GetScopes(const DebugFrame* frame)
 		for (size_t i{ 0 }; i < frameMemory.ParamCount(); i++)
 		{
 			auto& debugParameter = debugFunction->parameters[i];
-			DeclareVariable(argScope.reference, frameMemory.ParamAt(i), debugParameter);
+			DeclareVariable(argScope.reference, DebugVariable::Scope::Global, frameMemory.ParamAt(i), debugParameter);
 		}
 	}
 
@@ -281,7 +282,7 @@ const std::vector<DebugScope>& DebugState::GetScopes(const DebugFrame* frame)
 		for (size_t i{ 0 }; i < frameMemory.LocalCount(); i++)
 		{
 			auto& debugLocal = debugFunction->locals[i];
-			DeclareVariable(localScope.reference, frameMemory.LocalAt(i), debugLocal);
+			DeclareVariable(localScope.reference, DebugVariable::Scope::Local, frameMemory.LocalAt(i), debugLocal);
 		}
 	}
 
@@ -295,25 +296,69 @@ std::vector<DebugVariable>& DebugState::GetVariables(size_t reference)
 
 void DebugState::PopulateChildVariables(DebugVariable& variable)
 {
-	ExecutorDebugServer* debugServer = static_cast<ExecutorDebugServer*>(DebugServer::Instance());
+	assert(variable.debugInformation);
+	assert(variable.originalVariable);
+	assert(variable.debugInformation->internalType == "bundle" 
+		|| variable.debugInformation->internalType == "array");
 
-	assert(variable.internalType == DebugVariable::Type::Object || variable.internalType == DebugVariable::Type::Array);
+	ExecutorDebugServer* debugServer = static_cast<ExecutorDebugServer*>(DebugServer::Instance());
 	assert(debugServer);
 
-	if (variable.internalType == DebugVariable::Type::Object)
+	bool isObjectInitialized = variable.originalVariable->ContainsGCObject();
+	if (!isObjectInitialized)
+	{
+		assert(false);
+		return;
+	}
+
+	if (variable.debugInformation->internalType == "bundle")
 	{
 		assert(variable.debugInformation);
 		assert(variable.debugInformation->sourceNamespace != "");
 		assert(variable.debugInformation->sourceType != "");
 
 		auto object = debugServer->GetBundle(variable.debugInformation->sourceNamespace, variable.debugInformation->sourceType);
-		// TODO Finish
-	}
-	else if (variable.internalType == DebugVariable::Type::Array)
-	{
-		assert(false);
+		assert(object);
+
+		if (!object)
+		{
+			// TODO HANDLE SYMBOLS NOT FOUND
+			assert(false);
+			return;
+		}
+
+		for (size_t i = 0; i < object->fields.size(); i++)
+		{
+			auto& internalObject = *(nebula::Bundle*)variable.originalVariable->AsGCObject().get();
+			auto& internalVariable = internalObject.GetVariable((int)i);
+			auto& dbgField = object->fields[i];
+
+			DeclareVariable(variable.reference,
+				DebugVariable::Scope::Member,
+				internalVariable,
+				dbgField);
+		}
+
+		return;
 	}
 
+	if (variable.debugInformation->internalType == "array")
+	{
+		assert(variable.debugInformation);
+		assert(variable.debugInformation->sourceType != "");
+
+		auto& internalArray = *(nebula::VariantArray*)variable.originalVariable->AsGCObject().get();
+		for (size_t i{ 0 }; i < internalArray.Size(); i++)
+		{
+			// TODO
+			//DeclareVariable(variable.reference,
+			//	DebugVariable::Scope::Member,
+			//	internalVariable,
+			//	nullptr);
+		}
+
+		return;
+	}
 }
 
 size_t DebugState::GetNextSourceReference()
@@ -357,64 +402,32 @@ void DebugState::InvalidateState()
 	m_variables.clear();
 }
 
-void DebugState::DeclareVariable(VariableId reference, nebula::Variable& variable, const symbols::DebugVariable& debugVariable)
+void DebugState::DeclareVariable(VariableId reference, DebugVariable::Scope scope,
+	nebula::Variable& variable,
+	const symbols::DebugVariable& debugVariable)
 {
-	auto& currentVariables = m_variables[reference];
 
-	VariableId id = 0;
-	std::string type;
-	if (variable.Type() == nebula::DataStackVariantIndex::_TypeObject)
+	DebugVariable wrapDebugVarriable
 	{
-		id = GetNextFrameReference();
-		type = std::format("{}::{}", debugVariable.sourceNamespace, debugVariable.sourceType);
-	}
-	else
+		.reference = 0,
+		.scope = scope,
+		.debugInformation = &debugVariable,
+		.canChangeValueByDebugger = true,
+		.originalVariable = &variable,
+	};
+
+	if (debugVariable.internalType == "bundle" ||
+		debugVariable.internalType == "array")
 	{
-		type = "primitive";
-	}
-
-	DebugVariable::Type internalType = DebugVariable::Type::Int;
-	DebugVariable::Scope scope = DebugVariable::Scope::Local;
-
-	std::string value = "";
-	bool canValueBeOverriden = true;
-
-	if (variable.Type() == nebula::DataStackVariantIndex::_TypeObject)
-	{
-		canValueBeOverriden = false;
-		internalType = DebugVariable::Type::Object;
+		wrapDebugVarriable.canChangeValueByDebugger = false;
 		if (variable.ContainsGCObject())
 		{
-			auto& gcObj = variable.AsGCObject();
-			if (gcObj->GetType() == nebula::ObjectType::Array)
-			{
-				internalType = DebugVariable::Type::Array;
-			}
-		}
-		else
-		{
-			value = "null";
+			wrapDebugVarriable.reference = GetNextVariableReference();
 		}
 	}
-	else 
-	{
-		value = nebula::ToString(variable.Value());
-	}
 
-	currentVariables.push_back(
-		DebugVariable
-		{
-			.reference = 0,
-			.internalType = internalType,
-			.generalScope = scope,
-			.name = debugVariable.name,
-			.value = value,
-			.displayType = type,
-			.canChangeValueByDebugger = canValueBeOverriden,
-
-			.originalVariable = &variable,
-			.debugInformation = &debugVariable,
-		});
+	auto& currentVariables = m_variables[reference];
+	currentVariables.emplace_back(std::move(wrapDebugVarriable));
 }
 
 size_t DebugState::GetLineNumber(const nebula::Frame& frame)
