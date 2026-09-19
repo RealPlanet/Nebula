@@ -96,6 +96,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\DebugTypes.cpp" />
     <ClCompile Include="src\DebugState.cpp" />
     <ClCompile Include="src\BreakpointManager.cpp" />
     <ClCompile Include="src\Utility.cpp" />

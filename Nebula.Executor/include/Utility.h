@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <filesystem>
 #include <string>
+#include <string_view>
+#include <charconv>
 
 #include "DAPTypes.h"
 #include "DAPEvents.h"
@@ -29,6 +31,12 @@ namespace nebula::utility
 	std::vector<nebula::debugger::DebugOutput> build_fatal_error_outputs(const nebula::shared::ErrorCallStack* callstack);
 	std::string load_script_line_from_source(const std::string& path, size_t line);
 	std::string get_line_at(std::ifstream& stream, size_t line);
+
+	bool try_parse(std::string_view str, size_t& result);
+	bool try_parse(std::string_view str, double& result);
+
+	void to_lower_implace(std::string& str);
+	std::string to_lower(std::string str);
 }
 
 #endif // !_H_EXECUTOR_DBG_UTILITY_

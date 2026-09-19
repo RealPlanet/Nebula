@@ -179,37 +179,34 @@ void nebula::utility::assign(::dap::Scope& scope, const nebula::debugger::DebugS
 
 void nebula::utility::assign(::dap::Variable& variable, const nebula::debugger::DebugVariable& debugVariable)
 {
-	variable.name = debugVariable.name;
-	variable.evaluateName = debugVariable.name;
-	variable.value = debugVariable.value;
-	variable.type = "";
+	assert(debugVariable.debugInformation);
+
+	variable.name = debugVariable.debugInformation->name;
+	variable.evaluateName = debugVariable.debugInformation->name;
+	variable.value = debugVariable.GetDisplayValue();
+	variable.type = debugVariable.GetDisplayType();
 	variable.variablesReference = debugVariable.reference;
 	variable.presentationHint = ::dap::VariablePresentationHint
 	{
 		.visibility = ::dap::VariablePresentationHint::VisibilityValues::Public,
 	};
 
-	if (debugVariable.generalScope == nebula::debugger::DebugVariable::Scope::Local)
+	if (debugVariable.scope == nebula::debugger::DebugVariable::Scope::Local)
 	{
 		variable.presentationHint.value().kind = ::dap::VariablePresentationHint::KindValues::Locals;
 	}
-	else if (debugVariable.generalScope == nebula::debugger::DebugVariable::Scope::Arguments)
+	else if (debugVariable.scope == nebula::debugger::DebugVariable::Scope::Arguments)
 	{
 		variable.presentationHint.value().kind = ::dap::VariablePresentationHint::KindValues::Arguments;
 	}
-	else if (debugVariable.generalScope == nebula::debugger::DebugVariable::Scope::Global)
+	else if (debugVariable.scope == nebula::debugger::DebugVariable::Scope::Global)
 	{
 		variable.presentationHint.value().kind = ::dap::VariablePresentationHint::Kind{ "Global" };
 	}
-
-	// TODO
-	//switch (debugVariable.internalType)
-	//{
-	//case nebula::debugger::DebugVariable::Type::Array:
-	//{
-	//
-	//}
-	//}
+	else if (debugVariable.scope == nebula::debugger::DebugVariable::Scope::Member)
+	{
+		variable.presentationHint.value().kind = ::dap::VariablePresentationHint::Kind{ "Member" };
+	}
 }
 
 std::vector<nebula::debugger::DebugOutput> nebula::utility::build_fatal_error_outputs(const nebula::shared::ErrorCallStack* callstack)
@@ -318,4 +315,39 @@ std::string nebula::utility::get_line_at(std::ifstream& stream, size_t line)
 	}
 
 	return l;
+}
+
+bool nebula::utility::try_parse(std::string_view str, size_t& result)
+{
+	auto [ptr, ec] = std::from_chars(
+		str.data(),
+		str.data() + str.size(),
+		result
+	);
+
+	return ec == std::errc{} && ptr == str.data() + str.size();
+}
+
+bool nebula::utility::try_parse(std::string_view str, double& result)
+{
+	auto [ptr, ec] = std::from_chars(
+		str.data(),
+		str.data() + str.size(),
+		result
+	);
+
+	return ec == std::errc{} && ptr == str.data() + str.size();
+}
+
+void nebula::utility::to_lower_implace(std::string& str)
+{
+	std::transform(str.begin(), str.end(), str.begin(),
+		[](unsigned char c) { return (char)std::tolower(c); });
+}
+
+std::string nebula::utility::to_lower(std::string str)
+{
+	std::transform(str.begin(), str.end(), str.begin(),
+		[](unsigned char c) { return (char)std::tolower(c); });
+	return str;
 }

@@ -1,4 +1,5 @@
 #include "DebugController.h"
+#include "CallStack.h"
 #include "Interpreter.h"
 #include "DebugServer.h"
 #include "ExecutorDebugServer.h"
@@ -120,6 +121,8 @@ void DebugController::OperationThread()
 	while (m_runOperationThread)
 	{
 		assert(m_listener);
+		assert(m_interpreter->GetState() == nebula::Interpreter::State::Paused);
+
 		if (!m_eventQueue.Pop(currentEvent))
 		{
 			// Queue has been closed
@@ -136,6 +139,7 @@ void DebugController::OperationThread()
 
 		m_processingEvent.test_and_set();
 		m_processingEvent.notify_all();
+		m_stopCurrentOperation = false;
 
 		try
 		{
@@ -217,17 +221,7 @@ bool DebugController::Step()
 {
 	if (!m_interpreter->Step())
 	{
-		m_stopCurrentOperation = true;
-		m_runOperationThread = false;
-
-		auto errorCallstack = m_interpreter->GetFatalErrorCallstack();
-		if (errorCallstack)
-		{
-			m_listener->OnInterpreterFatalError(errorCallstack);
-		}
-
-		// Step returns if the vm exited too
-		m_listener->OnInterpreterTerminated();
+		CheckInterpreterExited();
 		return false;
 	}
 
@@ -237,6 +231,21 @@ bool DebugController::Step()
 	}
 
 	return true;
+}
+
+void DebugController::CheckInterpreterExited()
+{
+	m_stopCurrentOperation = true;
+	m_runOperationThread = false;
+
+	auto errorCallstack = m_interpreter->GetFatalErrorCallstack();
+	if (errorCallstack)
+	{
+		m_listener->OnInterpreterFatalError(errorCallstack);
+	}
+
+	// Step returns if the vm exited too
+	m_listener->OnInterpreterTerminated();
 }
 
 void DebugController::StepLine(ThreadId threadId)
@@ -351,7 +360,7 @@ bool DebugController::AtEndOfFunction(size_t nextOpcode, size_t instructionCount
 
 bool DebugController::AnyBreakpointHit()
 {
-	auto scopelock = m_breakpointManager.Lock();
+	auto lock = std::scoped_lock{ m_breakpointManager.GetMutex() };
 
 	for (auto& bp : m_breakpointManager.GetFunctionBreakpoints())
 	{
@@ -364,10 +373,11 @@ bool DebugController::AnyBreakpointHit()
 			continue;
 		}
 
-		::nebula::debugger::DebugBreakpoint hitBreakpoint;
+		::nebula::debugger::DebugBreakpoint hitBreakpoint = {};
 		hitBreakpoint.isFunctionBreakpoint = true;
 		hitBreakpoint.threadId = id;
 		m_listener->OnBreakpointHit(hitBreakpoint);
+
 		return true;
 	}
 
@@ -386,11 +396,11 @@ bool DebugController::AnyBreakpointHit()
 				continue;
 			}
 
-
-			::nebula::debugger::DebugBreakpoint hitBreakpoint;
+			::nebula::debugger::DebugBreakpoint hitBreakpoint = {};
 			hitBreakpoint.isFunctionBreakpoint = false;
 			hitBreakpoint.threadId = id;
 			m_listener->OnBreakpointHit(hitBreakpoint);
+
 			return true;
 		}
 	}

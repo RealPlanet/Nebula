@@ -50,7 +50,7 @@ namespace nebula::debugger
 		void InvalidateState();
 
 	private:
-		void DeclareVariable(VariableId reference, nebula::Variable& variable, const symbols::DebugVariable& debugVariable);
+		void DeclareVariable(VariableId reference, DebugVariable::Scope scope, nebula::Variable& variable, const symbols::DebugVariable& debugVariable);
 
 		size_t GetLineNumber(const nebula::Frame& frame);
 

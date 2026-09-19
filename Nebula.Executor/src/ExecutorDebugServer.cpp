@@ -66,7 +66,7 @@ void ExecutorDebugServer::UnregisterScript(const Script* script)
 DebugFilePtr ExecutorDebugServer::GetScript(const std::string& namespace_)
 {
 	const symbols::DebugFile* scriptInformation = DefaultDebugServer::GetScript(namespace_);
-	if (scriptInformation && m_debugController->IsDebugging())
+	if (m_debugController && m_debugController->IsDebugging() && scriptInformation)
 	{
 		assert(m_debugState);
 
@@ -149,14 +149,12 @@ void ExecutorDebugServer::DetachDebugger(bool resumeInterpreter)
 		// ( example: Termination of the entire process )
 		// Calling this immediately unlocks the original main execution thread
 		m_debugController->StopDebugger(resumeInterpreter);
-		m_debugController.release();
-		m_debugController = nullptr;
+		m_debugState.reset();
 	}
 
 	if (m_debugState)
 	{
-		m_debugState.release();
-		m_debugState = nullptr;
+		m_debugState.reset();
 	}
 
 	nebula::utility::CleanupDebuggerFiles(true);
@@ -192,7 +190,8 @@ void ExecutorDebugServer::NotifyInterpreterStopped(ThreadId threadId, const dap:
 	m_dapServer->QueueEventAfterResponse(std::move(stoppedEvent));
 }
 
-std::tuple<bool, size_t, std::string, size_t> ExecutorDebugServer::IsLineDebuggable(const std::string& namespace_, size_t line)
+std::tuple<bool, size_t, std::string, size_t> ExecutorDebugServer::IsLineDebuggable(const std::string& namespace_,
+	size_t line)
 {
 	const symbols::DebugFunction* function = GetFunctionAtLine(namespace_, line);
 	if (!function)
@@ -262,7 +261,7 @@ bool ExecutorDebugServer::OnLoadedSourcesRequest(const dap::LoadedSourcesRequest
 	assert(m_debugController);
 	assert(m_debugState);
 
-	auto sources = m_debugState->GetSources();
+	auto& sources = m_debugState->GetSources();
 	response.sources.reserve(sources.size());
 	for (auto& [name, source] : sources)
 	{
@@ -361,8 +360,8 @@ bool ExecutorDebugServer::OnDisconnectRequest(const dap::DisconnectRequest&, dap
 	return m_pInterpreter->Stop() == Interpreter::State::Exited;
 }
 
-bool ExecutorDebugServer::OnSetExceptionBreakpointsRequest(const dap::SetExceptionBreakpointsRequest& request,
-	dap::SetExceptionBreakpointsResponse& response)
+bool ExecutorDebugServer::OnSetExceptionBreakpointsRequest(const dap::SetExceptionBreakpointsRequest&,
+	dap::SetExceptionBreakpointsResponse&)
 {
 	return false;
 }
@@ -472,7 +471,8 @@ bool ExecutorDebugServer::OnSetBreakpointsRequest(const dap::SetBreakpointsReque
 		utility::assign(bp.source.value(), *source);
 
 		auto normalizedLine = NormalizeLineNumber(reqBp.line);
-		auto [isLineDebuggable, instructionIndex, functionName, actualLineNumber] = IsLineDebuggable(source->namespace_, normalizedLine);
+		auto [isLineDebuggable, instructionIndex, functionName, actualLineNumber] =
+			IsLineDebuggable(source->namespace_, normalizedLine);
 		if (!isLineDebuggable)
 		{
 			bp.message = std::format("Line '{}' is not debuggable", reqBp.line);
@@ -529,7 +529,7 @@ bool ExecutorDebugServer::OnSetVariableRequest(const dap::SetVariableRequest& re
 	DebugVariable* varToChange{ nullptr };
 	for (auto& var : scopeVariables)
 	{
-		if (var.name == request.name)
+		if (var.debugInformation->name == request.name)
 		{
 			varToChange = &var;
 			break;
@@ -550,15 +550,24 @@ bool ExecutorDebugServer::OnSetVariableRequest(const dap::SetVariableRequest& re
 	}
 
 	assert(varToChange->originalVariable);
-	if (!varToChange->OverrideValue(request.type, request.value))
+	std::string reason;
+	bool changedValue = varToChange->OverrideValue(request.value, reason);
+	if (!changedValue)
 	{
-		response.SetFailed(std::format("Variable '{}' cannot have it's value changed to '{}' and type '{}'",
-			request.name, request.value, request.type));
+		if (reason == "")
+		{
+			response.SetFailed(std::format("Variable '{}' cannot have it's value changed to '{}'", request.name, request.value));
+		}
+		else
+		{
+			response.SetFailed(reason);
+		}
+
+		return false;
 	}
 
-	response.value = varToChange->value;
-	response.type = varToChange->displayType;
-	response.variablesReference = 0;
+	response.value = varToChange->GetDisplayValue();
+	response.variablesReference = varToChange->reference;
 	return true;
 }
 
@@ -694,7 +703,7 @@ bool ExecutorDebugServer::OnVariablesRequest(const dap::VariablesRequest& reques
 		if (var.reference > 0)
 		{
 			// We need to allocate the child variables so the next request can fetch them
-			assert(var.internalType == DebugVariable::Type::Object || var.internalType == DebugVariable::Type::Array);
+			assert(var.debugInformation->internalType == "bundle" || var.debugInformation->internalType == "array");
 			m_debugState->PopulateChildVariables(var);
 		}
 
