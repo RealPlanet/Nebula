@@ -90,6 +90,8 @@
     <ClCompile Include="src\LanguageTypes.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
-    <ClCompile Include="src\DebugFile.cpp" />
+    <ClCompile Include="src\DebugFile.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

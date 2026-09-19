@@ -12,6 +12,7 @@ namespace nebula::debugger::symbols
 		std::string name{};
 		std::string sourceNamespace{};
 		std::string sourceType{};
+		std::string internalType{};
 	};
 } // namespace nebula::debugger
 
