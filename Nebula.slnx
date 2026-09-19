@@ -1,6 +1,5 @@
 <Solution>
   <Configurations>
-    <Platform Name="Any CPU" />
     <Platform Name="x64" />
   </Configurations>
   <Folder Name="/Backend/" />
@@ -26,6 +25,7 @@
     </Project>
     <Project Path="Nebula.Interop/Nebula.Interop.csproj">
       <BuildDependency Project="Nebula.Exports/Nebula.Exports.vcxproj" />
+      <Platform Project="x64" />
     </Project>
   </Folder>
   <Folder Name="/Backend/Servers/">
@@ -38,7 +38,9 @@
       <Platform Project="x64" />
     </Project>
     <Project Path="Nebula.Shared/Nebula.Shared.vcxproj" Id="92209819-7c3e-4314-a0d3-2a06d6a80d5c" />
-    <Project Path="Nebula.SourceGeneration/Nebula.SourceGeneration.csproj" />
+    <Project Path="Nebula.SourceGeneration/Nebula.SourceGeneration.csproj">
+      <Platform Project="x64" />
+    </Project>
   </Folder>
   <Folder Name="/Frontend/">
     <Project Path="Nebula.Compiler/Nebula.Compiler.csproj">
