@@ -15,23 +15,19 @@
 template <>
 struct ::strata::json::serialization::JSerializer<nebula::debugger::symbols::DebugVariable>
 {
-	static ::strata::json::json_element_ptr Serialize(const nebula::debugger::symbols::DebugVariable& source) = delete;
+	static ::strata::json::value Serialize(const nebula::debugger::symbols::DebugVariable& source) = delete;
 
-	static nebula::debugger::symbols::DebugVariable Deserialize(const const_json_proxy& element)
+	static nebula::debugger::symbols::DebugVariable Deserialize(const value& element)
 	{
 		nebula::debugger::symbols::DebugVariable variable;
 		variable.name = element["Name"];
-
-		if (element.object().contains_value("SourceNamespace"))
+		if (element.contains("SourceNamespace"))
 		{
 			variable.sourceNamespace = element["SourceNamespace"];
 		}
 
-		if (element.object().contains_value("SourceType"))
-		{
-			variable.sourceType = element["SourceType"];
-		}
-
+		variable.sourceType = element["SourceType"];
+		variable.internalType = element["InternalType"];
 		return variable;
 	};
 };
@@ -39,9 +35,9 @@ struct ::strata::json::serialization::JSerializer<nebula::debugger::symbols::Deb
 template <>
 struct ::strata::json::serialization::JSerializer<nebula::debugger::symbols::DebugLine>
 {
-	static ::strata::json::json_element_ptr Serialize(const nebula::debugger::symbols::DebugLine& source) = delete;
+	static ::strata::json::value Serialize(const nebula::debugger::symbols::DebugLine& source) = delete;
 
-	static nebula::debugger::symbols::DebugLine Deserialize(const const_json_proxy& element)
+	static nebula::debugger::symbols::DebugLine Deserialize(const value& element)
 	{
 		nebula::debugger::symbols::DebugLine line;
 		line.lineNumber = element["LineNumber"];
@@ -53,9 +49,9 @@ struct ::strata::json::serialization::JSerializer<nebula::debugger::symbols::Deb
 template <>
 struct ::strata::json::serialization::JSerializer<nebula::debugger::symbols::DebugFunction>
 {
-	static ::strata::json::json_element_ptr Serialize(const nebula::debugger::symbols::DebugFunction& source) = delete;
+	static ::strata::json::value Serialize(const nebula::debugger::symbols::DebugFunction& source) = delete;
 
-	static nebula::debugger::symbols::DebugFunction Deserialize(const const_json_proxy& element)
+	static nebula::debugger::symbols::DebugFunction Deserialize(const value& element)
 	{
 		nebula::debugger::symbols::DebugFunction function;
 		function.name = element["Name"];
@@ -73,9 +69,9 @@ struct ::strata::json::serialization::JSerializer<nebula::debugger::symbols::Deb
 template <>
 struct ::strata::json::serialization::JSerializer<nebula::debugger::symbols::DebugBundleDefinition>
 {
-	static ::strata::json::json_element_ptr Serialize(const nebula::debugger::symbols::DebugBundleDefinition& source) = delete;
+	static ::strata::json::value Serialize(const nebula::debugger::symbols::DebugBundleDefinition& source) = delete;
 
-	static nebula::debugger::symbols::DebugBundleDefinition Deserialize(const const_json_proxy& element)
+	static nebula::debugger::symbols::DebugBundleDefinition Deserialize(const value& element)
 	{
 		nebula::debugger::symbols::DebugBundleDefinition bundle;
 		bundle.name = element["Name"];
@@ -87,9 +83,9 @@ struct ::strata::json::serialization::JSerializer<nebula::debugger::symbols::Deb
 template <>
 struct ::strata::json::serialization::JSerializer<nebula::debugger::symbols::DebugFile>
 {
-	static ::strata::json::json_element_ptr Serialize(const nebula::debugger::symbols::DebugFile& source) = delete;
+	static ::strata::json::value Serialize(const nebula::debugger::symbols::DebugFile& source) = delete;
 
-	static nebula::debugger::symbols::DebugFile Deserialize(const strata::json::const_json_proxy& element)
+	static nebula::debugger::symbols::DebugFile Deserialize(const strata::json::value& element)
 	{
 		::nebula::debugger::symbols::DebugFile file;
 		file.namespace_ = element["Namespace"];

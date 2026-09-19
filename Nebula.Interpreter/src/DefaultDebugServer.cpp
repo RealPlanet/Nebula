@@ -70,7 +70,7 @@ DebugFilePtr DefaultDebugServer::LoadScriptFileFromDisk(const std::string& names
 	try
 	{
 		// Must be a json file
-		auto data = strata::json::json_parser::from_file(path);
+		auto data = strata::json::json::from_file(path);
 		auto insertIt = m_debugSymbols.insert(
 			std::make_pair(namespace_, strata::json::serialization::Deserialize<symbols::DebugFile>(data)));
 
