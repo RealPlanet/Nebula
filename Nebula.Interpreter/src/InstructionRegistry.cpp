@@ -1235,14 +1235,15 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 			args.size() == 3); // Alloc an object, namespace and object name
 
 		DataStackVariantIndex typeIndex = (DataStackVariantIndex)std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
-		if (args.size() == 1)
+		//if (args.size() == 1)
+		// We do not check types at runtime so we can just create whatever array we need
 		{
 			TArray newArr = interpreter->m_Memory.AllocArray(typeIndex);
 			context->Stack().Push({ newArr });
 			return InstructionErrorCode::None;
 		}
 
-		return InstructionErrorCode::Fatal;
+		//return InstructionErrorCode::Fatal;
 	}
 	case VMInstruction::LdElem:
 	{
