@@ -1,6 +1,7 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
 using Nebula.Core.Compilation.CST.Tree.Base;
+using Nebula.Core.Compilation.CST.Tree.Types;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
@@ -9,6 +10,7 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Bundle
     public sealed class BundleDeclaration
         : Statement
     {
+        public TypeClause ObjectType { get; }
         public Token Keyword { get; }
         public Token Name { get; }
         public Token OpenBracket { get; }
@@ -24,6 +26,7 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Bundle
             OpenBracket = openBracket;
             Fields = fields;
             ClosedBracket = closedBracket;
+            ObjectType = new TypeClause(syntaxTree, name);
         }
 
         public override IEnumerable<Node> GetChildren()
