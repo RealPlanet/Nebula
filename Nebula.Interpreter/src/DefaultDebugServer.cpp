@@ -124,8 +124,8 @@ DebugBundleDefinitionPtr DefaultDebugServer::GetBundle(const std::string& namesp
 		return nullptr;
 	}
 
-	auto it = scriptInfo->bundles.find(type);
-	if (it == scriptInfo->bundles.end())
+	auto it = scriptInfo->types.find(type);
+	if (it == scriptInfo->types.end())
 	{
 		return nullptr;
 	}

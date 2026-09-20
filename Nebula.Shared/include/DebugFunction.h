@@ -25,7 +25,6 @@ namespace nebula::debugger::symbols
 		std::vector<DebugVariable> parameters{};
 		std::vector<DebugVariable> locals{};
 		std::vector<DebugLine> lines{};
-		std::vector<int> statements{};
 
 	public:
 		size_t GetLineFromOpcode(size_t opcode) const;
