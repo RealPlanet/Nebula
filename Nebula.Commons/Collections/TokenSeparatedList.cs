@@ -6,10 +6,10 @@ using System.Linq;
 
 namespace Nebula.Commons.Collections
 {
-    public sealed class TokenSeparatedList<T> : IEnumerable<T>, IReadOnlyCollection<T>
-        where T : Node
+    public sealed class TokenSeparatedList<T> 
+        : IEnumerable<T>, IReadOnlyCollection<T>
+            where T : Node
     {
-        #region Properties
         public NodeType Separator { get; }
 
         public IReadOnlyList<T> Parameters
@@ -33,7 +33,6 @@ namespace Nebula.Commons.Collections
         public int Count => Parameters.Count;
 
         public bool IsReadOnly => true;
-        #endregion
 
         private readonly List<Node> _nodes = new();
 

@@ -6,16 +6,16 @@ using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.CST.Tree.Declaration.Bundle
 {
-    public sealed class BundleFieldDeclaration
+    public sealed class ObjectFieldDeclaration
         : Statement
     {
-        public TypeClause FieldType { get; }
+        public BaseTypeClause FieldType { get; }
         public Token Identifier { get; }
         public Token Semicolon { get; }
 
-        public override NodeType Type => NodeType.BundleFieldDeclaration;
+        public override NodeType Type => NodeType.ObjectFieldDeclaration;
 
-        public BundleFieldDeclaration(SourceCode code, TypeClause fieldType, Token identifier, Token semicolon)
+        public ObjectFieldDeclaration(SourceCode code, BaseTypeClause fieldType, Token identifier, Token semicolon)
             : base(code)
         {
             FieldType = fieldType;
@@ -25,7 +25,11 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Bundle
 
         public override IEnumerable<Node> GetChildren()
         {
-            yield return FieldType;
+            foreach (var child in FieldType.GetChildren())
+            {
+                yield return child;
+            }
+
             yield return Identifier;
             yield return Semicolon;
         }

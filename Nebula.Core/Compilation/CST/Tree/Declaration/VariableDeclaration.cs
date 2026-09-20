@@ -12,12 +12,12 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration
     {
         public override NodeType Type => NodeType.VariableDeclaration;
 
-        public TypeClause VarType { get; }
+        public BaseTypeClause VarType { get; }
 
         public AssignmentExpression AssignmentExpression { get; }
 
         public VariableDeclaration(SourceCode source,
-                                   TypeClause type,
+                                   BaseTypeClause type,
                                    AssignmentExpression assignment)
             : base(source)
         {
@@ -27,7 +27,11 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration
 
         public override IEnumerable<Node> GetChildren()
         {
-            yield return VarType;
+            foreach (var child in VarType.GetChildren())
+            {
+                yield return child;
+            }
+
             yield return AssignmentExpression;
         }
     }

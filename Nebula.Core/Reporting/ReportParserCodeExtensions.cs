@@ -3,6 +3,7 @@ using Nebula.Commons.Reporting.Strings;
 using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
 using Nebula.Core.Compilation.AST.Symbols;
+using Nebula.Core.Compilation.CST.Tree.Types;
 using Nebula.Shared.Enumerators;
 
 namespace Nebula.Core.Reporting
@@ -45,11 +46,17 @@ namespace Nebula.Core.Reporting
             string message = string.Format(template, token.Text);
             r.PushError(message, token.Location);
         }
-        public static void ReportUndefinedType(this Report r, Token token)
+        public static void ReportUndefinedType(this Report r, TypeClause clause)
         {
             (EParserMessages code, string template) = ParserMessagesProvider.TypeDoesNotExist;
-            string message = string.Format(template, token.Text);
-            r.PushError(message, token.Location);
+            string message = string.Format(template, clause.Identifier.Text);
+            r.PushError(message, clause.Location);
+        }
+        public static void ReportUndefinedObject(this Report r, ScopedTypeClause clause)
+        {
+            (EParserMessages code, string template) = ParserMessagesProvider.ObjectDoesNotExist;
+            string message = string.Format(template, clause.Namespace.Text, clause.ClassName.Text);
+            r.PushError(message, clause.Location);
         }
         public static void ReportFunctionAlreadyDefined(this Report r, Token token)
         {
