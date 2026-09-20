@@ -73,11 +73,11 @@ TBundle InterpreterMemory::AllocBundle(const BundleDefinition& definition)
     return ptr;
 }
 
-TArray InterpreterMemory::AllocArray(const DataStackVariantIndex& type)
+TArray InterpreterMemory::AllocArray()
 {
     // Attempt to free memory at each allocation
     Collect();
-    TArray ptr = std::make_shared<VariantArray>(type);
+    TArray ptr = std::make_shared<VariantArray>();
     m_IGCObjects.push_back(dynamic_pointer_cast<IGCObject>(ptr));
 
     return ptr;
