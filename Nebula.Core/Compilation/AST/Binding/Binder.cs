@@ -482,7 +482,16 @@ namespace Nebula.Core.Compilation.AST.Binding
                     continue;
                 }
 
-                TypeSymbol parameterType = BindTypeClause(field.FieldType);
+                TypeSymbol parameterType;
+                if (field.FieldType is TypeClause clause && bundle.ObjectType == clause)
+                {
+                    parameterType = new ObjectTypeSymbol(_currentProgram.Namespace.Text, bundle.ObjectType.Identifier.Text);
+                }
+                else
+                {
+                    parameterType = BindTypeClause(field.FieldType);
+                }
+
                 AbstractBundleField paramSymbol = new(parameterType, name, bundleFields.Count);
                 bundleFields.Add(paramSymbol);
             }
@@ -1259,7 +1268,7 @@ namespace Nebula.Core.Compilation.AST.Binding
         {
             ImmutableArray<AbstractStatement>.Builder statements = ImmutableArray.CreateBuilder<AbstractStatement>();
 
-            if(createNewScope)
+            if (createNewScope)
             {
                 //Block of codes have a new scope
                 _currentScope = new(_currentScope);
