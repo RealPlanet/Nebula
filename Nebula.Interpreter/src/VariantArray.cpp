@@ -4,18 +4,29 @@
 
 using namespace nebula;
 
-nebula::VariantArray::VariantArray(const DataStackVariantIndex& type)
-    : IGCObject(ObjectType::Array), m_eVariantType{ type }
+VariantArray::VariantArray()
+    : IGCObject(ObjectType::Array)
 {
 }
 
-InstructionErrorCode VariantArray::CallVirtual(const std::string_view& funcName, nebula::Interpreter*, Frame* context)
+void VariantArray::Append(const DataStackVariant& v)
+{
+    m_Vector.emplace_back(v);
+}
+
+void VariantArray::Clear() { m_Vector.clear(); }
+
+size_t VariantArray::Size() { return m_Vector.size(); }
+
+DataStackVariant& VariantArray::operator[](int i) { return m_Vector[i]; }
+
+InstructionErrorCode VariantArray::CallVirtual(const std::string_view& funcName, Interpreter*, Frame* context)
 {
     if (funcName == "Append")
     {
         DataStackVariant& v = context->Stack().Peek();
 
-        if (v.index() != this->m_eVariantType)
+        if (!m_Vector.empty() && m_Vector[0].index() != v.index())
         {
             return InstructionErrorCode::Fatal;
         }

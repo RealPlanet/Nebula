@@ -347,6 +347,7 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
 	case VMInstruction::Ldc_i4_7:
 	case VMInstruction::Ldc_i4_8:
 	case VMInstruction::Ldc_i4_9:
+	case VMInstruction::NewArr: // Expectes the compiler to do the type checking for now
 	{
 		return { /* No arguments */ };
 	}
@@ -370,24 +371,6 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
 		}
 		}
 		break;
-	}
-	case VMInstruction::NewArr:
-	{
-		assert((args.size() == 1 || args.size() == 2 || args.size() == 3) && "Wrong argument number for newarr opcode");
-		const std::string& targetType = args[0];
-		TInt32 dataType = (TInt32)StringToStackValue(targetType);
-
-		if (args.size() == 1)
-		{
-			return { dataType };
-		}
-
-		if (args.size() == 2)
-		{
-			return { dataType, args[1] };
-		}
-
-		return { dataType, args[1], args[2] };
 	}
 	case VMInstruction::CallVirt:
 	{
@@ -1230,20 +1213,10 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 	}
 	case VMInstruction::NewArr:
 	{
-		assert(args.size() == 1 || // Alloc a primitive type
-			args.size() == 2 || // Alloc an object and object name
-			args.size() == 3); // Alloc an object, namespace and object name
-
-		DataStackVariantIndex typeIndex = (DataStackVariantIndex)std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
-		//if (args.size() == 1)
-		// We do not check types at runtime so we can just create whatever array we need
-		{
-			TArray newArr = interpreter->m_Memory.AllocArray(typeIndex);
-			context->Stack().Push({ newArr });
-			return InstructionErrorCode::None;
-		}
-
-		//return InstructionErrorCode::Fatal;
+		assert(args.size() == 0);
+		TArray newArr = interpreter->m_Memory.AllocArray();
+		context->Stack().Push({ newArr });
+		return InstructionErrorCode::None;
 	}
 	case VMInstruction::LdElem:
 	{
