@@ -370,61 +370,47 @@ namespace Nebula.Core.Compilation.CST.Parsing
                     {
                         return ParseForLoopStatement();
                     }
-                default:
+                case NodeType.IdentifierToken:
                     {
-                        bool isBaseVariableDefinition = Current.Type == NodeType.IdentifierToken &&
-                            Peek(1).Type == NodeType.IdentifierToken;
+                        return ParseIdentifierStatement();
+                    }
+                default:
+                    return ParseExpressionStatement();
+            }
+        }
 
-                        if (isBaseVariableDefinition)
-                        {
-                            return ParseVariableDeclarations();
-                        }
+        private Statement ParseIdentifierStatement()
+        {
+            if (SpeculateParse(() => ParseTypeClause(), () => Current.Type == NodeType.IdentifierToken))
+            {
+                return ParseVariableDeclarations();
+            }
 
-                        bool isVariableDefinitionWithRank = Current.Type == NodeType.IdentifierToken &&
-                            Peek(1).Type == NodeType.OpenSquareBracketToken &&
-                           (Peek(2).Type == NodeType.CommaToken || Peek(2).Type == NodeType.ClosedSquareBracketToken);
-
-                        if (isVariableDefinitionWithRank)
-                        {
-                            return ParseVariableDeclarations();
-                        }
-
-                        // This also executes if with namespace and rank
-                        bool isVariableDefinitionWithNamespace = Current.Type == NodeType.IdentifierToken &&
-                            Peek(1).Type == NodeType.DoubleColonToken &&
-                            Peek(2).Type == NodeType.IdentifierToken &&
-                            Peek(3).Type == NodeType.IdentifierToken;
-
-                        // Variable declaration with type from another namespace
-                        if (isVariableDefinitionWithNamespace)
-                        {
-                            return ParseVariableDeclarations();
-                        }
-
-                        if (Current.Type == NodeType.IdentifierToken &&
-                            Peek(1).Type == NodeType.WaitNotificationKeyword)
-                        {
-                            return ParseWaitNotificationStatement();
-                        }
-
-                        if (Current.Type == NodeType.IdentifierToken &&
-                            Peek(1).Type == NodeType.EndOnNotificationKeyword)
-                        {
-                            return ParseEndOnNotificationStatement();
-                        }
-
-                        if (Current.Type == NodeType.IdentifierToken &&
-                            Peek(1).Type == NodeType.NotifyKeyword)
-                        {
-                            return ParseNotifyStatement();
-                        }
-
-                        Expression expression = ParseExpression();
-                        Token token = MatchToken(NodeType.SemicolonToken);
-                        ExpressionStatement exprStatement = new(_currentSource, expression, token);
-                        return exprStatement;
+            switch (Peek(1).Type)
+            {
+                case NodeType.WaitNotificationKeyword:
+                    {
+                        return ParseWaitNotificationStatement();
+                    }
+                case NodeType.EndOnNotificationKeyword:
+                    {
+                        return ParseEndOnNotificationStatement();
+                    }
+                case NodeType.NotifyKeyword:
+                    {
+                        return ParseNotifyStatement();
                     }
             }
+
+            return ParseExpressionStatement();
+        }
+
+        private Statement ParseExpressionStatement()
+        {
+            Expression expression = ParseExpression();
+            Token token = MatchToken(NodeType.SemicolonToken);
+            ExpressionStatement exprStatement = new(_currentSource, expression, token);
+            return exprStatement;
         }
 
         private NotifyStatement ParseNotifyStatement()
@@ -995,7 +981,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
                 return _currentTokens[_currentTokenIndex++];
             }
 
-                _parseReport.ReportUnexpectedToken(Current, type);
+            _parseReport.ReportUnexpectedToken(Current, type);
 
             return new(_currentSource, type, Current.TextPosition, null, null, ImmutableArray<Trivia>.Empty, ImmutableArray<Trivia>.Empty);
         }
@@ -1008,12 +994,35 @@ namespace Nebula.Core.Compilation.CST.Parsing
 
             return _currentTokens[_currentTokenIndex + offset];
         }
-        private Token Current => Peek(0);
 
+        private bool SpeculateParse(Action speculation, Func<bool>? condition = null)
+        {
+            var currentPosition = _currentTokenIndex;
+            var report = _parseReport;
+            _parseReport = new();
+            try
+            {
+                speculation();
+                if (!_parseReport.HasErrors)
+                {
+                    return condition == null || condition();
+                }
+
+                return false;
+            }
+            finally
+            {
+                _currentTokenIndex = currentPosition;
+                _parseReport = report;
+            }
+        }
+
+        private Token Current => Peek(0);
         private readonly SourceCode _currentSource;
         private readonly CompilationUnit _currentUnit;
-        private readonly Report _parseReport = new();
         private readonly IReadOnlyList<Token> _currentTokens;
+
+        private Report _parseReport = new();
         private int _currentTokenIndex = 0;
     }
 }
