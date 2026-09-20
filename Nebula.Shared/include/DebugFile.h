@@ -22,7 +22,7 @@ namespace nebula::debugger::symbols
 		std::string originalFileFullName{};
 		std::string md5Hash{};
 
-		std::unordered_map<std::string, DebugBundleDefinition> bundles{};
+		std::unordered_map<std::string, DebugBundleDefinition> types{};
 		std::unordered_map<std::string, DebugFunction> functions{};
 		std::unordered_set<std::string> nativeFunctions{};
 
