@@ -61,8 +61,7 @@ struct ::strata::json::serialization::JSerializer<nebula::debugger::symbols::Deb
 		function.parameters = ::strata::json::serialization::Deserialize<std::vector<nebula::debugger::symbols::DebugVariable>>(element["Parameters"]);
 		function.locals = ::strata::json::serialization::Deserialize<std::vector<nebula::debugger::symbols::DebugVariable>>(element["LocalVariables"]);
 		function.lines = ::strata::json::serialization::Deserialize<std::vector<nebula::debugger::symbols::DebugLine>>(element["Lines"]);
-		function.statements = ::strata::json::serialization::Deserialize<std::vector<int>>(element["Statements"]);
-		return function;
+		return function	;
 	};
 };
 
@@ -75,7 +74,7 @@ struct ::strata::json::serialization::JSerializer<nebula::debugger::symbols::Deb
 	{
 		nebula::debugger::symbols::DebugBundleDefinition bundle;
 		bundle.name = element["Name"];
-		bundle.fields = ::strata::json::serialization::Deserialize<std::vector<nebula::debugger::symbols::DebugVariable>>(element["Fields"]);
+		bundle.fields = ::strata::json::serialization::Deserialize<std::vector<nebula::debugger::symbols::DebugVariable>>(element["Members"]);
 		return bundle;
 	};
 };
@@ -93,7 +92,7 @@ struct ::strata::json::serialization::JSerializer<nebula::debugger::symbols::Deb
 		file.originalFileFullName = element["OriginalFileFullName"];
 		file.md5Hash = element["MD5Hash"];
 
-		file.bundles = ::strata::json::serialization::Deserialize<std::unordered_map<std::string, nebula::debugger::symbols::DebugBundleDefinition>>(element["Bundles"]);
+		file.types = ::strata::json::serialization::Deserialize<std::unordered_map<std::string, nebula::debugger::symbols::DebugBundleDefinition>>(element["Types"]);
 		file.functions = ::strata::json::serialization::Deserialize<std::unordered_map<std::string, nebula::debugger::symbols::DebugFunction>>(element["Functions"]);
 		file.nativeFunctions = ::strata::json::serialization::Deserialize<std::unordered_set<std::string>>(element["NativeFunctions"]);
 
