@@ -93,7 +93,7 @@ namespace Nebula.Core.Compilation.Emitting
             }
             else
             {
-                string sourceLoc = Path.GetDirectoryName(program.SourceCode.FileName)
+                string sourceLoc = Path.GetDirectoryName(program.SourceCode.FullPath)
                     ?? throw new Exception("Could not get source path!");
 
                 outputFilePath = Path.Combine(sourceLoc, compiledFileName);
@@ -440,10 +440,7 @@ namespace Nebula.Core.Compilation.Emitting
                                           TypeReference baseValueType,
                                           Node originalNode)
         {
-
-            object arguments = ExtractNewArrArguments(arraySymbol, baseValueType);
-
-            processor.Emit(InstructionOpcode.Newarr, arguments, originalNode);
+            processor.Emit(InstructionOpcode.Newarr, originalNode);
             processor.Emit(InstructionOpcode.Stloc, variableDefinition, originalNode);
         }
 
@@ -453,34 +450,8 @@ namespace Nebula.Core.Compilation.Emitting
                                           TypeReference baseValueType,
                                           Node originalNode)
         {
-            object arguments = ExtractNewArrArguments(arraySymbol, baseValueType);
-
-            processor.Emit(InstructionOpcode.Newarr, arguments, originalNode);
+            processor.Emit(InstructionOpcode.Newarr, originalNode);
             processor.Emit(InstructionOpcode.StArg, parameter, originalNode);
-        }
-
-        private object ExtractNewArrArguments(ArrayTypeSymbol arraySymbol, TypeReference baseValueType)
-        {
-            object arguments = baseValueType.Name;
-            if (arraySymbol.ValueType.IsObject)
-            {
-                ExtractBundleNamespaceAndName((ObjectTypeSymbol)arraySymbol.ValueType, out string typeNamespace, out string typedName);
-                if (_currentContext.Assembly.Namespace != typeNamespace)
-                {
-                    arguments = new string[] { baseValueType.Name, typeNamespace, typedName };
-                }
-                else
-                {
-                    arguments = new string[] { baseValueType.Name, typedName };
-                }
-            }
-
-            if (arraySymbol.ValueType.IsArray)
-            {
-                throw new NotSupportedException("Array within array is not supported!");
-            }
-
-            return arguments;
         }
 
         private static void ExtractBundleNamespaceAndName(ObjectTypeSymbol objTypeSymbol, out string typeNamespace, out string typedName)

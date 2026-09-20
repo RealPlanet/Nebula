@@ -30,7 +30,7 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
         public FunctionDeclaration(
             SourceCode sourceCode,
             Token keyword,
-            TypeClause returnType,
+            BaseTypeClause returnType,
             Token name,
             Token openParenthesis,
             TokenSeparatedList<Parameter> parameters,

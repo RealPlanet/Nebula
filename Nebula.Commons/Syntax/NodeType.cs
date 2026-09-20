@@ -96,7 +96,7 @@
         FunctionDeclaration,
         NativeFunctionDeclaration,
         BundleDeclaration,
-        BundleFieldDeclaration,
+        ObjectFieldDeclaration,
 
         UnaryExpression,
         BinaryExpression,
@@ -114,8 +114,9 @@
         IsDefinedExpression,
 
         EndOfFileToken,
+        ArrayTypeClause,
+        ObjectTypeClause,
         TypeClause,
-        RankSpecifier,
         ElseClause,
         Parameter,
 

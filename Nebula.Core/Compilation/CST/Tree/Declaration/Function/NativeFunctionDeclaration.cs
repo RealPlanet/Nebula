@@ -11,7 +11,7 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
     {
         public NativeFunctionDeclaration(SourceCode syntaxTree,
                                          Token keyword,
-                                         TypeClause returnType,
+                                         BaseTypeClause returnType,
                                          Token name,
                                          Token openParenthesis,
                                          TokenSeparatedList<Parameter> parameters,

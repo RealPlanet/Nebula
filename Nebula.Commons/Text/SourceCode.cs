@@ -9,15 +9,15 @@ namespace Nebula.Commons.Text
 {
     public sealed class SourceCode
     {
-        public ImmutableArray<TextLine> Lines { get; }
-        public string Text { get; }
-        public string FileName { get; }
+        public ImmutableArray<TextLine> Lines { get; private set; }
+        public string Text { get; private set; }
+        public string FullPath { get; }
 
         private SourceCode(string text, string fileName)
         {
             Lines = ParseLines(this, text);
             Text = text;
-            FileName = fileName;
+            FullPath = fileName;
         }
 
         [DebuggerStepThrough]

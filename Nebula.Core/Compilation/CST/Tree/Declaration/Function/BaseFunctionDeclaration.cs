@@ -12,7 +12,7 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
         : Statement
     {
         public Token Keyword { get; }
-        public TypeClause ReturnType { get; }
+        public BaseTypeClause ReturnType { get; }
         public Token Name { get; }
         public Token OpenParenthesis { get; }
         public TokenSeparatedList<Parameter> Parameters { get; }
@@ -21,7 +21,7 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
         private protected BaseFunctionDeclaration(
             SourceCode syntaxTree,
             Token keyword,
-            TypeClause returnType,
+            BaseTypeClause returnType,
             Token name,
             Token openParenthesis,
             TokenSeparatedList<Parameter> parameters,
@@ -50,7 +50,11 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
         public override IEnumerable<Node> GetChildren()
         {
             yield return Keyword;
-            yield return ReturnType;
+            foreach (Node child in ReturnType.GetChildren())
+            {
+                yield return child;
+            }
+
             yield return Name;
             yield return OpenParenthesis;
             foreach (Node child in Parameters.GetWithSeparators())

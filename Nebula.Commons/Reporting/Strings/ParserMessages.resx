@@ -157,6 +157,10 @@
     <value>Type '{0}' does not exist.</value>
     <comment>E</comment>
   </data>
+  <data name="ObjectDoesNotExist" xml:space="preserve">
+    <value>Object '{0}::{1}' does not exist.</value>
+    <comment>E</comment>
+  </data>
   <data name="NamespaceMustBeFirstOfAny" xml:space="preserve">
     <value>Namespace definition '{0}' must be before any global statement.</value>
     <comment>E</comment>
