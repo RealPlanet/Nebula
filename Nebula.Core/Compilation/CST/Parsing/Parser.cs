@@ -12,9 +12,11 @@ using Nebula.Core.Compilation.CST.Tree.Expressions;
 using Nebula.Core.Compilation.CST.Tree.Statements;
 using Nebula.Core.Compilation.CST.Tree.Types;
 using Nebula.Core.Reporting;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 
@@ -53,7 +55,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
                 if (_currentUnit.NamespaceStatement.IsEmpty)
                 {
                     // If no namespace was set in the source code the file name is used instead
-                    string defaultNamespace = Path.GetFileNameWithoutExtension(_currentSource.FileName);
+                    string defaultNamespace = Path.GetFileNameWithoutExtension(_currentSource.FullPath);
                     _currentUnit.NamespaceStatement = new NamespaceStatement(defaultNamespace);
                     _parseReport.ReportNamespaceNotSet(defaultNamespace, _currentSource);
                 }
@@ -129,11 +131,11 @@ namespace Nebula.Core.Compilation.CST.Parsing
             }
 
             Token openBracket = MatchToken(NodeType.OpenBracketToken);
-            ImmutableArray<BundleFieldDeclaration>.Builder builder = ImmutableArray.CreateBuilder<BundleFieldDeclaration>();
+            ImmutableArray<ObjectFieldDeclaration>.Builder builder = ImmutableArray.CreateBuilder<ObjectFieldDeclaration>();
             while (Current.Type != NodeType.ClosedBracketToken)
             {
                 Token start = Current;
-                TypeClause type = ParseTypeClause();
+                BaseTypeClause type = ParseTypeClause();
                 Token varName = MatchToken(NodeType.IdentifierToken);
                 Token semicolon = MatchToken(NodeType.SemicolonToken);
                 builder.Add(new(_currentSource, type, varName, semicolon));
@@ -185,7 +187,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
         private bool ParseFunctionDeclaration()
         {
             Token keyword = MatchToken(NodeType.FuncKeyword);
-            TypeClause type = ParseTypeClause();
+            BaseTypeClause type = ParseTypeClause();
             Token funcName = MatchToken(NodeType.IdentifierToken);
             string strFuncName = funcName.Text;
             if (_currentUnit.Functions.Any(f => f.Name.Text == strFuncName))
@@ -212,7 +214,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
         private bool ParseNativeFunctionDeclaration()
         {
             Token keyword = MatchToken(NodeType.NativeKeyword);
-            TypeClause type = ParseTypeClause();
+            BaseTypeClause type = ParseTypeClause();
             Token funcName = MatchToken(NodeType.IdentifierToken);
             string strFuncName = funcName.Text;
             if (_currentUnit.Functions.Any(f => f.Name.Text == strFuncName))
@@ -231,47 +233,29 @@ namespace Nebula.Core.Compilation.CST.Parsing
             return true;
         }
 
-        private TypeClause ParseTypeClause()
+        private BaseTypeClause ParseTypeClause()
         {
-            Token first = MatchToken(NodeType.IdentifierToken);
-
-            // For bundle delcarations outside scope
+            Token namespaceOrTypeName = MatchToken(NodeType.IdentifierToken);
+            BaseTypeClause typeClause;
             if (Current.Type == NodeType.DoubleColonToken)
             {
                 Token doubleColon = MatchToken(NodeType.DoubleColonToken);
                 Token typeName = MatchToken(NodeType.IdentifierToken);
-                RankSpecifier? rs = ParseRankSpecifier();
-                return new TypeClause(_currentSource, first, doubleColon, typeName, rs);
+                typeClause = new ScopedTypeClause(_currentSource, namespaceOrTypeName, doubleColon, typeName);
             }
-
-            RankSpecifier? rankSpecifier = ParseRankSpecifier();
-            return new TypeClause(_currentSource, null, null, first, rankSpecifier);
-        }
-
-        private RankSpecifier? ParseRankSpecifier()
-        {
-            if (Current.Type != NodeType.OpenSquareBracketToken)
+            else
             {
-                return null;
+                typeClause = new TypeClause(_currentSource, namespaceOrTypeName);
             }
 
-            Token open = MatchToken(NodeType.OpenSquareBracketToken);
-
-            NodeType separator = NodeType.CommaToken;
-            TokenSeparatedList<Token> parameters = new(separator);
-            while (Current.Type != NodeType.ClosedParenthesisToken && Current.Type != NodeType.EndOfFileToken)
+            while (Current.Type == NodeType.OpenSquareBracketToken)
             {
-                if (Current.Type != NodeType.CommaToken)
-                {
-                    break;
-                }
-
-                Token comma = MatchToken(separator);
-                parameters.AppendSeparator(comma);
+                var open = MatchToken(NodeType.OpenSquareBracketToken);
+                var close = MatchToken(NodeType.ClosedSquareBracketToken);
+                typeClause = new ArrayTypeClause(_currentSource, typeClause, open, close);
             }
 
-            Token close = MatchToken(NodeType.ClosedSquareBracketToken);
-            return new RankSpecifier(_currentSource, open, parameters, close);
+            return typeClause;
         }
 
         private TokenSeparatedList<Token> ParseAttributeList()
@@ -319,7 +303,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
 
         private Parameter ParseParameter()
         {
-            TypeClause type = ParseTypeClause();
+            BaseTypeClause type = ParseTypeClause();
             Token identifier = MatchToken(NodeType.IdentifierToken);
             return new(_currentSource, type, identifier);
         }
@@ -434,12 +418,6 @@ namespace Nebula.Core.Compilation.CST.Parsing
                         {
                             return ParseNotifyStatement();
                         }
-
-                        //if(Current.Type == NodeType.BundleKeyword &&
-                        //    Peek(1).Type == NodeType.IdentifierToken)
-                        //{
-                        //    return ParseVariableDeclaration();
-                        //};
 
                         Expression expression = ParseExpression();
                         Token token = MatchToken(NodeType.SemicolonToken);
@@ -618,13 +596,13 @@ namespace Nebula.Core.Compilation.CST.Parsing
                 constKeyword = MatchToken(NodeType.ConstKeyword);
             }
 
-            TypeClause type = ParseTypeClause();
+            BaseTypeClause type = ParseTypeClause();
             TokenSeparatedList<VariableDeclaration> declarations = ParseCommaSeparatedVariableDeclarations(type);
             Token semicolon = MatchToken(NodeType.SemicolonToken);
             return new VariableDeclarationCollection(_currentSource, constKeyword, declarations, semicolon);
         }
 
-        private TokenSeparatedList<VariableDeclaration> ParseCommaSeparatedVariableDeclarations(TypeClause varType)
+        private TokenSeparatedList<VariableDeclaration> ParseCommaSeparatedVariableDeclarations(BaseTypeClause varType)
         {
             const NodeType separatorType = NodeType.CommaToken;
             TokenSeparatedList<VariableDeclaration> variables = new(separatorType);
@@ -1017,7 +995,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
                 return _currentTokens[_currentTokenIndex++];
             }
 
-            _parseReport.ReportUnexpectedToken(Current, type);
+                _parseReport.ReportUnexpectedToken(Current, type);
 
             return new(_currentSource, type, Current.TextPosition, null, null, ImmutableArray<Trivia>.Empty, ImmutableArray<Trivia>.Empty);
         }

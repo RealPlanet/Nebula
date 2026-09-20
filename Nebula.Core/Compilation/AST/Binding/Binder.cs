@@ -473,7 +473,7 @@ namespace Nebula.Core.Compilation.AST.Binding
             ImmutableArray<AbstractBundleField>.Builder bundleFields = ImmutableArray.CreateBuilder<AbstractBundleField>();
             HashSet<string> seenNames = new();
 
-            foreach (BundleFieldDeclaration field in bundle.Fields)
+            foreach (ObjectFieldDeclaration field in bundle.Fields)
             {
                 string name = field.Identifier.Text;
                 if (!seenNames.Add(name))
@@ -1019,13 +1019,6 @@ namespace Nebula.Core.Compilation.AST.Binding
             string variableName = expr.ObjectIdentifier.Text;
             string functionName = expr.Identifier.Text;
 
-            ImmutableArray<AbstractExpression>.Builder? boundArguments = ImmutableArray.CreateBuilder<AbstractExpression>();
-            foreach (Expression? argument in expr.Arguments)
-            {
-                AbstractExpression? boundArgument = BindExpression(argument);
-                boundArguments.Add(boundArgument);
-            }
-
             // Get the instantiated bundle which is in a variable
             var objIdentifier = expr.ObjectIdentifier;
             VariableSymbol? localVariable = BindVariableReference(string.Empty, expr.ObjectIdentifier.Text, expr.ObjectIdentifier.Location);
@@ -1047,7 +1040,8 @@ namespace Nebula.Core.Compilation.AST.Binding
                 return new AbstractErrorExpression(expr);
             }
 
-            return new AbstractObjectCallExpression(expr, localVariable, objectFunction, boundArguments.ToImmutableArray());
+            BindFunctionCallArguments(expr, out ImmutableArray<AbstractExpression> boundArguments, objectFunction);
+            return new AbstractObjectCallExpression(expr, localVariable, objectFunction, boundArguments);
         }
 
         private AbstractObjectInitializationExpression BindObjectInitializationExpression(ObjectInitializationExpression expr)
@@ -1385,64 +1379,49 @@ namespace Nebula.Core.Compilation.AST.Binding
 
         #endregion
 
-        [return: NotNullIfNotNull(nameof(typeClause))]
-        private TypeSymbol? BindTypeClause(TypeClause? typeClause)
+        [return: NotNullIfNotNull(nameof(clause))]
+        private TypeSymbol? BindTypeClause(BaseTypeClause? clause)
         {
-            if (typeClause is null)
+            if (clause is null)
             {
                 return null;
             }
 
             TypeSymbol? type = null;
-            string typeName = typeClause.Identifier.Text;
-            if (typeClause.Namespace != null && typeClause.Namespace.Text != _currentProgram.Namespace.Text)
+            switch (clause)
             {
-                if (_currentProgram.References.TryGetBundle(typeClause.Namespace.Text, typeName, out BundleSymbol? _))
-                {
-                    return new ObjectTypeSymbol(typeClause.Namespace.Text, typeName);
-                }
-            }
-            else
-            {
-                type = LookupType(typeName);
-            }
-
-            // Null means we are trying to use a bundle type or type actually does not exist
-            if (type is null)
-            {
-                // Check if this is a user defined bundle
-                if (_currentUnit.Bundles.Any(b => b.Name.Text == typeName))
-                {
-                    ObjectTypeSymbol objSymbol = new(_currentProgram.Namespace.Text, typeName);
-                    if (typeClause.RankSpecifier != null && typeClause.RankSpecifier.Rank > 0)
+                case ScopedTypeClause objectType:
                     {
-                        if (typeClause.RankSpecifier.Rank != 1)
+                        if (_currentProgram.References.TryGetBundle(objectType.Namespace.Text, objectType.ClassName.Text, out BundleSymbol? _))
                         {
-                            throw new NotImplementedException("Multi dimensional array are not supported");
+                            return new ObjectTypeSymbol(objectType.Namespace.Text, objectType.ClassName.Text);
                         }
 
-                        return new ArrayTypeSymbol(objSymbol, typeClause.RankSpecifier.Rank);
+                        _binderReport.ReportUndefinedObject(objectType);
+                        return TypeSymbol.Error;
+                    }
+                case ArrayTypeClause arrayTypeClause:
+                    {
+                        TypeSymbol innerType = BindTypeClause(arrayTypeClause.TypeOfArray);
+                        return new ArrayTypeSymbol(innerType);
+                    }
+                case TypeClause typeClause:
+                    type = LookupType(typeClause.Identifier.Text);
+                    if (type is null)
+                    {
+                        if (_currentProgram.References.TryGetBundle(_currentProgram.Namespace.Text, typeClause.Identifier.Text, out BundleSymbol? _))
+                        {
+                            return new ObjectTypeSymbol(_currentProgram.Namespace.Text, typeClause.Identifier.Text);
+                        }
+
+                        _binderReport.ReportUndefinedType(typeClause);
+                        return TypeSymbol.Error;
                     }
 
-                    return objSymbol;
-                }
-
-                _binderReport.ReportUndefinedType(typeClause.Identifier);
-                return TypeSymbol.Error;
+                    return type;
+                default:
+                    return TypeSymbol.Error;
             }
-
-            if (type is not null && typeClause.RankSpecifier != null && typeClause.RankSpecifier.Rank > 0)
-            {
-                if (typeClause.RankSpecifier.Rank != 1)
-                {
-                    throw new NotImplementedException("Multi dimensional array are not supported");
-                }
-
-                // This is an array type
-                return new ArrayTypeSymbol(type, typeClause.RankSpecifier.Rank);
-            }
-
-            return type!;
         }
 
         public static TypeSymbol? LookupType(string name) => name switch
@@ -1451,7 +1430,6 @@ namespace Nebula.Core.Compilation.AST.Binding
             "int" => TypeSymbol.Int,
             "float" => TypeSymbol.Float,
             "string" => TypeSymbol.String,
-            //"any" => TypeSymbol.Any,
             "void" => TypeSymbol.Void,
             _ => null,
         };

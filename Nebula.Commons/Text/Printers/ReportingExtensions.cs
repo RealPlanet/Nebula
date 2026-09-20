@@ -49,7 +49,7 @@ namespace Nebula.Commons.Text.Printers
             }
 
             foreach (ReportMessage msg in report.Where(d => d.Location.Text is not null)
-                                    .OrderBy(d => d.Location.Text!.FileName)
+                                    .OrderBy(d => d.Location.Text!.FullPath)
                                     .ThenBy(d => d.Location.Span.Start)
                                     .ThenBy(d => d.Location.Span.Length))
             {

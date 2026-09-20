@@ -11,13 +11,13 @@ namespace Nebula.Commons.Text
     {
         public ImmutableArray<TextLine> Lines { get; private set; }
         public string Text { get; private set; }
-        public string FileName { get; }
+        public string FullPath { get; }
 
         private SourceCode(string text, string fileName)
         {
             Lines = ParseLines(this, text);
             Text = text;
-            FileName = fileName;
+            FullPath = fileName;
         }
 
         [DebuggerStepThrough]

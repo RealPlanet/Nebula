@@ -39,7 +39,7 @@ namespace Nebula.CodeGeneration
             Register(InstructionOpcode.Callvirt, ConvertGenericOperand);
 
             Register(InstructionOpcode.Newobj, ConvertGenericOperand);
-            Register(InstructionOpcode.Newarr, ConvertGenericOperand);
+            Register(InstructionOpcode.Newarr, NoArgumentsAllowed);
 
             Register(InstructionOpcode.Ldfld, RequireInt32);
             Register(InstructionOpcode.Stfld, RequireInt32);

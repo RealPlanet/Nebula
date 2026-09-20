@@ -37,32 +37,30 @@ namespace Nebula.CodeGeneration.Writer
 
         public static void WriterDebuggingInfo(this StreamWriter writer, Assembly assembly, string assemblyChecksum)
         {
-            string fileName = Path.GetFileName(assembly.SourceCode.FileName);
-            DebugFile outpuData = new()
+            string fileName = Path.GetFileName(assembly.SourceCode.FullPath);
+            DebugSymbolsFile outpuData = new()
             {
                 Namespace = assembly.Namespace,
-                OriginalFileName = fileName,
-                OriginalFileFullName = assembly.SourceCode.FileName,
+                SourceFilePath = assembly.SourceCode.FullPath,
                 MD5Hash = assemblyChecksum,
             };
 
             foreach (BundleDefinition bundle in assembly.TypeDefinition.Bundles)
             {
-                DebugBundleDefinition dbgBundleDef = new()
+                DebugTypeSymbols dbgBundleDef = new()
                 {
                     Name = bundle.Name,
                 };
 
-                outpuData.Bundles.Add(dbgBundleDef.Name, dbgBundleDef);
+                outpuData.Types.Add(dbgBundleDef.Name, dbgBundleDef);
 
                 foreach (ParameterDefinition field in bundle.Fields)
                 {
-                    dbgBundleDef.Fields.Add(new()
+                    dbgBundleDef.Members.Add(new()
                     {
                         Name = field.Name,
-                        SourceNamespace = field.SourceNamespace,
-                        SourceType = field.SourceTypeName,
-                        InternalType = field.VariableType.ToString(),
+                        Namespace = field.SourceNamespace,
+                        TypeName = field.SourceTypeName,
                     });
                 }
             }
@@ -82,7 +80,7 @@ namespace Nebula.CodeGeneration.Writer
                     funcEndLineNumber = assembly.SourceCode.GetLineIndex(func.OriginalNode.Span.End);
                 }
 
-                DebugFunction dbgFunc = new()
+                DebugFunctionSymbols dbgFunc = new()
                 {
                     Name = func.Name,
                     LineNumber = funcLineNumber,
@@ -97,27 +95,24 @@ namespace Nebula.CodeGeneration.Writer
                     dbgFunc.Parameters.Add(new()
                     {
                         Name = p.Name,
-                        SourceNamespace = p.SourceNamespace,
-                        SourceType = p.SourceTypeName,
-                        InternalType = p.VariableType.ToString(),
+                        Namespace = p.SourceNamespace,
+                        TypeName = p.SourceTypeName,
                     });
                 }
 
                 foreach (VariableDefinition v in func.Body.Variables)
                 {
-                    DebugVariable dbgVariable = new()
+                    DebugVariableSymbols dbgVariable = new()
                     {
                         Name = v.Name,
-                        InternalType = v.VariableType.ToString(),
-                        SourceNamespace = v.SourceNamespace,
-                        SourceType = v.SourceTypeName,
+                        Namespace = v.SourceNamespace,
+                        TypeName = v.SourceTypeName,
                     };
 
                     dbgFunc.LocalVariables.Add(dbgVariable);
                 }
 
                 int lastLineNumber = -1;
-                Node? lastStatementNode = null;
                 for (int i = 0; i < func.Body.Instructions.Count; i++)
                 {
                     Instruction inst = func.Body.Instructions[i];
@@ -127,13 +122,6 @@ namespace Nebula.CodeGeneration.Writer
                     {
                         dbgFunc.Lines.Add(new(lineNumber, i));
                         lastLineNumber = lineNumber;
-                    }
-
-                    Node? originalNode = inst.OriginalNode;
-                    if (originalNode != lastStatementNode)
-                    {
-                        lastStatementNode = originalNode;
-                        dbgFunc.Statements.Add(i);
                     }
                 }
             }

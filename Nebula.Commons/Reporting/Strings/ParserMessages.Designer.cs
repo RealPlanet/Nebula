@@ -160,6 +160,15 @@ namespace Nebula.Commons.Reporting.Strings {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Object &apos;{0}::{1}&apos; does not exist..
+        /// </summary>
+        public static string ObjectDoesNotExist {
+            get {
+                return ResourceManager.GetString("ObjectDoesNotExist", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Type &apos;{0}&apos; does not exist..
         /// </summary>
         public static string TypeDoesNotExist {

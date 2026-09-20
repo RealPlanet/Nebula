@@ -5,7 +5,7 @@ namespace Nebula.Commons.Debugger
 {
     public record DebugLine(int LineNumber, int StartOpcodeOfLine);
 
-    public class DebugFunction
+    public class DebugFunctionSymbols
     {
         [JsonInclude]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -25,15 +25,13 @@ namespace Nebula.Commons.Debugger
         public long InstructionCount { get; init; }
 
         [JsonInclude]
-        public List<DebugVariable> Parameters { get; init; } = [];
+        public List<DebugVariableSymbols> Parameters { get; init; } = [];
 
         [JsonInclude]
-        public List<DebugVariable> LocalVariables { get; init; } = [];
+        public List<DebugVariableSymbols> LocalVariables { get; init; } = [];
 
+        /// <summary> The lines of this function with their associated opcode </summary>
         [JsonInclude]
         public List<DebugLine> Lines { get; init; } = [];
-
-        [JsonInclude]
-        public List<int> Statements { get; init; } = [];
     }
 }

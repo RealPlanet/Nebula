@@ -12,11 +12,11 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Bundle
         public Token Keyword { get; }
         public Token Name { get; }
         public Token OpenBracket { get; }
-        public ImmutableArray<BundleFieldDeclaration> Fields { get; }
+        public ImmutableArray<ObjectFieldDeclaration> Fields { get; }
         public Token ClosedBracket { get; }
         public override NodeType Type => NodeType.BundleDeclaration;
 
-        public BundleDeclaration(SourceCode syntaxTree, Token keyword, Token name, Token openBracket, ImmutableArray<BundleFieldDeclaration> fields, Token closedBracket)
+        public BundleDeclaration(SourceCode syntaxTree, Token keyword, Token name, Token openBracket, ImmutableArray<ObjectFieldDeclaration> fields, Token closedBracket)
             : base(syntaxTree)
         {
             Keyword = keyword;
@@ -31,7 +31,7 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Bundle
             yield return Keyword;
             yield return Name;
             yield return OpenBracket;
-            foreach (BundleFieldDeclaration v in Fields)
+            foreach (ObjectFieldDeclaration v in Fields)
             {
                 yield return v;
             }

@@ -10,10 +10,10 @@ namespace Nebula.Core.Compilation.CST.Tree
     {
         public override NodeType Type => NodeType.Parameter;
 
-        public TypeClause ParameterType { get; }
+        public BaseTypeClause ParameterType { get; }
         public Token Identifier { get; }
 
-        public Parameter(SourceCode sourceCode, TypeClause type, Token identifier)
+        public Parameter(SourceCode sourceCode, BaseTypeClause type, Token identifier)
             : base(sourceCode)
         {
             ParameterType = type;
@@ -22,7 +22,11 @@ namespace Nebula.Core.Compilation.CST.Tree
 
         public override IEnumerable<Node> GetChildren()
         {
-            yield return ParameterType;
+            foreach (var child in ParameterType.GetChildren())
+            {
+                yield return child;
+            }
+
             yield return Identifier;
         }
     }
