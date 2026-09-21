@@ -32,10 +32,10 @@ static void GatherStackRoots(Interpreter* vm, std::vector<AllocableObjectPtr>& f
             size_t localCount = memory.LocalCount();
             for (int j{ 0 }; j < localCount; j++)
             {
-                const Variable& fv = memory.LocalAt(j);
-                if (const TGCObject* obj = std::get_if<TGCObject>(&fv.Value()))
+                const Value& fv = memory.LocalAt(j);
+                if (fv.GetValueType() == DataStackVariantIndex::_TypeObject)
                 {
-                    foundRoots.push_back(*obj);
+                    foundRoots.push_back(fv.AsGCObject());
                 }
             }
 
@@ -169,7 +169,7 @@ void InterpreterMemory::Sweep()
 
 void InterpreterMemory::AddGlobals(const Script* script)
 {
-    std::vector<Variable> variables{};
+    std::vector<Value> variables{};
     variables.reserve(script->Globals().size());
 
     for (auto& global : script->Globals())
@@ -179,7 +179,7 @@ void InterpreterMemory::AddGlobals(const Script* script)
     m_ScriptGlobals[script->Namespace()] = variables;
 }
 
-Variable* InterpreterMemory::GetGlobal(const std::string_view& script, TInt32 index)
+Value* InterpreterMemory::GetGlobal(const std::string_view& script, TInt32 index)
 {
     auto it = m_ScriptGlobals.find(script);
     if (it == m_ScriptGlobals.end())

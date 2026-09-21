@@ -4,7 +4,7 @@
 #include <unordered_set>
 
 #include "LanguageTypes.h"
-#include "Variable.h"
+#include "Value.h"
 #include "Bundle.h"
 
 namespace nebula
@@ -28,13 +28,13 @@ namespace nebula
 		bool Empty() { return m_IGCObjects.empty(); }
 
 		void AddGlobals(const Script* script);
-		Variable* GetGlobal(const std::string_view& namespaceStr, TInt32 index);
+		Value* GetGlobal(const std::string_view& namespaceStr, TInt32 index);
 
 	private:
 		Interpreter* m_pParent;
 		std::list<AllocableObjectPtr> m_IGCObjects;
 		size_t m_iGCThreshold;
-		std::map<const std::string_view, std::vector< Variable>> m_ScriptGlobals{};
+		std::map<const std::string_view, std::vector< Value>> m_ScriptGlobals{};
 	};
 }
 

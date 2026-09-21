@@ -4,17 +4,18 @@
 
 namespace nebula
 {
-	class Variable
+	class Value
 	{
-		friend class Frame;
 	public:
-		Variable() { _type = _UnknownType; }
-		Variable(DataStackVariantIndex initialType) { _type = initialType; }
+		Value() { _type = _UnknownType; }
+		Value(DataStackVariantIndex initialType) { _type = initialType; }
+		Value(const DataStackVariant&);
+		Value(DataStackVariant&&);
 
-		DataStackVariantIndex	Type() const { return _type; }
+		DataStackVariantIndex	GetValueType() const { return _type; }
 		bool					SetValue(const DataStackVariant& val);
-		DataStackVariant&		Value() { return _value; }
-		const DataStackVariant& Value() const { return _value; }
+		DataStackVariant&		GetInternalValue() { return _value; }
+		const DataStackVariant& GetInternalValue() const { return _value; }
 
 		TInt32					AsInt32() const { return std::get<DataStackVariantIndex::_TypeInt32>(_value); }
 		TFloat					AsFloat() const { return std::get<DataStackVariantIndex::_TypeFloat>(_value); }
