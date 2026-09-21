@@ -14,20 +14,13 @@ Frame::Frame(Frame* parent, const Function* f, bool discardParent)
     const VariableList& params = f->Parameters();
     DataStack& dataStack = parent->Stack();
     long paramCount = (long)params.size();
+
     // Stack values are in the opposite order!
     for (long i = paramCount - 1; i >= 0; i--)
     {
-        Variable& param = m_Memory.ParamAt(i);
-        param._type = params[i];
-        param._value = dataStack.Peek();
+        Value& param = m_Memory.ParamAt(i);
+        param.SetValue(dataStack.Peek());
         dataStack.Pop();
-    }
-
-    const VariableList& vars = f->Locals();
-    for (size_t i = 0; i < vars.size(); i++)
-    {
-        m_Memory.LocalAt(i)._type = vars[i];
-        // Value is set when instructions are executed
     }
 
     if (discardParent)

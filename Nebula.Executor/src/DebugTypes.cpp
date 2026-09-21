@@ -105,7 +105,7 @@ std::string DebugVariable::GetDisplayValue() const
 		return "undefined";
 	}
 
-	return nebula::ToString(originalVariable->Value());
+	return nebula::ToString(originalVariable->GetInternalValue());
 }
 
 std::string DebugVariable::GetDisplayType() const

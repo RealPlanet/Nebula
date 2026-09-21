@@ -29,10 +29,10 @@ std::shared_ptr<Bundle> Bundle::FromDefinition(const BundleDefinition& definitio
 DataStackVariant& Bundle::Get(int index)
 {
 	auto& f = m_Fields[index];
-	return f.Value();
+	return f.GetInternalValue();
 }
 
-Variable& nebula::Bundle::GetVariable(int index)
+Value& nebula::Bundle::GetVariable(int index)
 {
 	auto& f = m_Fields[index];
 	return f;

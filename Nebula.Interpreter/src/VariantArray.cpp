@@ -14,24 +14,36 @@ void VariantArray::Append(const DataStackVariant& v)
     m_Vector.emplace_back(v);
 }
 
+void nebula::VariantArray::Append(DataStackVariant&& v)
+{
+    m_Vector.emplace_back(std::move(v));
+}
+
 void VariantArray::Clear() { m_Vector.clear(); }
 
 size_t VariantArray::Size() { return m_Vector.size(); }
 
-DataStackVariant& VariantArray::operator[](int i) { return m_Vector[i]; }
+Value& nebula::VariantArray::At(size_t i)
+{
+    return m_Vector.at(i);
+}
+
+const Value& nebula::VariantArray::At(size_t i) const
+{
+    return m_Vector.at(i);
+}
 
 InstructionErrorCode VariantArray::CallVirtual(const std::string_view& funcName, Interpreter*, Frame* context)
 {
     if (funcName == "Append")
     {
         DataStackVariant& v = context->Stack().Peek();
-
-        if (!m_Vector.empty() && m_Vector[0].index() != v.index())
+        if (!m_Vector.empty() && m_Vector[0].GetValueType() != v.index())
         {
             return InstructionErrorCode::Fatal;
         }
 
-        Append(v);
+        Append(std::move(v));
         context->Stack().Pop();
         return InstructionErrorCode::None;
     }

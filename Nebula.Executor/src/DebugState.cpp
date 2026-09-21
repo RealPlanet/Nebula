@@ -403,7 +403,7 @@ void DebugState::InvalidateState()
 }
 
 void DebugState::DeclareVariable(VariableId reference, DebugVariable::Scope scope,
-	nebula::Variable& variable,
+	nebula::Value& variable,
 	const symbols::DebugVariable& debugVariable)
 {
 

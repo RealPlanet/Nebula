@@ -1,10 +1,9 @@
 #pragma once
 
-#include <map>
 #include <vector>
 
 #include "LanguageTypes.h"
-#include "Variable.h"
+#include "Value.h"
 #include "interfaces/IGCObject.h"
 
 namespace nebula
@@ -42,7 +41,7 @@ namespace nebula
         size_t FieldCount() const { return m_Fields.size(); }
 
         DataStackVariant& Get(int index);
-        Variable& GetVariable(int index);
+        Value& GetVariable(int index);
 
         bool SetAt(int index, DataStackVariant& data);
         void ClearFields() { m_Fields.clear(); }
@@ -50,7 +49,7 @@ namespace nebula
     private:
         Bundle();
         std::string m_Name;
-        std::vector<Variable> m_Fields;
+        std::vector<Value> m_Fields;
     };
 }
 

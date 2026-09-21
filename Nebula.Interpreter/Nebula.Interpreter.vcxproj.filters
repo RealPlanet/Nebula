@@ -1,69 +1,120 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClInclude Include="include\Interpreter.h" />
-    <ClInclude Include="include\ThreadMap.h" />
-    <ClInclude Include="include\CallStack.h" />
-    <ClInclude Include="include\Frame.h" />
-    <ClInclude Include="include\FrameScheduler.h" />
-    <ClInclude Include="include\Function.h" />
-    <ClInclude Include="include\DataStack.h" />
-    <ClInclude Include="include\Script.h" />
-    <ClInclude Include="include\Bundle.h" />
-    <ClInclude Include="src\LiteralScriptParser.h" />
-    <ClInclude Include="src\InstructionRegistry.h" />
-    <ClInclude Include="include\FrameMemory.h" />
-    <ClInclude Include="include\InterpreterStandardOutput.h" />
-    <ClInclude Include="include\InterpreterMemory.h" />
-    <ClInclude Include="include\VariantArray.h" />
-    <ClInclude Include="include\DefaultDebugServer.h" />
-    <ClInclude Include="include\Variable.h" />
+    <ClInclude Include="include\Function.h">
+      <Filter>Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Bundle.h">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CallStack.h">
+      <Filter>Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DefaultDebugServer.h">
+      <Filter>Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Frame.h">
+      <Filter>Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FrameMemory.h">
+      <Filter>Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FrameScheduler.h">
+      <Filter>Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\InstructionRegistry.h">
+      <Filter>Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Interpreter.h">
+      <Filter>Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="include\InterpreterMemory.h">
+      <Filter>Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="include\InterpreterStandardOutput.h">
+      <Filter>Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="src\LiteralScriptParser.h">
+      <Filter>Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Script.h">
+      <Filter>Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ThreadMap.h">
+      <Filter>Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DataStack.h">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Value.h">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="include\VariantArray.h">
+      <Filter>Data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Interpreter.cpp" />
-    <ClCompile Include="src\CallStack.cpp" />
-    <ClCompile Include="src\Frame.cpp" />
-    <ClCompile Include="src\FrameScheduler.cpp" />
-    <ClCompile Include="src\ThreadMap.cpp" />
-    <ClCompile Include="src\Function.cpp" />
-    <ClCompile Include="src\Script.cpp" />
-    <ClCompile Include="src\Bundle.cpp" />
-    <ClCompile Include="src\IScriptParser.cpp" />
-    <ClCompile Include="src\LiteralScriptParser.cpp" />
-    <ClCompile Include="src\InstructionRegistry.cpp" />
-    <ClCompile Include="src\FrameMemory.cpp" />
-    <ClCompile Include="src\InterpreterStandardOutput.cpp" />
-    <ClCompile Include="src\InterpreterMemory.cpp" />
-    <ClCompile Include="src\VariantArray.cpp" />
-    <ClCompile Include="src\DefaultDebugServer.cpp" />
+    <ClCompile Include="src\InstructionRegistry.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Function.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FrameScheduler.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FrameMemory.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Frame.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DefaultDebugServer.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CallStack.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Bundle.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Interpreter.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\InterpreterMemory.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VariantArray.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ThreadMap.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Script.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\IScriptParser.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LiteralScriptParser.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\InterpreterStandardOutput.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="include\Value.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Script">
-      <UniqueIdentifier>{71a1e2ee-dfb9-45ac-9cca-604a7f996659}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Script\ScriptParser">
-      <UniqueIdentifier>{d3a591b9-1011-4d8d-b1f7-6eeda413ecfe}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Script\ScriptParser\Debug">
-      <UniqueIdentifier>{fe96adf6-f7fc-4553-ba8a-11747530f6bb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Script\ScriptParser\Release">
-      <UniqueIdentifier>{a6873ea7-adaf-4652-ba52-9dff035a7fc1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Script\DataStack">
-      <UniqueIdentifier>{c665cfb7-4190-490a-b3e1-12ccf6c57d5a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Interpreter">
       <UniqueIdentifier>{3e809fdd-b5a6-4a99-bd95-85614b08d625}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Interpreter\Frame">
-      <UniqueIdentifier>{7abe0c4c-b13c-40b3-b9ba-6f1053f57d2b}</UniqueIdentifier>
+    <Filter Include="Data">
+      <UniqueIdentifier>{3bc67486-fcb5-4c0e-b278-c2da3255c514}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Interpreter\Function">
-      <UniqueIdentifier>{aa0718bf-e3ff-4180-8ca2-b8007a315157}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Interpreter\Instructions">
-      <UniqueIdentifier>{956dceec-9b09-46f9-9fa1-48ba8a5abaf7}</UniqueIdentifier>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{093389ba-c945-48c1-8016-52f6cae5d75a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
