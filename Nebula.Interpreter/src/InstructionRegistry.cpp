@@ -528,7 +528,7 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 		int localIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
 		const TString& funcName = std::get<DataStackVariantIndex::_TypeString>(args[1]);
 
-		Variable& var = context->Memory().LocalAt(localIndex);
+		Value& var = context->Memory().LocalAt(localIndex);
 		const TGCObject& ptr = var.AsGCObject();
 		if (ptr.get() != nullptr)
 		{
@@ -537,15 +537,15 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 			return result;
 		}
 
-		if (var.Type() == DataStackVariantIndex::_TypeObject)
+		if (var.GetValueType() == DataStackVariantIndex::_TypeObject)
 		{
 			return InstructionErrorCode::NotAPrimitive;
 		}
 
-		auto func = interpreter->GetTypeFunction(var.Type(), funcName);
+		auto func = interpreter->GetTypeFunction(var.GetValueType(), funcName);
 		if (func != nullptr)
 		{
-			context->Stack().Push(var.Value());
+			context->Stack().Push(var.GetInternalValue());
 			return (*func)(interpreter, context);
 		}
 
@@ -849,9 +849,9 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 		assert(std::holds_alternative<TInt32>(args[0]));
 
 		TInt32 localIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
-		Variable& var = context->Memory().LocalAt(localIndex);
+		Value& var = context->Memory().LocalAt(localIndex);
 
-		stack.Push(var.Value());
+		stack.Push(var.GetInternalValue());
 		return InstructionErrorCode::None;
 	}
 	case VMInstruction::Ldarg:
@@ -860,9 +860,9 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 		assert(std::holds_alternative<TInt32>(args[0]));
 
 		TInt32 argIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
-		Variable& var = context->Memory().ParamAt(argIndex);
+		Value& var = context->Memory().ParamAt(argIndex);
 
-		stack.Push(var.Value());
+		stack.Push(var.GetInternalValue());
 		return InstructionErrorCode::None;
 
 	}
@@ -883,13 +883,13 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 			namespaceStr = context->Namespace();
 		}
 
-		Variable* variant = interpreter->m_Memory.GetGlobal(namespaceStr, staticIndex);
+		Value* variant = interpreter->m_Memory.GetGlobal(namespaceStr, staticIndex);
 		if (variant == nullptr)
 		{
 			return InstructionErrorCode::GlobalVariableNotFound;
 		}
 
-		context->Stack().Push(variant->Value());
+		context->Stack().Push(variant->GetInternalValue());
 		return InstructionErrorCode::None;
 	}
 	case VMInstruction::AddStr:
@@ -939,7 +939,7 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 	case VMInstruction::Stloc:
 	{
 		TInt32 localIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
-		Variable& var = context->Memory().LocalAt(localIndex);
+		Value& var = context->Memory().LocalAt(localIndex);
 		DataStackVariant value = stack.Peek();
 
 		if (var.SetValue(value))
@@ -955,7 +955,7 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 	case VMInstruction::StArg:
 	{
 		TInt32 argIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
-		Variable& var = context->Memory().ParamAt(argIndex);
+		Value& var = context->Memory().ParamAt(argIndex);
 		DataStackVariant value = stack.Peek();
 		stack.Pop();
 
@@ -979,7 +979,7 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 			namespaceStr = context->Namespace();
 		}
 
-		Variable* variant = interpreter->m_Memory.GetGlobal(namespaceStr, staticIndex);
+		Value* variant = interpreter->m_Memory.GetGlobal(namespaceStr, staticIndex);
 		if (variant == nullptr)
 		{
 			return InstructionErrorCode::GlobalVariableNotFound;
@@ -1229,10 +1229,10 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 
 		CHECK_GC_OBJECT_IS_ARRAY(obj);
 		VariantArray* array = (VariantArray*)obj.get();
-		DataStackVariant& value = (*array)[index];
+		Value& value = array->At(index);
 
 		context->Stack().Pop();
-		context->Stack().Push(value);
+		context->Stack().Push(value.GetInternalValue());
 		return InstructionErrorCode::None;
 	}
 	case VMInstruction::LastInstruction:

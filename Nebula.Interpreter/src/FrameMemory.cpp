@@ -3,65 +3,56 @@
 using namespace nebula;
 
 FrameMemory::FrameMemory(size_t paramCount, size_t localCount)
-    : m_ParamCount{ paramCount }, m_LocalCount{ localCount }
+	: m_ParamCount{ paramCount }, m_LocalCount{ localCount }
 {
-    m_Variables = new Variable[localCount + paramCount];
+	m_Variables = new Value[localCount + paramCount];
 }
 
 FrameMemory::~FrameMemory()
 {
-    if (m_Variables)
-    {
-        delete[] m_Variables;
-        m_Variables = nullptr;
-    }
+	if (m_Variables)
+	{
+		delete[] m_Variables;
+		m_Variables = nullptr;
+	}
 }
 
-Variable& FrameMemory::LocalAt(size_t i)
+Value& FrameMemory::LocalAt(size_t i)
 {
-    if (i > m_ParamCount + i)
-    {
-        throw std::exception("Invalid local index");
-    }
+	if (i > m_ParamCount + i)
+	{
+		throw std::exception("Invalid local index");
+	}
 
-    return m_Variables[m_ParamCount + i];
+	return m_Variables[m_ParamCount + i];
 }
 
-Variable& FrameMemory::ParamAt(size_t i)
+Value& FrameMemory::ParamAt(size_t i)
 {
-    if (i > m_ParamCount)
-    {
-        throw std::exception("Invalid param index");
-    }
+	if (i > m_ParamCount)
+	{
+		throw std::exception("Invalid param index");
+	}
 
-    return m_Variables[i];
+	return m_Variables[i];
 }
 
-const Variable& FrameMemory::LocalAt(size_t i) const
+const Value& FrameMemory::LocalAt(size_t i) const
 {
-    if (i > m_ParamCount + i)
-    {
-        throw std::exception("Invalid local index");
-    }
+	if (i > m_ParamCount + i)
+	{
+		throw std::exception("Invalid local index");
+	}
 
-    return m_Variables[m_ParamCount + i];
+	return m_Variables[m_ParamCount + i];
 }
 
-const Variable& FrameMemory::ParamAt(size_t i) const
+const Value& FrameMemory::ParamAt(size_t i) const
 {
-    if (i > m_ParamCount)
-    {
-        throw std::exception("Invalid param index");
-    }
+	if (i > m_ParamCount)
+	{
+		throw std::exception("Invalid param index");
+	}
 
-    return m_Variables[i];
-}
-
-bool Variable::SetValue(const DataStackVariant& val)
-{
-    if (Type() != val.index())
-        return false;
-
-    _value = val;
-    return true;
+	return m_Variables[i];
 }

@@ -106,7 +106,7 @@ namespace nebula::debugger
 		// If this value can be changed by a debugger, for now only primitives are allowed
 		bool canChangeValueByDebugger;
 
-		nebula::Variable* originalVariable;
+		nebula::Value* originalVariable;
 
 		bool OverrideValue(const std::string& valueToSet, std::string& reason);
 		std::string GetDisplayValue() const;
