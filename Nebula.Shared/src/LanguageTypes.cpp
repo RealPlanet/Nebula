@@ -1,6 +1,5 @@
 #include <map>
 #include <string>
-#include <cassert>
 
 #include "LanguageTypes.h"
 
@@ -10,11 +9,11 @@ DataStackVariantIndex nebula::StringToStackValue(const std::string& str)
 {
 	static std::map<std::string, DataStackVariantIndex> valMap = {
 		//{ "char",	DataStackVariantIndex::_TypeByte },
-		{"bool", DataStackVariantIndex::_TypeInt32}, 
+		{"bool", DataStackVariantIndex::_TypeInt32},
 		{"int32", DataStackVariantIndex::_TypeInt32},
 		{"float", DataStackVariantIndex::_TypeFloat},
 		{"string", DataStackVariantIndex::_TypeString},
-		{"void", DataStackVariantIndex::_TypeVoid}, 
+		{"void", DataStackVariantIndex::_TypeVoid},
 		{"object", DataStackVariantIndex::_TypeObject},
 		{"array", DataStackVariantIndex::_TypeObject},
 	};
@@ -22,7 +21,6 @@ DataStackVariantIndex nebula::StringToStackValue(const std::string& str)
 	auto it = valMap.find(str);
 	if (it == valMap.end())
 	{
-
 		return DataStackVariantIndex::_UnknownType;
 	}
 

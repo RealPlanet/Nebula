@@ -15,83 +15,36 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\Utility.h" />
-    <ClInclude Include="include\DebugFunction.h">
-      <Filter>Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="include\DebugServer.h">
-      <Filter>Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="include\DebuggerDefinitions.h">
-      <Filter>Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="include\DebugLine.h">
-      <Filter>Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="include\DebugFile.h">
-      <Filter>Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="include\DebugVariable.h">
-      <Filter>Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="include\interfaces\IGCObject.h">
+    <ClInclude Include="include\StringUtility.h" />
+    <ClInclude Include="include\GCUser.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
-    <ClInclude Include="include\interfaces\INotificationListener.h">
+    <ClInclude Include="include\NotificationListener.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="include\interfaces\IStreamWrapper.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
-    <ClInclude Include="include\DiagnosticReport.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\ErrorCallStack.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Instruction.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\InstructionDefs.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\LanguageTypes.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="include\interfaces\IScriptParser.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
-    <ClInclude Include="include\DebugBundleDefinition.h">
-      <Filter>Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="include\SymbolsSerializer.h">
-      <Filter>Debug</Filter>
-    </ClInclude>
+    <ClInclude Include="include\DebugSymbols.h" />
+    <ClInclude Include="include\DebugSymbolSerializers.h" />
+    <ClInclude Include="include\TimeUtility.h" />
+    <ClInclude Include="include\LanguageTypes.h" />
+    <ClInclude Include="include\InstructionDefinitions.h" />
+    <ClInclude Include="include\Instruction.h" />
+    <ClInclude Include="include\ExceptionCallstack.h" />
+    <ClInclude Include="include\DebugServer.h" />
+    <ClInclude Include="include\DebuggerDefinitions.h" />
+    <ClInclude Include="include\DiagnosticReport.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\DiagnosticReport.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\DebugServer.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\DebugFunction.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ErrorCallStack.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\IGCObject.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\INotificationListener.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\LanguageTypes.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="src\DebugFile.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
+    <ClCompile Include="src\LanguageTypes.cpp" />
+    <ClCompile Include="src\ExceptionCallstack.cpp" />
+    <ClCompile Include="src\DebugServer.cpp" />
+    <ClCompile Include="src\NotificationListener.cpp" />
+    <ClCompile Include="src\DiagnosticReport.cpp" />
+    <ClCompile Include="src\GCUser.cpp" />
   </ItemGroup>
 </Project>

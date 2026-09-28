@@ -3,44 +3,44 @@
 #include <string>
 #include <string_view>
 
-#include "interfaces/IGCObject.h"
-#include "interfaces/INotificationListener.h"
+#include "GCUser.h"
+#include "NotificationListener.h"
 #include "Instruction.h"
 
 using namespace nebula;
 
-IGCObject::IGCObject(ObjectType type)
+GCUser::GCUser(ObjectType type)
 	: m_ContainedType{ type }
 {
 }
 
-IGCObject::~IGCObject()
+GCUser::~GCUser()
 {
 	assert(m_Listeners.empty());
 }
 
-void IGCObject::Subscribe(INotificationListener* listener)
+void GCUser::Subscribe(NotificationListener* listener)
 {
 	assert(listener);
 	m_Listeners.insert(listener);
 	listener->m_ConnectedNotifiers.insert(this);
 }
 
-void IGCObject::Unsubscribe(INotificationListener* listener)
+void GCUser::Unsubscribe(NotificationListener* listener)
 {
 	assert(listener);
 	listener->m_ConnectedNotifiers.erase(this);
 	m_Listeners.erase(listener);
 }
 
-void IGCObject::Unsubscribe(std::unordered_set<INotificationListener*>::iterator& it)
+void GCUser::Unsubscribe(std::unordered_set<NotificationListener*>::iterator& it)
 {
-	INotificationListener* listener = *it;
+	NotificationListener* listener = *it;
 	listener->m_ConnectedNotifiers.erase(this);
 	it = m_Listeners.erase(it);
 }
 
-void IGCObject::Notify(const std::string& notification)
+void GCUser::Notify(const std::string& notification)
 {
 	std::hash<std::string> hasher;
 	size_t notifHash = hasher(notification);
@@ -59,7 +59,7 @@ void IGCObject::Notify(const std::string& notification)
 	}
 }
 
-InstructionErrorCode nebula::IGCObject::CallVirtual(const std::string_view&, nebula::Interpreter*, Frame*)
+InstructionErrorCode nebula::GCUser::CallVirtual(const std::string_view&, nebula::Interpreter*, Frame*)
 {
 	return InstructionErrorCode::Fatal;
 }

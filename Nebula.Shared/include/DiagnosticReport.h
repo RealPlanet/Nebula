@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef _H_NEBULA_DIAGNOSTIC_REPORT_
+#define _H_NEBULA_DIAGNOSTIC_REPORT_
+
 #include <string>
 #include <vector>
 
@@ -43,3 +46,4 @@ namespace nebula::shared
     };
 }
 
+#endif // !_H_NEBULA_DIAGNOSTIC_REPORT_

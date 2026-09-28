@@ -1,14 +1,11 @@
 #pragma once
 
-#ifndef _H_DEBUG_SERVER_
-#define _H_DEBUG_SERVER_
+#ifndef _H_NEBULA_DEBUG_SERVER_
+#define _H_NEBULA_DEBUG_SERVER_
 
 #include <string>
 
-#include "DebugBundleDefinition.h"
-#include "DebugFile.h"
-#include "DebugFunction.h"
-#include "DebugVariable.h"
+#include "DebugSymbols.h"
 
 namespace nebula
 {
@@ -16,11 +13,6 @@ namespace nebula
 
 	namespace debugger
 	{
-		using DebugFilePtr = const symbols::DebugFile*;
-		using DebugBundleDefinitionPtr = const symbols::DebugBundleDefinition*;
-		using DebugFunctionPtr = const symbols::DebugFunction*;
-		using DebugVariablePtr = const symbols::DebugVariable*;
-
 		constexpr const char* NEBULA_DEBUG_SYMBOL_EXTENSION = ".ndbg";
 
 		class DebugServer
@@ -42,11 +34,9 @@ namespace nebula
 			// debug queries, ideally the debug data is not loaded until requested
 			virtual void RegisterScript(const Script* script) = 0;
 
-			virtual DebugFilePtr GetScript(const std::string& namespace_) = 0;
-			virtual DebugBundleDefinitionPtr GetBundle(const std::string& namespace_, const std::string& type) = 0;
-			virtual DebugFunctionPtr GetFunction(const std::string& namespace_, const std::string& type) = 0;
+			virtual symbols::DebugSymbols* GetDebugSymbols(const std::string& namespace_) = 0;
 		};
 	} // namespace debugger
 } // namespace nebula
 
-#endif // !_H_DEBUG_SERVER_
+#endif // !_H_NEBULA_DEBUG_SERVER_

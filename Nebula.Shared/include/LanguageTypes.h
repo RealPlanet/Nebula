@@ -1,82 +1,80 @@
 #pragma once
 
-#include <memory>
-#include <variant>
-#include <string>
+#ifndef _H_LANGUAGE_TYPES_
+#define _H_LANGUAGE_TYPES_
+
 #include <cmath>
 #include <intrin.h>
+#include <memory>
+#include <string>
+#include <variant>
 
 namespace nebula
 {
-    template<typename TType>
-    using RefCounted = std::shared_ptr<TType>;
+	template <typename TType> using RefCounted = std::shared_ptr<TType>;
 
-    class Bundle;
-    class VariantArray;
-    class IGCObject;
+	class Bundle;
+	class VariantArray;
+	class IGCObject;
 
-    // Utility types
-    using TBundle = RefCounted<Bundle>;
-    using TArray = RefCounted<VariantArray>;
+	// Utility types
+	using TBundle = RefCounted<Bundle>;
+	using TArray = RefCounted<VariantArray>;
 
-    // Datastack types
-    //using TByte = uint8_t;
-    using TInt32 = int32_t;
-    using TFloat = float_t;
-    using TString = std::string;
-    using TGCObject = RefCounted<IGCObject>;
+	// Datastack types
+	// using TByte = uint8_t;
+	using TInt32 = int32_t;
+	using TFloat = float_t;
+	using TString = std::string;
+	using TGCObject = RefCounted<IGCObject>;
 
-    /// <summary> Enum for variant lookup and emit </summary>
-    enum DataStackVariantIndex
-        : uint8_t {
-        _TypeInt32 = 0,
-        _TypeFloat,
-        _TypeString,
-        _TypeObject,
-        _TypeVoid, // Does not exist in the stack but is used while compiling code
-        _UnknownType,
-        _TypeLast,
-    };
+	/// <summary> Enum for variant lookup and emit </summary>
+	enum DataStackVariantIndex : uint8_t
+	{
+		_TypeInt32 = 0,
+		_TypeFloat,
+		_TypeString,
+		_TypeObject,
+		_TypeVoid, // Does not exist in the stack but is used while compiling code
+		_UnknownType,
+		_TypeLast,
+	};
 
-    //using DataStackVariant = std::variant<TByte, TInt32, TFloat, TString, TBundle>;
-    using DataStackVariant = std::variant<TInt32, TFloat, TString, TGCObject>;
+	// using DataStackVariant = std::variant<TByte, TInt32, TFloat, TString, TBundle>;
+	using DataStackVariant = std::variant<TInt32, TFloat, TString, TGCObject>;
 
-    DataStackVariantIndex StringToStackValue(const std::string& str);
+	DataStackVariantIndex StringToStackValue(const std::string& str);
 
-    inline bool IsDefined(const DataStackVariant& v)
-    {
-        const TGCObject* obj = std::get_if<TGCObject>(&v);
-        if (obj != nullptr)
-        {
-            return obj->get() != nullptr;
-        }
+	inline bool IsDefined(const DataStackVariant& v)
+	{
+		const TGCObject* obj = std::get_if<TGCObject>(&v);
+		if (obj != nullptr)
+		{
+			return obj->get() != nullptr;
+		}
 
-        return true;
-    }
+		return true;
+	}
 
-    inline std::string ToString(const DataStackVariant& var)
-    {
-        //if (std::holds_alternative<TByte>(var))
-        //{
-        //	return std::to_string(std::get<_TypeByte>(var));
-        //}
+	inline std::string ToString(const DataStackVariant& var)
+	{
+		if (std::holds_alternative<TInt32>(var))
+		{
+			return std::to_string(std::get<_TypeInt32>(var));
+		}
 
-        if (std::holds_alternative<TInt32>(var))
-        {
-            return std::to_string(std::get<_TypeInt32>(var));
-        }
+		if (std::holds_alternative<TFloat>(var))
+		{
+			return std::to_string(std::get<_TypeFloat>(var));
+		}
 
-        if (std::holds_alternative<TFloat>(var))
-        {
-            return std::to_string(std::get<_TypeFloat>(var));
-        }
+		if (std::holds_alternative<TString>(var))
+		{
+			return std::get<_TypeString>(var);
+		}
 
-        if (std::holds_alternative<TString>(var))
-        {
-            return std::get<_TypeString>(var);
-        }
+		return "";
+	}
+} // namespace nebula
 
-        __debugbreak();
-        return "";
-    }
-}
+#endif // !_H_LANGUAGE_TYPES_

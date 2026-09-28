@@ -1,17 +1,18 @@
 #pragma once
 
-#ifndef _NEBULA_INST_NAMES_H_
-#define _NEBULA_INST_NAMES_H_
+#ifndef _H_NEBULA_INSTRUCTION_DEFINITIONS_
+#define _H_NEBULA_INSTRUCTION_DEFINITIONS_
 
 #include <map>
 #include <string>
 
-#include "Utility.h"
+#include "StringUtility.h"
 
-namespace nebula {
-
+namespace nebula
+{
 	/// <summary> Despite the names in this enum all instructions will be emitted/read as lower case identifiers </summary>
-	enum class VMInstruction {
+	enum class VMInstruction
+	{
 		Nop,
 
 		Pop,
@@ -24,7 +25,7 @@ namespace nebula {
 		ConvType,
 		ChkDef,
 
-		// Control flow 
+		// Control flow
 		Ret,
 		Br,
 		BrTrue,
@@ -90,7 +91,7 @@ namespace nebula {
 		LastInstruction
 	};
 
-	enum class VMAttribute
+	enum class VMAttribute : uint8_t
 	{
 		Unknown,
 		// Automatically generates a routine as soon as the VM is started or the script is loaded
@@ -103,14 +104,19 @@ namespace nebula {
 	};
 
 	// All the secions that can be found in a script
-	enum class ScriptSection
-		: uint8_t
+	enum class ScriptSection : uint8_t
 	{
-		Namespace,	// Namespace of script
-		Function,	// Function data
-		Bundle,		// Bundle definition
-		Locals,		// Variables defined in scope
-		Globals,	// Variables defined in the script
+		Namespace, // Namespace of script
+		Function,  // Function data
+		Bundle,    // Bundle definition
+		Locals,    // Variables defined in scope
+		Globals,   // Variables defined in the script
+	};
+
+	enum class SpecialDataType : uint8_t
+	{
+		Unknown,
+		Locals,
 	};
 
 	static inline constexpr const char* ReadableScriptSection(ScriptSection s)
@@ -246,64 +252,65 @@ namespace nebula {
 
 		return nullptr;
 	}
-	static inline bool stoi(const char* s, VMInstruction& val) {
+	static inline bool stoi(const char* s, VMInstruction& val)
+	{
 		static std::map<std::string, VMInstruction> instructionMap = {
-			{"nop",			VMInstruction::Nop			},
-			{"pop",			VMInstruction::Pop			},
-			{"dup",			VMInstruction::Dup			},
-			{"callvirt",	VMInstruction::CallVirt 	},
-			{"call",		VMInstruction::Call			},
-			{"convtype",	VMInstruction::ConvType		},
-			{"ret",			VMInstruction::Ret			},
-			{"br",			VMInstruction::Br			},
-			{"brtrue",		VMInstruction::BrTrue		},
-			{"brfalse",		VMInstruction::BrFalse		},
-			{"ceq",			VMInstruction::Ceq			},
-			{"neg",			VMInstruction::Neg			},
-			{"not",			VMInstruction::Not			},
-			{"and",			VMInstruction::And			},
-			{"or",			VMInstruction::Or			},
-			{"xor",			VMInstruction::Xor			},
-			{"clt",			VMInstruction::Clt			},
-			{"cgt",			VMInstruction::Cgt			},
-			{"call_t",		VMInstruction::Call_t		},
-			{"wait",		VMInstruction::Wait			},
-			{"wait_n",		VMInstruction::Wait_n		},
-			{"endon",		VMInstruction::Endon		},
-			{"notify",		VMInstruction::Notify		},
-			{"add",			VMInstruction::Add			},
-			{"sub",			VMInstruction::Sub			},
-			{"mul",			VMInstruction::Mul			},
-			{"div",			VMInstruction::Div			},
-			{"rem",			VMInstruction::Rem			},
-			{"addstr",		VMInstruction::AddStr		},
-			{"ldnull",		VMInstruction::LdNull		},
-			{"ldc_i4_0",	VMInstruction::Ldc_i4_0		},
-			{"ldc_i4_1",	VMInstruction::Ldc_i4_1		},
-			{"ldc_i4_2",	VMInstruction::Ldc_i4_2		},
-			{"ldc_i4_3",	VMInstruction::Ldc_i4_3		},
-			{"ldc_i4_4",	VMInstruction::Ldc_i4_4		},
-			{"ldc_i4_5",	VMInstruction::Ldc_i4_5		},
-			{"ldc_i4_6",	VMInstruction::Ldc_i4_6		},
-			{"ldc_i4_7",	VMInstruction::Ldc_i4_7		},
-			{"ldc_i4_8",	VMInstruction::Ldc_i4_8		},
-			{"ldc_i4_9",	VMInstruction::Ldc_i4_9		},
-			{"ldc_i4",		VMInstruction::Ldc_i4		},
-			{"ldc_r4",		VMInstruction::Ldc_r4		},
-			{"ldc_s",		VMInstruction::Ldc_s		},
-			{"ldarg",		VMInstruction::Ldarg		},
-			{"ldloc",		VMInstruction::Ldloc		},
-			{"ldfld",		VMInstruction::LdFld		},
-			{"ldsfld",		VMInstruction::LdSfld		},
-			{"ldelem",		VMInstruction::LdElem		},
-			{"starg",		VMInstruction::StArg		},
-			{"stloc",		VMInstruction::Stloc		},
-			{"stfld",		VMInstruction::StFld		},
-			{"stsfld",		VMInstruction::StsFld		},
-			{"stelem",		VMInstruction::StElem		},
-			{"newobj",		VMInstruction::Newobj		},
-			{"newarr",		VMInstruction::NewArr		},
-			{"chkdef",		VMInstruction::ChkDef		},
+			{"nop", VMInstruction::Nop},
+			{"pop", VMInstruction::Pop},
+			{"dup", VMInstruction::Dup},
+			{"callvirt", VMInstruction::CallVirt},
+			{"call", VMInstruction::Call},
+			{"convtype", VMInstruction::ConvType},
+			{"ret", VMInstruction::Ret},
+			{"br", VMInstruction::Br},
+			{"brtrue", VMInstruction::BrTrue},
+			{"brfalse", VMInstruction::BrFalse},
+			{"ceq", VMInstruction::Ceq},
+			{"neg", VMInstruction::Neg},
+			{"not", VMInstruction::Not},
+			{"and", VMInstruction::And},
+			{"or", VMInstruction::Or},
+			{"xor", VMInstruction::Xor},
+			{"clt", VMInstruction::Clt},
+			{"cgt", VMInstruction::Cgt},
+			{"call_t", VMInstruction::Call_t},
+			{"wait", VMInstruction::Wait},
+			{"wait_n", VMInstruction::Wait_n},
+			{"endon", VMInstruction::Endon},
+			{"notify", VMInstruction::Notify},
+			{"add", VMInstruction::Add},
+			{"sub", VMInstruction::Sub},
+			{"mul", VMInstruction::Mul},
+			{"div", VMInstruction::Div},
+			{"rem", VMInstruction::Rem},
+			{"addstr", VMInstruction::AddStr},
+			{"ldnull", VMInstruction::LdNull},
+			{"ldc_i4_0", VMInstruction::Ldc_i4_0},
+			{"ldc_i4_1", VMInstruction::Ldc_i4_1},
+			{"ldc_i4_2", VMInstruction::Ldc_i4_2},
+			{"ldc_i4_3", VMInstruction::Ldc_i4_3},
+			{"ldc_i4_4", VMInstruction::Ldc_i4_4},
+			{"ldc_i4_5", VMInstruction::Ldc_i4_5},
+			{"ldc_i4_6", VMInstruction::Ldc_i4_6},
+			{"ldc_i4_7", VMInstruction::Ldc_i4_7},
+			{"ldc_i4_8", VMInstruction::Ldc_i4_8},
+			{"ldc_i4_9", VMInstruction::Ldc_i4_9},
+			{"ldc_i4", VMInstruction::Ldc_i4},
+			{"ldc_r4", VMInstruction::Ldc_r4},
+			{"ldc_s", VMInstruction::Ldc_s},
+			{"ldarg", VMInstruction::Ldarg},
+			{"ldloc", VMInstruction::Ldloc},
+			{"ldfld", VMInstruction::LdFld},
+			{"ldsfld", VMInstruction::LdSfld},
+			{"ldelem", VMInstruction::LdElem},
+			{"starg", VMInstruction::StArg},
+			{"stloc", VMInstruction::Stloc},
+			{"stfld", VMInstruction::StFld},
+			{"stsfld", VMInstruction::StsFld},
+			{"stelem", VMInstruction::StElem},
+			{"newobj", VMInstruction::Newobj},
+			{"newarr", VMInstruction::NewArr},
+			{"chkdef", VMInstruction::ChkDef},
 		};
 
 		auto instPair = instructionMap.find(s);
@@ -319,8 +326,12 @@ namespace nebula {
 		val = instPair->second;
 		return true;
 	}
-	static inline bool stoi(const std::string& s, VMInstruction& val) { return stoi((const char*)s.data(), val); }
-	static inline constexpr const char* atos(const VMAttribute attr) {
+	static inline bool stoi(const std::string& s, VMInstruction& val)
+	{
+		return stoi((const char*)s.data(), val);
+	}
+	static inline constexpr const char* atos(const VMAttribute attr)
+	{
 		switch (attr)
 		{
 		case VMAttribute::AutoExec:
@@ -331,7 +342,8 @@ namespace nebula {
 
 		return nullptr;
 	}
-	static inline bool stoattr(const char* s, VMAttribute& val) {
+	static inline bool stoattr(const char* s, VMAttribute& val)
+	{
 		if (strncmp("autoexec", s, cstrlen("autoexec") + 1) == 0)
 		{
 			val = VMAttribute::AutoExec;
@@ -354,17 +366,11 @@ namespace nebula {
 		return false;
 	}
 
-	enum class SpecialDataType
-	{
-		Unknown,
-		Locals,
-	};
-
 	inline SpecialDataType StringToSpecialDataType(const std::string& str)
 	{
 		static std::map<std::string, SpecialDataType> valMap = {
-			{ "unknown",	SpecialDataType::Unknown },
-			{ "locals",	    SpecialDataType::Locals },
+			{"unknown", SpecialDataType::Unknown},
+			{"locals", SpecialDataType::Locals},
 		};
 
 		auto it = valMap.find(str);
@@ -375,6 +381,6 @@ namespace nebula {
 
 		return it->second;
 	}
-}
+} // namespace nebula
 
-#endif // !_NEBULA_INST_NAMES_H_
+#endif // !_H_NEBULA_INSTRUCTION_DEFINITIONS_
