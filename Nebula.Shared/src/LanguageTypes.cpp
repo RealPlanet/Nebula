@@ -16,7 +16,6 @@ DataStackVariantIndex nebula::StringToStackValue(const std::string& str)
 		{"string", DataStackVariantIndex::_TypeString},
 		{"void", DataStackVariantIndex::_TypeVoid}, 
 		{"object", DataStackVariantIndex::_TypeObject},
-		{"bundle", DataStackVariantIndex::_TypeObject},
 		{"array", DataStackVariantIndex::_TypeObject},
 	};
 
