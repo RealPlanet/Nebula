@@ -18,12 +18,13 @@ Value::Value(DataStackVariant&& other)
 
 bool Value::SetValue(const DataStackVariant& val)
 {
-	if (_type != nebula::DataStackVariantIndex ::_UnknownType && _type != val.index())
+	if (_type != nebula::DataStackVariantIndex::_UnknownType && _type != val.index())
 	{
 		assert(false);
 		return false;
 	}
 
 	_value = val;
+	_type = (nebula::DataStackVariantIndex)val.index();
 	return true;
 }

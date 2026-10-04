@@ -5,7 +5,7 @@
 #include <string>
 
 #include "LanguageTypes.h"
-#include "InstructionDefs.h"
+#include "InstructionDefinitions.h"
 
 namespace nebula
 {

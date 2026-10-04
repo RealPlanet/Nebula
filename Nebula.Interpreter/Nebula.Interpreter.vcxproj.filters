@@ -34,9 +34,6 @@
     <ClInclude Include="include\InterpreterStandardOutput.h">
       <Filter>Interpreter</Filter>
     </ClInclude>
-    <ClInclude Include="src\LiteralScriptParser.h">
-      <Filter>Interpreter</Filter>
-    </ClInclude>
     <ClInclude Include="include\Script.h">
       <Filter>Interpreter</Filter>
     </ClInclude>
@@ -51,6 +48,9 @@
     </ClInclude>
     <ClInclude Include="include\VariantArray.h">
       <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\LiteralScriptParser.h">
+      <Filter>Parsing</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -102,7 +102,7 @@
     <ClCompile Include="src\InterpreterStandardOutput.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
-    <ClCompile Include="include\Value.cpp">
+    <ClCompile Include="src\Value.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
   </ItemGroup>
@@ -115,6 +115,9 @@
     </Filter>
     <Filter Include="Sources">
       <UniqueIdentifier>{093389ba-c945-48c1-8016-52f6cae5d75a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Parsing">
+      <UniqueIdentifier>{9796a930-f19d-437c-9049-47f68cfa95f9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

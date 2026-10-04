@@ -3,13 +3,13 @@
 #include <vector>
 
 #include "LanguageTypes.h"
-#include "interfaces/IGCObject.h"
+#include "GCUser.h"
 #include "Value.h"
 
 namespace nebula
 {
     class VariantArray
-        : public IGCObject {
+        : public GCUser {
     public:
         VariantArray();
 

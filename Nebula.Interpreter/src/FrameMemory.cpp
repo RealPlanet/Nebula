@@ -8,6 +8,16 @@ FrameMemory::FrameMemory(size_t paramCount, size_t localCount)
 	m_Variables = new Value[localCount + paramCount];
 }
 
+FrameMemory::FrameMemory(FrameMemory&& f) noexcept
+	: m_Variables{ f.m_Variables },
+	m_ParamCount{ f.m_ParamCount },
+	m_LocalCount{ f.m_LocalCount }
+{
+	f.m_Variables = nullptr;
+	f.m_ParamCount = 0;
+	f.m_LocalCount = 0;
+}
+
 FrameMemory::~FrameMemory()
 {
 	if (m_Variables)

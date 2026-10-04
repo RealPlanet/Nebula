@@ -44,6 +44,6 @@ bool Bundle::SetAt(int index, DataStackVariant& data)
 }
 
 nebula::Bundle::Bundle()
-	: IGCObject(ObjectType::Bundle)
+	: GCUser(ObjectType::Bundle)
 {
 }
