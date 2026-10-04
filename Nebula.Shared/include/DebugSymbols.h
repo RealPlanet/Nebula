@@ -37,7 +37,7 @@ namespace nebula::debugger::symbols
 		};
 
 		eKind kind;
-		TypeId arrayTypeId;
+		TypeId arrayTypeId{ 0 };
 		std::string objectNamespace{};
 		std::string objectName{};
 		std::vector<ValueInformation> members{};
