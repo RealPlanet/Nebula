@@ -7,7 +7,7 @@
 #include "NebulaExports.h"
 
 #include "interfaces/IStreamWrapper.h"
-#include "interfaces/IGCObject.h"
+#include "GCUser.h"
 
 #include "Interpreter.h"
 #include "Frame.h"

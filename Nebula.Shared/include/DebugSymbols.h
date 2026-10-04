@@ -20,7 +20,7 @@ namespace nebula::debugger::symbols
 		size_t firstOpcodeOfLine{};
 	};
 
-	struct VariableInformation
+	struct ValueInformation
 	{
 		std::string name{};
 		TypeId typeId{};
@@ -37,9 +37,10 @@ namespace nebula::debugger::symbols
 		};
 
 		eKind kind;
+		TypeId arrayTypeId;
 		std::string objectNamespace{};
 		std::string objectName{};
-		std::vector<VariableInformation> members{};
+		std::vector<ValueInformation> members{};
 		// lookup id in the parent debug file type information
 		TypeId Id;
 		// Readable name of this type
@@ -60,8 +61,8 @@ namespace nebula::debugger::symbols
 		size_t endLineNumber{ 0 };
 		size_t instructionCount{ 0 };
 
-		std::vector<VariableInformation> parameters{};
-		std::vector<VariableInformation> locals{};
+		std::vector<ValueInformation> parameters{};
+		std::vector<ValueInformation> locals{};
 		std::vector<LineInformation> lines{};
 
 	public:
@@ -124,7 +125,7 @@ namespace nebula::debugger::symbols
 		std::string md5Hash{};
 		std::string namespace_{};
 
-		std::vector<VariableInformation> globals{};
+		std::vector<ValueInformation> globals{};
 		std::unordered_map<TypeId, TypeInformation> types{};
 		std::unordered_map<std::string, FunctionInformation> functions{};
 		std::unordered_set<std::string> nativeFunctions{};
@@ -146,6 +147,19 @@ namespace nebula::debugger::symbols
 			if (it != types.end())
 			{
 				return &it->second;
+			}
+
+			return nullptr;
+		}
+
+		inline const TypeInformation* GetType(const std::string& className) const
+		{
+			for(auto& [ typeId, type ] : types)
+			{
+				if (type.objectName == className)
+				{
+					return &type;
+				}
 			}
 
 			return nullptr;
