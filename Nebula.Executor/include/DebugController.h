@@ -1,12 +1,13 @@
 #pragma once
 
-#ifndef _H_DEBUG_CONTROLLER_H
-#define _H_DEBUG_CONTROLLER_H
+#ifndef _H_NEBULA_DEBUG_CONTROLLER_
+#define _H_NEBULA_DEBUG_CONTROLLER_
 
 #include "BlockingQueue.h"
+#include "DebugState.h"
+#include "DebuggerEntities.h"
 #include "BreakpointManager.h"
-#include "DebugControllerListener.h"
-#include "DebugTypes.h"
+#include "ExceptionCallstack.h"
 
 #include <atomic>
 #include <thread>
@@ -19,13 +20,28 @@ namespace nebula
 
 namespace nebula::debugger
 {
-	/// <summary>
-	/// Provides debugging functionality for the virtual machine.
-	/// </summary>
+	enum class PauseReason
+	{
+		Entry,
+		Step,
+		Stopped,
+	};
+
+	class DebugControllerListener
+	{
+	public:
+		virtual void OnInterpreterPaused(ThreadId threadId, PauseReason reason) = 0;
+		virtual void OnInterpreterResumed(ThreadId threadId) = 0;
+		virtual void OnInterpreterTerminated() = 0;
+		virtual void OnBreakpointHit(Breakpoint& breakpoint) = 0;
+		virtual void OnInterpreterFatalError(const nebula::shared::ExceptionCallstack* error) = 0;
+		virtual void OnOutput(const std::string& output) = 0;
+	};
+
 	class DebugController
 	{
 	public:
-		DebugController(Interpreter* interpreter, DebugControllerListener* listener);
+		DebugController(Interpreter* interpreter, DebugControllerListener* listener, DebugState* debugState);
 		~DebugController();
 
 		void StartDebugger();
@@ -45,6 +61,28 @@ namespace nebula::debugger
 		BreakpointManager& GetBreakpointManager() { return m_breakpointManager; }
 
 	private:
+		enum class ContinueResult
+		{
+			Unkown,
+			Error,
+			Hitbreakpoint,
+			Done
+		};
+
+		struct DebugEventInfo
+		{
+			enum class Event
+			{
+				Unkown,
+				Step,
+				StepIn,
+				Continue,
+			};
+
+			Event type;
+			ThreadId threadId;
+		};
+
 		void StopOperationThread();
 		void OperationThread();
 
@@ -55,7 +93,8 @@ namespace nebula::debugger
 		void CheckInterpreterExited();
 
 		void StepLine(ThreadId threadId);
-		void StepOverFunctionCall(ThreadId threadId, Frame* ourFrame, size_t callstackIndex);
+		void StepInto(ThreadId threadId);
+		void StepOverFunctionCall(ThreadId threadId, nebula::Frame* ourFrame, size_t callstackIndex);
 
 		bool HandleStepOfExitingFunction(ThreadId id, size_t nextOpcode, size_t instructionCount);
 		bool AtEndOfFunction(size_t nextOpcode, size_t instructionCount);
@@ -63,8 +102,11 @@ namespace nebula::debugger
 		ThreadId AnyFrameJustStarted(const std::string& _namespace, const std::string& funcName);
 		ThreadId AnyFrameAboutToBeAt(const std::string& _namespace, const std::string& funcName, size_t opcode);
 
+		const symbols::FunctionInformation* GetFunctionInformation(const std::string& _namespace, const std::string& funcName);
+
 		Interpreter* m_interpreter;
 		DebugControllerListener* m_listener;
+		DebugState* m_debugState;
 
 		std::thread m_operationThread;
 		collections::BlockingQueue<DebugEventInfo> m_eventQueue;
@@ -74,28 +116,7 @@ namespace nebula::debugger
 		bool m_isDebugging;
 		bool m_runOperationThread;
 		bool m_stopCurrentOperation;
-
-		//private:
-		//	// All these methods must be invoked by the dispatch queue
-		//	ContinueResult StepLine(ThreadId threadId, HitBreakpointInformation& hitBreakpointInfo);
-		//	ContinueResult StepStatement(ThreadId threadId, HitBreakpointInformation& hitBreakpointInfo);
-		//	ContinueResult StepIn(ThreadId threadId, HitBreakpointInformation& hitBreakpointInfo);
-		//	
-
-		//	bool SteppingOverLastInstruction(ThreadId threadId, size_t nextOpcode, FunctionDbgData* dbgInfo);
-		//private:
-		//	// Handles the code execution logic while debugging
-		//	
-		//	void ProcessContinueEvent(DebugEventInfo& info);
-		//	void ProcessStepEvent(DebugEventInfo& info);
-		//	void ProcessStepInEvent(DebugEventInfo& info);
-
-		//	bool AnyBreakpointHit(HitBreakpointInformation& hitBreakpoint);
-		//	
-		//	
 	};
 }
 
-
-
-#endif // !_H_DEBUG_CONTROLLER_H
+#endif // !_H_NEBULA_DEBUG_CONTROLLER_

@@ -96,26 +96,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\DebugTypes.cpp" />
-    <ClCompile Include="src\DebugState.cpp" />
-    <ClCompile Include="src\BreakpointManager.cpp" />
-    <ClCompile Include="src\Utility.cpp" />
-    <ClCompile Include="src\DebugController.cpp" />
-    <ClCompile Include="src\ExecutorDebugServer.cpp" />
-    <ClCompile Include="src\main.cpp" />
+    <ClInclude Include="..\..\ArgParser\ArgParser.h" />
+    <ClInclude Include="include\BreakpointManager.h" />
+    <ClInclude Include="include\ConsoleWriter.h" />
+    <ClInclude Include="include\DebugController.h" />
+    <ClInclude Include="include\DebuggerEntities.h" />
+    <ClInclude Include="include\DebugState.h" />
+    <ClInclude Include="include\ExecutorDebugServer.h" />
+    <ClInclude Include="include\BlockingQueue.h" />
+    <ClInclude Include="include\DebuggerUtility.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\ArgParser\ArgParser.h" />
-    <ClInclude Include="include\BlockingQueue.h" />
-    <ClInclude Include="include\BreakpointManager.h" />
-    <ClInclude Include="include\DebugControllerListener.h" />
-    <ClInclude Include="include\DebugState.h" />
-    <ClInclude Include="include\DebugTypes.h" />
-    <ClInclude Include="include\DebugController.h" />
-    <ClInclude Include="include\ExecutorDebugServer.h" />
-    <ClInclude Include="include\ArgParser.h" />
-    <ClInclude Include="include\ConsoleWriter.h" />
-    <ClInclude Include="include\Utility.h" />
+    <ClCompile Include="src\DebugState.cpp" />
+    <ClCompile Include="src\BreakpointManager.cpp" />
+    <ClCompile Include="src\DebugController.cpp" />
+    <ClCompile Include="src\DebuggerUtility.cpp" />
+    <ClCompile Include="src\DebuggerEntities.cpp" />
+    <ClCompile Include="src\ExecutorDebugServer.cpp" />
+    <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

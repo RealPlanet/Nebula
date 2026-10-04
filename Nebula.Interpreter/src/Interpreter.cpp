@@ -19,14 +19,13 @@ Interpreter::Interpreter()
 
 Interpreter::~Interpreter()
 {
-	// Run gc to avoid leaks
-	m_Memory.Collect(true);
-	assert(m_Memory.Empty());
-
 	SetState(State::Exited);
 	m_Threads.Clear();
 	m_Scripts.clear();
 	m_NativeFunctions.clear();
+	// Run gc to avoid leaks
+	m_Memory.Collect(true);
+	assert(m_Memory.Empty());
 	ClearStandardOutput();
 	delete m_initializersToRun;
 	delete m_LastExceptionCallstack;

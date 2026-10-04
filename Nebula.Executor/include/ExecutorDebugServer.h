@@ -5,7 +5,6 @@
 
 #include "DefaultDebugServer.h"
 #include "DebugController.h"
-#include "DebugControllerListener.h"
 #include "DebugState.h"
 #include "DAPServer.h"
 #include "DAPTypes.h"
@@ -30,14 +29,14 @@ namespace nebula
 			~ExecutorDebugServer();
 
 			virtual void UnregisterScript(const Script* script) override;
-			virtual DebugFilePtr GetScript(const std::string& namespace_) override;
+			virtual symbols::DebugSymbols* GetDebugSymbols(const std::string& namespace_) override;
 
 			virtual void UnloadAll() override;
 
 			// Debugging stuff
 		public:
 			bool IsDebugging() const;
-			const symbols::DebugFunction* GetFunctionAtLine(const std::string& namespace_, size_t line);
+			const symbols::FunctionInformation* GetFunctionAtLine(const std::string& namespace_, size_t line);
 
 		private:
 			void AttachDebugger();
@@ -93,9 +92,9 @@ namespace nebula
 			void OnInterpreterPaused(ThreadId threadId, PauseReason reason) override;
 			void OnInterpreterResumed(ThreadId threadId) override;
 			void OnInterpreterTerminated() override;
-			void OnBreakpointHit(DebugBreakpoint& breakpoint) override;
+			void OnBreakpointHit(Breakpoint& breakpoint) override;
 			void OnOutput(const std::string& output) override;
-			void OnInterpreterFatalError(const nebula::shared::ErrorCallStack* error) override;
+			void OnInterpreterFatalError(const nebula::shared::ExceptionCallstack* error) override;
 		};
 	}
 }
