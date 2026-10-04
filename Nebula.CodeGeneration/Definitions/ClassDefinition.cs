@@ -3,15 +3,16 @@ using System.Collections.Generic;
 
 namespace Nebula.CodeGeneration.Definitions
 {
-    public sealed class BundleDefinition
+    public sealed class ClassDefinition
         : ISupportsComments
     {
         public HashSet<string> LeadingComments { get; } = [];
 
         public string Name { get; }
+
         public IList<ParameterDefinition> Fields { get; } = [];
 
-        public BundleDefinition(string name)
+        public ClassDefinition(string name)
         {
             Name = name;
         }

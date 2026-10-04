@@ -2,9 +2,9 @@
 
 namespace Nebula.Core.Compilation.AST.Bundle
 {
-    public sealed class AbstractBundleField(TypeSymbol fieldType, string fieldName, int ordinalPosition)
+    public sealed class AbstractBundleField(TypeSymbol type, string fieldName, int ordinalPosition)
     {
-        public TypeSymbol FieldType { get; } = fieldType;
+        public TypeSymbol Type { get; } = type;
         public string FieldName { get; } = fieldName;
         public int OrdinalPosition { get; } = ordinalPosition;
     }

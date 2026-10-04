@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace Nebula.Commons.Debugger
+namespace Nebula.CodeGeneration.DebugSymbols
 {
     public record DebugLine(int LineNumber, int StartOpcodeOfLine);
 
-    public class DebugFunctionSymbols
+    public class FunctionSymbol
     {
         [JsonInclude]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -25,10 +25,10 @@ namespace Nebula.Commons.Debugger
         public long InstructionCount { get; init; }
 
         [JsonInclude]
-        public List<DebugVariableSymbols> Parameters { get; init; } = [];
+        public List<VariableDebugSymbol> Parameters { get; init; } = [];
 
         [JsonInclude]
-        public List<DebugVariableSymbols> LocalVariables { get; init; } = [];
+        public List<VariableDebugSymbol> LocalVariables { get; init; } = [];
 
         /// <summary> The lines of this function with their associated opcode </summary>
         [JsonInclude]

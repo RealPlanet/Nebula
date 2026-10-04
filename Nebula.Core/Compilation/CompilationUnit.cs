@@ -1,5 +1,6 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
+using Nebula.Core.Compilation.CST.Tree.Declaration;
 using Nebula.Core.Compilation.CST.Tree.Declaration.Bundle;
 using Nebula.Core.Compilation.CST.Tree.Declaration.Function;
 using Nebula.Core.Compilation.CST.Tree.Statements;

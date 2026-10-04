@@ -25,7 +25,6 @@ namespace Nebula.Core.Compilation.AST.Symbols
         public bool IsString => this == String;
         public bool IsVoid => this == Void;
         public bool IsArray => this is ArrayTypeSymbol;
-
         public bool IsObject => this is ObjectTypeSymbol;
 
         public static TypeSymbol TypeFromEnum(TypeIdentifier identifier)
@@ -36,7 +35,7 @@ namespace Nebula.Core.Compilation.AST.Symbols
                 TypeIdentifier.Int32 => Int,
                 TypeIdentifier.String => String,
                 TypeIdentifier.Float => Float,
-                TypeIdentifier.Bundle => BaseObject,
+                TypeIdentifier.Object => BaseObject,
                 TypeIdentifier.Array => BaseArray,
                 _ => throw new System.Exception($"Unknown type: {identifier}"),
             };
@@ -51,10 +50,12 @@ namespace Nebula.Core.Compilation.AST.Symbols
         public override SymbolType SymbolType => SymbolType.Type;
 
         public virtual TypeSymbol BaseType => this;
+        public string Namespace { get; }
 
         protected TypeSymbol(string @namespace, string name)
-            : base(@namespace, name)
+            : base(name)
         {
+            Namespace = @namespace;
         }
 
         public override string ToString() => Name;

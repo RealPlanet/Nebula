@@ -1,5 +1,5 @@
-﻿using Nebula.CodeGeneration.Definitions;
-using Nebula.Commons.Debugger;
+﻿using Nebula.CodeGeneration.DebugSymbols;
+using Nebula.CodeGeneration.Definitions;
 using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
 using Nebula.Commons.Text.Printers;
@@ -24,7 +24,7 @@ namespace Nebula.CodeGeneration.Writer
 
             inWriter.WriteGlobals(assembly.TypeDefinition.Globals);
 
-            foreach (BundleDefinition bundle in assembly.TypeDefinition.Bundles)
+            foreach (ClassDefinition bundle in assembly.TypeDefinition.Classes)
             {
                 inWriter.WriteBundle(bundle);
             }
@@ -37,37 +37,33 @@ namespace Nebula.CodeGeneration.Writer
 
         public static void WriterDebuggingInfo(this StreamWriter writer, Assembly assembly, string assemblyChecksum)
         {
-            string fileName = Path.GetFileName(assembly.SourceCode.FullPath);
-            DebugSymbolsFile outpuData = new()
+            DebugSymbolsFile debugSymbols = new()
             {
                 Namespace = assembly.Namespace,
                 SourceFilePath = assembly.SourceCode.FullPath,
                 MD5Hash = assemblyChecksum,
             };
 
-            foreach (BundleDefinition bundle in assembly.TypeDefinition.Bundles)
+            TypeInterner interner = new(debugSymbols);
+
+            foreach (ClassDefinition clazz in assembly.TypeDefinition.Classes)
             {
-                DebugTypeSymbols dbgBundleDef = new()
-                {
-                    Name = bundle.Name,
-                };
+                interner.RegisterClass(clazz, assembly.Namespace);
+            }
 
-                outpuData.Types.Add(dbgBundleDef.Name, dbgBundleDef);
-
-                foreach (ParameterDefinition field in bundle.Fields)
+            foreach(VariableDefinition global in assembly.TypeDefinition.Globals)
+            {
+                int typeId = interner.GetOrCreateTypeId(global.VariableType);
+                debugSymbols.Globals.Add(new VariableDebugSymbol
                 {
-                    dbgBundleDef.Members.Add(new()
-                    {
-                        Name = field.Name,
-                        Namespace = field.SourceNamespace,
-                        TypeName = field.SourceTypeName,
-                    });
-                }
+                    Name = global.Name,
+                    TypeId = typeId,
+                });
             }
 
             foreach (NativeMethodDefinition nativeFunc in assembly.TypeDefinition.NativeMethods)
             {
-                outpuData.NativeFunctions.Add(nativeFunc.Name);
+                debugSymbols.NativeFunctions.Add(nativeFunc.Name);
             }
 
             foreach (MethodDefinition func in assembly.TypeDefinition.Methods)
@@ -80,7 +76,7 @@ namespace Nebula.CodeGeneration.Writer
                     funcEndLineNumber = assembly.SourceCode.GetLineIndex(func.OriginalNode.Span.End);
                 }
 
-                DebugFunctionSymbols dbgFunc = new()
+                FunctionSymbol dbgFunc = new()
                 {
                     Name = func.Name,
                     LineNumber = funcLineNumber,
@@ -88,28 +84,24 @@ namespace Nebula.CodeGeneration.Writer
                     EndLineNumber = funcEndLineNumber,
                 };
 
-                outpuData.Functions.Add(dbgFunc.Name, dbgFunc);
+                debugSymbols.Functions.Add(dbgFunc.Name, dbgFunc);
 
                 foreach (ParameterDefinition p in func.Parameters)
                 {
                     dbgFunc.Parameters.Add(new()
                     {
                         Name = p.Name,
-                        Namespace = p.SourceNamespace,
-                        TypeName = p.SourceTypeName,
+                        TypeId = interner.GetOrCreateTypeId(p.VariableType),
                     });
                 }
 
                 foreach (VariableDefinition v in func.Body.Variables)
                 {
-                    DebugVariableSymbols dbgVariable = new()
+                    dbgFunc.LocalVariables.Add(new VariableDebugSymbol
                     {
                         Name = v.Name,
-                        Namespace = v.SourceNamespace,
-                        TypeName = v.SourceTypeName,
-                    };
-
-                    dbgFunc.LocalVariables.Add(dbgVariable);
+                        TypeId = interner.GetOrCreateTypeId(v.VariableType),
+                    });
                 }
 
                 int lastLineNumber = -1;
@@ -126,7 +118,7 @@ namespace Nebula.CodeGeneration.Writer
                 }
             }
 
-            writer.Write(JsonSerializer.Serialize(outpuData, new JsonSerializerOptions
+            writer.Write(JsonSerializer.Serialize(debugSymbols, new JsonSerializerOptions
             {
                 WriteIndented = true
             }));
@@ -146,7 +138,7 @@ namespace Nebula.CodeGeneration.Writer
             writer.WriteLine($"\"{_namespace}\"");
         }
 
-        public static void WriteBundle(this IndentedTextWriter writer, BundleDefinition bundle)
+        public static void WriteBundle(this IndentedTextWriter writer, ClassDefinition bundle)
         {
             writer.Write(InterpreterWords.GetScriptSectionName(ScriptSection.Bundle, true));
             writer.WriteSpace();
@@ -246,9 +238,14 @@ namespace Nebula.CodeGeneration.Writer
             writer.Write(" " + close);
         }
 
+        public static void WriteType(this IndentedTextWriter writer, TypeReference type)
+        {
+            writer.Write(type.CompiledName);
+        }
+
         public static void WriteParameter(this IndentedTextWriter writer, ParameterDefinition param)
         {
-            writer.Write(param.VariableType.Name.ToLower());
+            writer.WriteType(param.VariableType);
             writer.WriteSpace();
             writer.Write(param.Name);
         }
@@ -261,7 +258,7 @@ namespace Nebula.CodeGeneration.Writer
                 writer.Write(" : ");
             }
 
-            writer.Write(param.VariableType.Name.ToLower());
+            writer.WriteType(param.VariableType);
         }
 
         public static void WriteInstruction(this IndentedTextWriter writer, Instruction instruction, int labelCount)

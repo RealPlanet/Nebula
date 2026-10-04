@@ -37,7 +37,7 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression
             Field = field;
             if(Initializer is AbstractObjectInitializationExpression e)
             {
-                e.SetAllocationResult(Field.FieldType);
+                e.SetAllocationResult(Field.Type);
             }
         }
 

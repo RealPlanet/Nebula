@@ -28,7 +28,7 @@ namespace Nebula.Core.Reporting
             string message = string.Format(template, token.Text);
             r.PushError(message, token.Location);
         }
-        public static void ReportBundleAlreadyDefined(this Report r, Token token)
+        public static void ReportClassAlreadyDefined(this Report r, Token token)
         {
             (EParserMessages code, string template) = ParserMessagesProvider.BundleAlreadyExists;
             string message = string.Format(template, token.Text);
@@ -40,7 +40,7 @@ namespace Nebula.Core.Reporting
             string message = string.Format(template, token.Text);
             r.PushError(message, token.Location);
         }
-        public static void ReportBundleFieldAlreadyDeclared(this Report r, Token token)
+        public static void ReportClassFieldAlreadyDeclared(this Report r, Token token)
         {
             (EParserMessages code, string template) = ParserMessagesProvider.FieldAlreadyDeclared;
             string message = string.Format(template, token.Text);
