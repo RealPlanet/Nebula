@@ -16,7 +16,7 @@ func void PrintEntity(SharedScript::Entity ent)
 
 bundle Data
 {
-    int Id;
+    int Id; 
     string Message;
 }
 
