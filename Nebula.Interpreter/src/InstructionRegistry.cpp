@@ -1218,6 +1218,26 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 		context->Stack().Push({ newArr });
 		return InstructionErrorCode::None;
 	}
+	case VMInstruction::StElem:
+	{
+		assert(args.size() == 0);
+		DataStackVariant variantToStore = context->Stack().Peek();
+		context->Stack().Pop();
+
+		DataStackVariant indexVariant = context->Stack().Peek();
+		context->Stack().Pop();
+
+		const TInt32 index = std::get<DataStackVariantIndex::_TypeInt32>(indexVariant);
+		TGCObject& arrayObject = std::get<_TypeObject>(context->Stack().Peek());
+		CHECK_GC_OBJECT_IS_ARRAY(arrayObject);
+		VariantArray* array = (VariantArray*)arrayObject.get();
+		Value& value = array->At(index);
+		assert(value.GetValueType() == variantToStore.index());
+		value.SetValue(variantToStore);
+
+		// context->Stack().Pop(); // Pop the array object from the stack
+		return InstructionErrorCode::None;
+	}
 	case VMInstruction::LdElem:
 	{
 		assert(args.size() == 0);
