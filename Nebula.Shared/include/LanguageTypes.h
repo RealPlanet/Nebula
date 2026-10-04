@@ -15,7 +15,7 @@ namespace nebula
 
 	class Bundle;
 	class VariantArray;
-	class IGCObject;
+	class GCUser;
 
 	// Utility types
 	using TBundle = RefCounted<Bundle>;
@@ -26,7 +26,7 @@ namespace nebula
 	using TInt32 = int32_t;
 	using TFloat = float_t;
 	using TString = std::string;
-	using TGCObject = RefCounted<IGCObject>;
+	using TGCObject = RefCounted<GCUser>;
 
 	/// <summary> Enum for variant lookup and emit </summary>
 	enum DataStackVariantIndex : uint8_t
