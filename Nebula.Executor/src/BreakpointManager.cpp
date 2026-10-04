@@ -2,6 +2,18 @@
 
 using namespace nebula::debugger;
 
+BreakpointInformation::BreakpointInformation(const std::string& namespace_, const std::string& functionName, const size_t& opcodeIndex)
+	: m_namespace(namespace_), m_functionName(functionName), m_opcodeIndex(opcodeIndex)
+{
+}
+
+bool BreakpointInformation::operator==(const BreakpointInformation& other) const
+{
+	return m_namespace == other.m_namespace && 
+		m_functionName == other.m_functionName &&
+		m_opcodeIndex == other.m_opcodeIndex;
+}
+
 void BreakpointManager::AddFunctionBreakpoint(const BreakpointInformation& breakpointInfo)
 {
 	bpm_lock lock(m_mutex);

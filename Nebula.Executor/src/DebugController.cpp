@@ -4,26 +4,23 @@
 #include "DebugServer.h"
 #include "ExecutorDebugServer.h"
 
+#include "Frame.h"
+
 #include <cassert>
 
 using namespace nebula;
 using namespace nebula::debugger;
 
-DebugController::DebugController(Interpreter* interpreter, DebugControllerListener* listener)
-	: m_interpreter(interpreter), m_listener{ listener }
+DebugController::DebugController(Interpreter* interpreter, DebugControllerListener* listener, DebugState* debugState)
+	: m_interpreter(interpreter), m_listener{ listener }, m_debugState{ debugState }
 {
 	assert(interpreter);
 	assert(listener);
+	assert(debugState);
 
 	m_stopCurrentOperation = false;
 	m_runOperationThread = false;
 	m_isDebugging = false;
-
-	// Exit is handled in the Step wrapper method
-	//m_interpreter->SetExitCallback([this]() {
-	//	assert(m_listener);
-	//		m_listener->OnInterpreterTerminated();
-	//	});
 }
 
 DebugController::~DebugController()
@@ -121,7 +118,6 @@ void DebugController::OperationThread()
 	while (m_runOperationThread)
 	{
 		assert(m_listener);
-		assert(m_interpreter->GetState() == nebula::Interpreter::State::Paused);
 
 		if (!m_eventQueue.Pop(currentEvent))
 		{
@@ -129,6 +125,7 @@ void DebugController::OperationThread()
 			break;
 		}
 
+		assert(m_interpreter->GetState() == nebula::Interpreter::State::Paused);
 		auto interpreterState = m_interpreter->GetState();
 		if (interpreterState != Interpreter::Paused)
 		{
@@ -194,6 +191,8 @@ void DebugController::ProcessStepIn(ThreadId thread)
 {
 	m_listener->OnInterpreterResumed(thread);
 
+	StepInto(thread);
+
 	if (m_interpreter->GetState() == Interpreter::State::Paused)
 	{
 		m_listener->OnInterpreterPaused(thread, PauseReason::Step);
@@ -203,6 +202,7 @@ void DebugController::ProcessStepIn(ThreadId thread)
 void DebugController::ProcessContinue(ThreadId thread)
 {
 	m_listener->OnInterpreterResumed(thread);
+
 	while (!m_stopCurrentOperation)
 	{
 		if (!Step())
@@ -238,10 +238,10 @@ void DebugController::CheckInterpreterExited()
 	m_stopCurrentOperation = true;
 	m_runOperationThread = false;
 
-	auto errorCallstack = m_interpreter->GetFatalErrorCallstack();
-	if (errorCallstack)
+	auto ExceptionCallstack = m_interpreter->GetFatalExceptionCallstack();
+	if (ExceptionCallstack)
 	{
-		m_listener->OnInterpreterFatalError(errorCallstack);
+		m_listener->OnInterpreterFatalError(ExceptionCallstack);
 	}
 
 	// Step returns if the vm exited too
@@ -257,20 +257,22 @@ void DebugController::StepLine(ThreadId threadId)
 		return;
 	}
 
-	Frame* lastFrameOfThread = thread->at(thread->size() - 1);
-	auto callstackCount = thread->size();
-	auto nextOpcode = lastFrameOfThread->NextInstructionIndex();
-	auto dbgInfo = static_cast<ExecutorDebugServer*>(DebugServer::Instance())->GetFunction(lastFrameOfThread->Namespace(), lastFrameOfThread->FunctionName());
-	if (!dbgInfo)
+	nebula::Frame* lastFrameOfThread = thread->at(thread->size() - 1);
+
+	const symbols::FunctionInformation* functionInformation
+		= GetFunctionInformation(lastFrameOfThread->Namespace(), lastFrameOfThread->FunctionName());
+	if (functionInformation == nullptr)
 	{
 		Step();
 		return;
 	}
 
-	size_t nextLine = dbgInfo->GetLineFromOpcode(nextOpcode);
+	auto nextOpcode = lastFrameOfThread->NextInstructionIndex();
+	size_t initialCallstackSize = thread->size();
+	size_t nextLine = functionInformation->GetLineFromOpcode(nextOpcode);
 	size_t lastStepLine = nextLine;
 
-	if (HandleStepOfExitingFunction(threadId, nextOpcode, dbgInfo->instructionCount))
+	if (HandleStepOfExitingFunction(threadId, nextOpcode, functionInformation->instructionCount))
 	{
 		return;
 	}
@@ -283,7 +285,7 @@ void DebugController::StepLine(ThreadId threadId)
 		}
 
 		nextOpcode = lastFrameOfThread->NextInstructionIndex();
-		if (HandleStepOfExitingFunction(threadId, nextOpcode, dbgInfo->instructionCount))
+		if (HandleStepOfExitingFunction(threadId, nextOpcode, functionInformation->instructionCount))
 		{
 			// Function of thread exited we stop
 			return;
@@ -293,19 +295,64 @@ void DebugController::StepLine(ThreadId threadId)
 		assert(m_interpreter->GetThread(threadId).size() != 0);
 
 		// We called a function, need to keep stepping until we get back here
-		StepOverFunctionCall(threadId, lastFrameOfThread, callstackCount);
+		StepOverFunctionCall(threadId, lastFrameOfThread, initialCallstackSize);
 
-		lastStepLine = dbgInfo->GetLineFromOpcode(lastFrameOfThread->NextInstructionIndex());
+		lastStepLine = functionInformation->GetLineFromOpcode(lastFrameOfThread->NextInstructionIndex());
 		// because we can have statements/expressions that span multiple lines, as soon as we pass the expected line we stop
 	} while (lastStepLine == nextLine && !m_stopCurrentOperation);
 }
 
-void DebugController::StepOverFunctionCall(ThreadId threadId, Frame* ourFrame, size_t callstackIndex)
+void DebugController::StepInto(ThreadId threadId)
+{
+	auto thread = &m_interpreter->GetThread(threadId);
+	if (thread->size() == 0)
+	{
+		// TODO :: Report
+		return;
+	}
+
+	nebula::Frame* lastFrameOfThread = thread->at(thread->size() - 1);
+	auto nextOpcode = lastFrameOfThread->NextInstructionIndex();
+
+	const symbols::FunctionInformation* functionInformation
+		= GetFunctionInformation(lastFrameOfThread->Namespace(), lastFrameOfThread->FunctionName());
+
+	if (functionInformation == nullptr)
+	{
+		Step();
+		return;
+	}
+
+	size_t lineNumber = functionInformation->GetLineFromOpcode(nextOpcode);
+	size_t nextLine = lineNumber;
+
+	do
+	{
+		m_interpreter->Step();
+		nebula::Frame* newLastFrame = thread->at(thread->size() - 1);
+		if (lastFrameOfThread->FunctionName() != newLastFrame->FunctionName() ||
+			lastFrameOfThread->Namespace() != newLastFrame->Namespace())
+		{
+			break;
+		}
+
+		lastFrameOfThread = newLastFrame;
+		functionInformation = GetFunctionInformation(lastFrameOfThread->Namespace(), lastFrameOfThread->FunctionName());
+		if(functionInformation == nullptr)
+		{
+			break;
+		}
+
+		nextLine = functionInformation->GetLineFromOpcode(newLastFrame->NextInstructionIndex());
+	} while (lineNumber == nextLine && !m_stopCurrentOperation);
+}
+
+void DebugController::StepOverFunctionCall(ThreadId threadId, nebula::Frame* ourFrame, size_t callstackIndex)
 {
 	assert(m_interpreter->GetThread(threadId).size() != 0);
 
 	auto thread = &m_interpreter->GetThread(threadId);
-	Frame* newLastFrame = thread->at(thread->size() - 1);
+	nebula::Frame* newLastFrame = thread->at(thread->size() - 1);
 	while (newLastFrame->FunctionName() != ourFrame->FunctionName() ||
 		newLastFrame->Namespace() != ourFrame->Namespace() ||
 		thread->size() != callstackIndex /* Even if the function is the same as our frame we must make sure it is not a recursive call */)
@@ -367,13 +414,12 @@ bool DebugController::AnyBreakpointHit()
 		auto& ns = bp.GetNamespace();
 		auto& funcName = bp.GetFunctionName();
 		ThreadId id = AnyFrameJustStarted(ns, funcName);
-
-		if (id == NO_THREAD_ID)
+		if (id == INVALID_THREAD_ID)
 		{
 			continue;
 		}
 
-		::nebula::debugger::DebugBreakpoint hitBreakpoint = {};
+		::nebula::debugger::Breakpoint hitBreakpoint = {};
 		hitBreakpoint.isFunctionBreakpoint = true;
 		hitBreakpoint.threadId = id;
 		m_listener->OnBreakpointHit(hitBreakpoint);
@@ -391,12 +437,12 @@ bool DebugController::AnyBreakpointHit()
 			auto opcodeIndex = bp.GetOpcodeIndex();
 
 			ThreadId id = AnyFrameAboutToBeAt(ns, funcName, opcodeIndex);
-			if (id == NO_THREAD_ID)
+			if (id == INVALID_THREAD_ID)
 			{
 				continue;
 			}
 
-			::nebula::debugger::DebugBreakpoint hitBreakpoint = {};
+			::nebula::debugger::Breakpoint hitBreakpoint = {};
 			hitBreakpoint.isFunctionBreakpoint = false;
 			hitBreakpoint.threadId = id;
 			m_listener->OnBreakpointHit(hitBreakpoint);
@@ -441,10 +487,10 @@ ThreadId DebugController::AnyFrameJustStarted(const std::string& _namespace, con
 		return i;
 	}
 
-	return NO_THREAD_ID;
+	return INVALID_THREAD_ID;
 }
 
-ThreadId DebugController::AnyFrameAboutToBeAt(const std::string & _namespace, const std::string & funcName, size_t opcode)
+ThreadId DebugController::AnyFrameAboutToBeAt(const std::string& _namespace, const std::string& funcName, size_t opcode)
 {
 	const nebula::ThreadMap& threads = m_interpreter->GetThreads();
 	for (int i = 0; i < threads.Count(); i++)
@@ -473,51 +519,26 @@ ThreadId DebugController::AnyFrameAboutToBeAt(const std::string & _namespace, co
 		return i;
 	}
 
-	return NO_THREAD_ID;
+	return INVALID_THREAD_ID;
 }
 
-//
-//ContinueResult DebugController::StepIn(ThreadId threadId, HitBreakpointInformation& hitBreakpointInfo)
-//{
-//	const nebula::CallStack& thread = m_interpreter->GetThreads()
-//		.At(threadId);
-//	if (thread.size() == 0)
-//	{
-//		// TODO :: Report
-//		return ContinueResult::Error;
-//	}
-//
-//	Frame* lastFrame = thread.at(thread.size() - 1);
-//	auto nextOpcode = lastFrame->NextInstructionIndex();
-//	FunctionDbgData* dbgInfo = DebugServer::Instance()->GetFunctionDbgData(lastFrame->Namespace(), lastFrame->FunctionName());
-//	if (!dbgInfo)
-//	{
-//		m_interpreter->Step();
-//		return ContinueResult::Done;
-//	}
-//
-//	size_t lineNumber = dbgInfo->GetLineFromOpcode(nextOpcode);
-//	size_t nextLine = lineNumber;
-//
-//	// TODO need to check for breakpoints in case we hit something on different threads ?
-//	do
-//	{
-//		m_interpreter->Step();
-//		Frame* newLastFrame = thread.at(thread.size() - 1);
-//		if (lastFrame->FunctionName() != newLastFrame->FunctionName() ||
-//			lastFrame->Namespace() != newLastFrame->Namespace())
-//		{
-//			break;
-//		}
-//
-//		lastFrame = newLastFrame;
-//		nextLine = dbgInfo->GetLineFromOpcode(newLastFrame->NextInstructionIndex());
-//
-//	} while (lineNumber == nextLine && !m_haltStepping);
-//
-//	return ContinueResult::Done;
-//
-//}
+const symbols::FunctionInformation* nebula::debugger::DebugController::GetFunctionInformation(const std::string& _namespace, const std::string& funcName)
+{
+	const Source* frameSource = m_debugState->GetSource(_namespace);
+	if (frameSource == nullptr ||
+		frameSource->debugSymbols == nullptr)
+	{
+		return nullptr;
 
+	}
 
+	const std::string& functionName = funcName;
+	const symbols::FunctionInformation* functionInformation = frameSource->debugSymbols->GetFunction(functionName);
+	if (functionInformation == nullptr)
+	{
+		Step();
+		return nullptr;
+	}
 
+	return functionInformation;
+}

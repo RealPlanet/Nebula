@@ -1,53 +1,46 @@
 #include "DebugState.h"
 #include "DebugController.h"
-#include "DebugServer.h"
-#include "DebugTypes.h"
 #include "ExecutorDebugServer.h"
-#include "Frame.h"
-#include "Interpreter.h"
-#include "DebugFile.h"
-#include "DebugFunction.h"
-#include "DebugVariable.h"
-#include "VariantArray.h"
 
-#include <algorithm>
 #include <cassert>
-#include <format>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include <vector>
 
-using namespace nebula;
-using namespace nebula::debugger;
+// Internal objects
+#include "Interpreter.h"
+#include "Callstack.h"
+#include "Frame.h"
+#include "VariantArray.h"
 
-DebugState::DebugState(DebugController* controller) : m_controller{ controller }
+nebula::debugger::DebugState::DebugState(Interpreter* interpreter)
+	: m_interpreter{ interpreter }
 {
-	assert(controller);
+	assert(interpreter);
 }
 
-const DebugSource* DebugState::CreateSource(const symbols::DebugFile* information)
+const nebula::debugger::Source* nebula::debugger::DebugState::CreateSource(const symbols::DebugSymbols* information)
 {
 	assert(information);
 
-	auto& filename = information->originalFileName;
-	auto& fullpath = information->originalFileFullName;
+	auto& fullpath = information->sourceFilePath;
 	auto& ns = information->namespace_;
+	auto [iterator, inserted] = m_cachedSources.insert(
+		std::make_pair(ns, Source{
+			.name = ns,
+			.reference = GetNextSourceReference(),
+			.namespace_ = ns,
+			.path = fullpath,
+			.origin = "Loaded scripts",
+			.debugSymbols = information
+			}));
 
-	auto [iterator, interted] = m_cachedSources.insert(std::make_pair(ns, DebugSource{
-																			  .name = filename,
-																			  .reference = GetNextSourceReference(),
-																			  .namespace_ = ns,
-																			  .path = fullpath,
-																			  .origin = "Loaded scripts",
-		}));
-
-	assert(interted);
+	assert(inserted);
 	return &(*iterator).second;
 }
 
-std::optional<DebugSource> DebugState::RemoveSource(const std::string& namespace_)
+std::optional<nebula::debugger::Source> nebula::debugger::DebugState::RemoveSource(const std::string& namespace_)
 {
 	auto it = m_cachedSources.find(namespace_);
 	if (it == m_cachedSources.end())
@@ -55,23 +48,23 @@ std::optional<DebugSource> DebugState::RemoveSource(const std::string& namespace
 		return std::nullopt;
 	}
 
-	DebugSource source = it->second;
+	Source source = it->second;
 	m_cachedSources.erase(it);
 	return source;
 }
 
-void DebugState::ClearSources()
+void nebula::debugger::DebugState::ClearSources()
 {
 	m_cachedSources.clear();
 	m_sourceReference = 0;
 }
 
-const std::unordered_map<std::string, DebugSource>& DebugState::GetSources() const
+const std::unordered_map<std::string, nebula::debugger::Source>& nebula::debugger::DebugState::GetSources() const
 {
 	return m_cachedSources;
 }
 
-const DebugSource* DebugState::GetSource(const std::string& namespace_) const
+const nebula::debugger::Source* nebula::debugger::DebugState::GetSource(const std::string& namespace_) const
 {
 	auto it = m_cachedSources.find(namespace_);
 	if (it == m_cachedSources.end())
@@ -82,7 +75,7 @@ const DebugSource* DebugState::GetSource(const std::string& namespace_) const
 	return &it->second;
 }
 
-const DebugSource* DebugState::GetSourceByPath(const std::string& path) const
+const nebula::debugger::Source* nebula::debugger::DebugState::GetSourceByPath(const std::string& path) const
 {
 	if (path == "")
 	{
@@ -100,7 +93,7 @@ const DebugSource* DebugState::GetSourceByPath(const std::string& path) const
 	return nullptr;
 }
 
-const DebugSource* DebugState::GetSource(size_t reference) const
+const nebula::debugger::Source* nebula::debugger::DebugState::GetSource(size_t reference) const
 {
 	if (reference == 0)
 	{
@@ -118,37 +111,30 @@ const DebugSource* DebugState::GetSource(size_t reference) const
 	return nullptr;
 }
 
-const std::vector<DebugThread>& DebugState::GetThreads()
+const std::vector<nebula::debugger::Thread>& nebula::debugger::DebugState::GetThreads()
 {
-	assert(m_controller->IsDebugging());
-	assert(m_controller->IsPaused());
-
 	// If the threads are empty we need to cache them OR the vm has exited
 	// either way attempt to cache them
 	if (m_threads.empty())
 	{
-		auto& interpreter = m_controller->GetInterpreter();
-		auto& threads = interpreter.GetThreads();
+		auto& threads = m_interpreter->GetThreads();
 		ThreadId threadId = 0;
 		for (const auto& thread : threads)
 		{
-			m_threads.emplace_back(DebugThread{
-				.id = threadId,
-				.name = std::format("Thread {}", threadId + 1),
-				.frameCount = thread.size(),
-				});
+			Thread debugThread;
+			debugThread.id = threadId++;
+			debugThread.name = std::format("Thread {}", threadId);
+			debugThread.internalThread = &thread;
 
-			threadId++;
+			m_threads.push_back(std::move(debugThread));
 		}
 	}
 
 	return m_threads;
 }
 
-const DebugThread* DebugState::GetThread(ThreadId id) const
+const nebula::debugger::Thread* nebula::debugger::DebugState::GetThread(nebula::debugger::ThreadId id) const
 {
-	assert(m_controller->IsDebugging());
-	assert(m_controller->IsPaused());
 	assert(m_threads.size() != 0);
 
 	for (auto& thread : m_threads)
@@ -162,15 +148,15 @@ const DebugThread* DebugState::GetThread(ThreadId id) const
 	return nullptr;
 }
 
-const std::vector<DebugFrame>& DebugState::GetFramesOfThread(ThreadId id, size_t requestedFrames)
+const std::vector<nebula::debugger::Frame>& nebula::debugger::DebugState::GetFrames(nebula::debugger::ThreadId id, size_t requestedFrames)
 {
 	auto it = m_frames.find(id);
 	if (it == m_frames.end())
 	{
-		it = m_frames.emplace(id, std::vector<DebugFrame>{}).first;
+		it = m_frames.emplace(id, std::vector<nebula::debugger::Frame>{}).first;
 	}
 
-	auto& thread = m_controller->GetInterpreter().GetThreads().At(id);
+	auto& thread = m_interpreter->GetThreads().At(id);
 	const size_t totalFrames = thread.size();
 
 	// A levels value of 0 means "all frames".
@@ -184,7 +170,6 @@ const std::vector<DebugFrame>& DebugState::GetFramesOfThread(ThreadId id, size_t
 	}
 
 	auto& cachedFrames = it->second;
-
 	if (cachedFrames.size() < requestedFrames)
 	{
 		const size_t alreadyCached = cachedFrames.size();
@@ -197,26 +182,34 @@ const std::vector<DebugFrame>& DebugState::GetFramesOfThread(ThreadId id, size_t
 			const size_t frameIndex = totalFrames - alreadyCached - i - 1;
 			auto& actualFrame = thread.at(frameIndex);
 			FrameId frameId = GetNextFrameReference();
-			cachedFrames.push_back(DebugFrame{
-				.id = frameId,
-				.functionNamespace = actualFrame->Namespace(),
-				.functionName = actualFrame->FunctionName(),
-				.line = GetLineNumber(*actualFrame),
-				.column = 0,
-				.originalFrame = actualFrame,
-				});
 
-			m_cachedFramesById.emplace(std::make_pair(frameId, &cachedFrames[cachedFrames.size() - 1]));
+			nebula::debugger::Frame frame;
+			frame.id = frameId;
+			frame.internalFrame = actualFrame;
+			frame.source = GetSource(actualFrame->GetFunction()->Namespace());
+			if (frame.source != nullptr &&
+				frame.source->debugSymbols != nullptr)
+			{
+				const std::string& fName = actualFrame->FunctionName();
+				frame.functionSymbols = frame.source->debugSymbols->GetFunction(fName);
+				if (frame.functionSymbols)
+				{
+					frame.currentLine = frame.functionSymbols->GetLineFromOpcode(actualFrame->NextInstructionIndex());
+				}
+			}
+
+			cachedFrames.push_back(std::move(frame));
+			m_framesById.emplace(std::make_pair(frameId, &cachedFrames[cachedFrames.size() - 1]));
 		}
 	}
 
 	return cachedFrames;
 }
 
-const DebugFrame* DebugState::GetFrameById(FrameId frameId) const
+const nebula::debugger::Frame* nebula::debugger::DebugState::GetFrameById(nebula::debugger::FrameId frameId) const
 {
-	auto it = m_cachedFramesById.find(frameId);
-	if (it == m_cachedFramesById.end())
+	auto it = m_framesById.find(frameId);
+	if (it == m_framesById.end())
 	{
 		return nullptr;
 	}
@@ -224,144 +217,135 @@ const DebugFrame* DebugState::GetFrameById(FrameId frameId) const
 	return it->second;
 }
 
-const std::vector<DebugScope>& DebugState::GetScopes(const DebugFrame* frame)
+const std::vector<nebula::debugger::GenericScope>& nebula::debugger::DebugState::GetScopes(const nebula::debugger::Frame* frame)
 {
 	assert(frame);
-	if (!frame)
-	{
-		return m_scopes[0];
-	}
-
-	assert(frame->originalFrame);
+	assert(frame->internalFrame);
 	auto it = m_scopes.find(frame->id);
 	if (it != m_scopes.end())
 	{
 		return it->second;
 	}
 
-	ExecutorDebugServer* debugServer = static_cast<ExecutorDebugServer*>(DebugServer::Instance());
-	assert(debugServer);
-	auto debugFunction = debugServer->GetFunction(frame->functionNamespace, frame->functionName);
-	assert(debugFunction);
+	auto insertIt = m_scopes.insert(it, std::make_pair(frame->id, std::vector<nebula::debugger::GenericScope>{}));
+	if (!frame->source || !frame->source->debugSymbols)
+	{
+		return it->second;
+	}
 
-	auto insertIt = m_scopes.insert(it, std::make_pair(frame->id, std::vector<DebugScope>{}));
+	const nebula::debugger::symbols::FunctionInformation* debugInformation = frame->functionSymbols;
+	if (!debugInformation)
+	{
+		return insertIt->second;
+	}
 
 	// Create all scopes
-	auto& frameMemory = frame->originalFrame->Memory();
+	auto& frameMemory = frame->internalFrame->Memory();
 	if (frameMemory.ParamCount() > 0)
 	{
-		DebugScope argScope =
+		nebula::debugger::GenericScope argScope =
 		{
-			.frame = frame,
+			.id = GetNextVariableReference(),
 			.name = "Arguments",
-			.reference = GetNextVariableReference(),
-			.type = ScopeType::Arguments,
+			.type = nebula::debugger::GenericScope::eType::Arguments,
+			.internalFrame = frame->internalFrame,
 		};
 
 		insertIt->second.push_back(argScope);
-
-		for (size_t i{ 0 }; i < frameMemory.ParamCount(); i++)
+		for (size_t i{ 0 }; i < frameMemory.ParamCount() && i < debugInformation->parameters.size(); i++)
 		{
-			auto& debugParameter = debugFunction->parameters[i];
-			DeclareVariable(argScope.reference, DebugVariable::Scope::Global, frameMemory.ParamAt(i), debugParameter);
+			auto& debugParameter = debugInformation->parameters[i];
+			DeclareVariable(argScope.id, frameMemory.ParamAt(i), frame->source->debugSymbols, debugParameter);
 		}
 	}
 
 	if (frameMemory.LocalCount() > 0)
 	{
-		DebugScope localScope =
+		nebula::debugger::GenericScope localScope =
 		{
-			.frame = frame,
+			.id = GetNextVariableReference(),
 			.name = "Locals",
-			.reference = GetNextVariableReference(),
-			.type = ScopeType::Locals,
+			.type = nebula::debugger::GenericScope::eType::Locals,
+			.internalFrame = frame->internalFrame,
 		};
 
 		insertIt->second.push_back(localScope);
 
-		for (size_t i{ 0 }; i < frameMemory.LocalCount(); i++)
+		for (size_t i{ 0 }; i < frameMemory.LocalCount() && i < debugInformation->locals.size(); i++)
 		{
-			auto& debugLocal = debugFunction->locals[i];
-			DeclareVariable(localScope.reference, DebugVariable::Scope::Local, frameMemory.LocalAt(i), debugLocal);
+			auto& debugLocal = debugInformation->locals[i];
+			DeclareVariable(localScope.id, frameMemory.LocalAt(i), frame->source->debugSymbols, debugLocal);
 		}
 	}
 
 	return insertIt->second;
 }
 
-std::vector<DebugVariable>& DebugState::GetVariables(size_t reference)
+std::vector<nebula::debugger::Value>& nebula::debugger::DebugState::GetValues(size_t reference)
 {
-	return m_variables[reference];
+	return m_values[reference];
 }
 
-void DebugState::PopulateChildVariables(DebugVariable& variable)
+void nebula::debugger::DebugState::PopulateChildValues(Value& variable)
 {
-	assert(variable.debugInformation);
-	assert(variable.originalVariable);
-	assert(variable.debugInformation->internalType == "bundle" 
-		|| variable.debugInformation->internalType == "array");
+	assert(variable.typeInformation);
+	assert(variable.internalValue);
+	assert(variable.debugSymbols);
 
-	ExecutorDebugServer* debugServer = static_cast<ExecutorDebugServer*>(DebugServer::Instance());
-	assert(debugServer);
+	assert(variable.typeInformation->kind == symbols::TypeInformation::eKind::Object ||
+		variable.typeInformation->kind == symbols::TypeInformation::eKind::Array);
 
-	bool isObjectInitialized = variable.originalVariable->ContainsGCObject();
+	bool isObjectInitialized = variable.internalValue->ContainsGCObject();
 	if (!isObjectInitialized)
 	{
 		assert(false);
 		return;
 	}
 
-	if (variable.debugInformation->internalType == "bundle")
+	if (variable.typeInformation->kind == symbols::TypeInformation::eKind::Object)
 	{
-		assert(variable.debugInformation);
-		assert(variable.debugInformation->sourceNamespace != "");
-		assert(variable.debugInformation->sourceType != "");
+		// If the object is defined in a different namespace we need to find
+		// the source that contains the type information for this object
+		// because the one we have does not expose all information
+		auto& internalObject = *(nebula::Bundle*)variable.internalValue->AsGCObject().get();
 
-		auto object = debugServer->GetBundle(variable.debugInformation->sourceNamespace, variable.debugInformation->sourceType);
-		assert(object);
+		const symbols::DebugSymbols* objectScriptDefinitionDebugSymbols = GetSource(variable.typeInformation->objectNamespace)->debugSymbols;
+		const symbols::TypeInformation* objectTypeInformation = objectScriptDefinitionDebugSymbols->GetType(variable.typeInformation->objectName);
 
-		if (!object)
+		for (size_t i = 0; i < objectTypeInformation->members.size(); i++)
 		{
-			// TODO HANDLE SYMBOLS NOT FOUND
-			assert(false);
-			return;
-		}
-
-		for (size_t i = 0; i < object->fields.size(); i++)
-		{
-			auto& internalObject = *(nebula::Bundle*)variable.originalVariable->AsGCObject().get();
 			auto& internalVariable = internalObject.GetVariable((int)i);
-			auto& dbgField = object->fields[i];
-
-			DeclareVariable(variable.reference,
-				DebugVariable::Scope::Member,
-				internalVariable,
-				dbgField);
+			DeclareVariable(variable.id, internalVariable, objectScriptDefinitionDebugSymbols, objectTypeInformation->members[i]);
 		}
-
 		return;
 	}
 
-	if (variable.debugInformation->internalType == "array")
+	if (variable.typeInformation->kind == symbols::TypeInformation::eKind::Array)
 	{
-		assert(variable.debugInformation);
-		assert(variable.debugInformation->sourceType != "");
+		assert(variable.internalValue->GetValueType() == DataStackVariantIndex::_TypeObject);
+		assert(!variable.internalValue->ContainsGCObject() || variable.internalValue->AsGCObject()->GetType() == ObjectType::Array);
 
-		auto& internalArray = *(nebula::VariantArray*)variable.originalVariable->AsGCObject().get();
-		for (size_t i{ 0 }; i < internalArray.Size(); i++)
+		// If the object is defined in a different namespace we need to find
+		// the source that contains the type information for this object
+		// because the one we have does not expose all information
+		auto& internalObject = *(nebula::VariantArray*)variable.internalValue->AsGCObject().get();
+
+		const symbols::DebugSymbols* arrayTypeDebugSymbols = variable.debugSymbols;
+		const symbols::TypeInformation* elementType = arrayTypeDebugSymbols->GetType(variable.typeInformation->arrayTypeId);
+
+		for (size_t i{ 0 }; i < internalObject.Size(); i++)
 		{
-			// TODO
-			//DeclareVariable(variable.reference,
-			//	DebugVariable::Scope::Member,
-			//	internalVariable,
-			//	nullptr);
+			auto& internalVariable = internalObject.At((int)i);
+			DeclareVariable(variable.id, internalVariable, arrayTypeDebugSymbols, symbols::ValueInformation
+				{
+					.name = "[" + std::to_string(i) + "]",
+					.typeId = elementType->Id,
+				});
 		}
-
-		return;
 	}
 }
 
-size_t DebugState::GetNextSourceReference()
+size_t nebula::debugger::DebugState::GetNextSourceReference()
 {
 	if (!IsRemoteDebugging())
 	{
@@ -372,84 +356,60 @@ size_t DebugState::GetNextSourceReference()
 	return ++m_sourceReference;
 }
 
-size_t DebugState::GetNextFrameReference()
+size_t nebula::debugger::DebugState::GetNextFrameReference()
 {
 	return ++m_frameReference;
 }
 
-size_t DebugState::GetNextVariableReference()
+size_t nebula::debugger::DebugState::GetNextVariableReference()
 {
 	return ++m_variableReference;
 }
 
-// Remote debugging is defined as debugging through the attach request
-bool DebugState::IsRemoteDebugging() const
+bool nebula::debugger::DebugState::IsRemoteDebugging() const
 {
 	return m_isRemoteDebugging;
 }
 
-void DebugState::SetRemoteDebugging(bool v)
+void nebula::debugger::DebugState::SetRemoteDebugging(bool v)
 {
 	m_isRemoteDebugging = v;
 }
 
-void DebugState::InvalidateState()
+void nebula::debugger::DebugState::InvalidateState()
 {
 	m_threads.clear();
 	m_frames.clear();
-	m_cachedFramesById.clear();
+	m_framesById.clear();
 	m_scopes.clear();
-	m_variables.clear();
+	m_values.clear();
 }
 
-void DebugState::DeclareVariable(VariableId reference, DebugVariable::Scope scope,
-	nebula::Value& variable,
-	const symbols::DebugVariable& debugVariable)
+void nebula::debugger::DebugState::DeclareVariable(nebula::debugger::VariableId reference,
+	nebula::Value& internalValue,
+	const nebula::debugger::symbols::DebugSymbols* debugSymbols,
+	const nebula::debugger::symbols::ValueInformation& valueInformation)
 {
-
-	DebugVariable wrapDebugVarriable
+	const nebula::debugger::symbols::TypeInformation* typeInformation = debugSymbols->GetType(valueInformation.typeId);
+	nebula::debugger::Value wrapValue
 	{
-		.reference = 0,
-		.scope = scope,
-		.debugInformation = &debugVariable,
-		.canChangeValueByDebugger = true,
-		.originalVariable = &variable,
+		.id = 0,
+		.debugSymbols = debugSymbols,
+		.typeInformation = typeInformation,
+		.valueInformation = valueInformation,
+		.internalValue = &internalValue,
 	};
 
-	if (debugVariable.internalType == "bundle" ||
-		debugVariable.internalType == "array")
+	if (typeInformation->kind == nebula::debugger::symbols::TypeInformation::eKind::Object ||
+		typeInformation->kind == nebula::debugger::symbols::TypeInformation::eKind::Array)
 	{
-		wrapDebugVarriable.canChangeValueByDebugger = false;
-		if (variable.ContainsGCObject())
+		if (wrapValue.internalValue->ContainsGCObject())
 		{
-			wrapDebugVarriable.reference = GetNextVariableReference();
+			// Only assign a reference if the object is initialized
+			wrapValue.id = GetNextVariableReference();
 		}
 	}
 
-	auto& currentVariables = m_variables[reference];
-	currentVariables.emplace_back(std::move(wrapDebugVarriable));
-}
-
-size_t DebugState::GetLineNumber(const nebula::Frame& frame)
-{
-	assert(DebugServer::Instance());
-
-	ExecutorDebugServer* debugServer = static_cast<ExecutorDebugServer*>(DebugServer::Instance());
-	assert(debugServer);
-
-	const symbols::DebugFunction* dbgInfo = debugServer->GetFunction(frame.Namespace(), frame.FunctionName());
-	if (!dbgInfo)
-	{
-		return 0;
-	}
-
-	auto nextOpcode = frame.NextInstructionIndex();
-	if (nextOpcode == 0)
-	{
-		// Function hasn't executed yet
-		return dbgInfo->GetLineFromOpcode(0);
-	}
-
-	// Return current opcode
-	return dbgInfo->GetLineFromOpcode(nextOpcode);
+	auto& currentVariables = m_values[reference];
+	currentVariables.emplace_back(std::move(wrapValue));
 }

@@ -1,12 +1,10 @@
-#include "ExecutorDebugServer.h"
-#include "DAPEvents.h"
-#include "DAPServer.h"
-#include "DebugFile.h"
-#include "DebugFunction.h"
 #include "DebugServer.h"
 #include "DefaultDebugServer.h"
+#include "ExecutorDebugServer.h"
+#include "DebuggerUtility.h"
+#include "DAPEvents.h"
+#include "DAPServer.h"
 #include "Interpreter.h"
-#include "Utility.h"
 
 #include <cassert>
 #include <filesystem>
@@ -29,14 +27,15 @@ using namespace nebula::debugger;
         destination = default;                                                                                         \
     }
 
-ExecutorDebugServer::ExecutorDebugServer(nebula::Interpreter* virtualMachine) : m_pInterpreter(virtualMachine)
+ExecutorDebugServer::ExecutorDebugServer(nebula::Interpreter* virtualMachine)
+	: m_pInterpreter(virtualMachine)
 {
 	// Should not exist self file but remove it to be sure
-	nebula::utility::CleanupDebuggerFiles(true);
+	utility::CleanupDebuggerFiles(true);
 
 	// TODO This shouldnt kill the vm
 	m_dapServer = std::make_unique<dap::DAPServer>(this, 0);
-	nebula::utility::WriteDebuggerFile(m_dapServer->GetServerPort());
+	utility::WriteDebuggerFile(m_dapServer->GetServerPort());
 }
 
 ExecutorDebugServer::~ExecutorDebugServer()
@@ -46,8 +45,7 @@ ExecutorDebugServer::~ExecutorDebugServer()
 
 void ExecutorDebugServer::UnregisterScript(const Script* script)
 {
-	assert(m_debugController);
-	if (m_debugController->IsDebugging())
+	if (m_debugController && m_debugController->IsDebugging())
 	{
 		assert(m_debugState);
 		auto removedSource = m_debugState->RemoveSource(script->Namespace());
@@ -63,18 +61,16 @@ void ExecutorDebugServer::UnregisterScript(const Script* script)
 	DefaultDebugServer::UnregisterScript(script);
 }
 
-DebugFilePtr ExecutorDebugServer::GetScript(const std::string& namespace_)
+symbols::DebugSymbols* ExecutorDebugServer::GetDebugSymbols(const std::string& namespace_)
 {
-	const symbols::DebugFile* scriptInformation = DefaultDebugServer::GetScript(namespace_);
+	symbols::DebugSymbols* scriptInformation = DefaultDebugServer::GetDebugSymbols(namespace_);
 	if (m_debugController && m_debugController->IsDebugging() && scriptInformation)
 	{
 		assert(m_debugState);
-
-		auto& ns = scriptInformation->namespace_;
-		if (!m_debugState->GetSource(ns))
+		if (!m_debugState->GetSource(scriptInformation->namespace_))
 		{
 			// Add source to cache and notify source added
-			const DebugSource* newSource = m_debugState->CreateSource(scriptInformation);
+			const Source* newSource = m_debugState->CreateSource(scriptInformation);
 			::dap::LoadedSourceEvent event;
 			event.reason = dap::LoadedSourceEvent::ReasonValues::New;
 			utility::assign(event.source, *newSource);
@@ -94,9 +90,14 @@ void ExecutorDebugServer::UnloadAll()
 	}
 }
 
-const symbols::DebugFunction* ExecutorDebugServer::GetFunctionAtLine(const std::string& namespace_, size_t line)
+bool ExecutorDebugServer::IsDebugging() const
 {
-	auto script = GetScript(namespace_);
+	return m_isDebugging;
+}
+
+const symbols::FunctionInformation* ExecutorDebugServer::GetFunctionAtLine(const std::string& namespace_, size_t line)
+{
+	auto script = GetDebugSymbols(namespace_);
 	if (script == nullptr)
 	{
 		return nullptr;
@@ -114,17 +115,12 @@ const symbols::DebugFunction* ExecutorDebugServer::GetFunctionAtLine(const std::
 	return nullptr;
 }
 
-bool ExecutorDebugServer::IsDebugging() const
-{
-	return m_isDebugging;
-}
-
 void ExecutorDebugServer::AttachDebugger()
 {
 	m_isDebugging = true;
 	// Allocate debugging facilities
-	m_debugController = std::make_unique<DebugController>(m_pInterpreter, this);
-	m_debugState = std::make_unique<DebugState>(m_debugController.get());
+	m_debugState = std::make_unique<DebugState>(m_pInterpreter);
+	m_debugController = std::make_unique<DebugController>(m_pInterpreter, this, m_debugState.get());
 
 	// Temporarly stops executor while configuration is happening
 	m_debugController->StartDebugger();
@@ -157,7 +153,7 @@ void ExecutorDebugServer::DetachDebugger(bool resumeInterpreter)
 		m_debugState.reset();
 	}
 
-	nebula::utility::CleanupDebuggerFiles(true);
+	utility::CleanupDebuggerFiles(true);
 
 	// Save memory, drop all cache
 	UnloadAll();
@@ -172,7 +168,7 @@ void ExecutorDebugServer::CacheAlreadyLoadedSources()
 		// Just in case it was not registered on creation
 		RegisterScript(script.get());
 
-		auto scriptSymbols = GetScript(ns);
+		auto scriptSymbols = GetDebugSymbols(ns);
 		if (scriptSymbols == nullptr)
 		{
 			// TODO Report if null! Debugging symbols could not be found
@@ -193,7 +189,7 @@ void ExecutorDebugServer::NotifyInterpreterStopped(ThreadId threadId, const dap:
 std::tuple<bool, size_t, std::string, size_t> ExecutorDebugServer::IsLineDebuggable(const std::string& namespace_,
 	size_t line)
 {
-	const symbols::DebugFunction* function = GetFunctionAtLine(namespace_, line);
+	const symbols::FunctionInformation* function = GetFunctionAtLine(namespace_, line);
 	if (!function)
 	{
 		return { false, 0, "", 0 };
@@ -283,14 +279,14 @@ bool ExecutorDebugServer::OnSourceRequest(const dap::SourceRequest& request, dap
 
 		if (source.sourceReference.has_value())
 		{
-			const DebugSource* src = m_debugState->GetSource(source.sourceReference.value());
+			const nebula::debugger::Source* src = m_debugState->GetSource(source.sourceReference.value());
 			pathToLoad = src->path;
 		}
 	}
 	else
 	{
 		// Use retrocompatibility value
-		const DebugSource* src = m_debugState->GetSource(request.sourceReference);
+		const nebula::debugger::Source* src = m_debugState->GetSource(request.sourceReference);
 		pathToLoad = src->path;
 	}
 
@@ -392,7 +388,15 @@ bool ExecutorDebugServer::OnSetFunctionBreakpointsRequest(const dap::SetFunction
 		std::string bpNamespace = funcName.substr(0, separatorIndex);
 		std::string bpFuncName = funcName.substr(separatorIndex + 2);
 
-		const symbols::DebugFunction* dbgInfo = GetFunction(bpNamespace, bpFuncName);
+		const nebula::debugger::Source* source = m_debugState->GetSource(bpNamespace);
+		if (source == nullptr || source->debugSymbols == nullptr)
+		{
+			bp.message = std::format("Could not find debug information for namespace '{}'", bpNamespace);
+			response.breakpoints.push_back(bp);
+			continue;
+		}
+
+		const symbols::FunctionInformation* dbgInfo = source->debugSymbols->GetFunction(bpFuncName);
 		if (dbgInfo == nullptr)
 		{
 			bp.message = std::format("Could not find function '{}' in namespace '{}'", bpFuncName, bpNamespace);
@@ -428,7 +432,7 @@ bool ExecutorDebugServer::OnSetBreakpointsRequest(const dap::SetBreakpointsReque
 		return true;
 	}
 
-	const DebugSource* source{ nullptr };
+	const nebula::debugger::Source* source{ nullptr };
 	if (request.source.sourceReference.has_value())
 	{
 		source = m_debugState->GetSource(request.source.sourceReference.value());
@@ -495,13 +499,13 @@ bool ExecutorDebugServer::OnConfigurationDoneRequest(const dap::ConfigurationDon
 {
 	if (m_stepOnEntry)
 	{
-		NotifyInterpreterStopped(NO_THREAD_ID, dap::StoppedEvent::ReasonValues::Entry);
+		NotifyInterpreterStopped(nebula::debugger::INVALID_THREAD_ID, dap::StoppedEvent::ReasonValues::Entry);
 	}
 
 	if (m_startRequestType == DebugStartRequestType::Attach || !m_stepOnEntry)
 	{
 		// Now that we setup everything we can resume execution
-		m_debugController->Continue(NO_THREAD_ID);
+		m_debugController->Continue(nebula::debugger::INVALID_THREAD_ID);
 	}
 
 	return true;
@@ -519,17 +523,17 @@ bool ExecutorDebugServer::OnSetVariableRequest(const dap::SetVariableRequest& re
 		return false;
 	}
 
-	auto& scopeVariables = m_debugState->GetVariables(request.variablesReference);
+	auto& scopeVariables = m_debugState->GetValues(request.variablesReference);
 	if (scopeVariables.empty())
 	{
 		response.message = "No variables found for given reference";
 		return false;
 	}
 
-	DebugVariable* varToChange{ nullptr };
+	nebula::debugger::Value* varToChange{ nullptr };
 	for (auto& var : scopeVariables)
 	{
-		if (var.debugInformation->name == request.name)
+		if (var.valueInformation.name == request.name)
 		{
 			varToChange = &var;
 			break;
@@ -543,13 +547,13 @@ bool ExecutorDebugServer::OnSetVariableRequest(const dap::SetVariableRequest& re
 		return false;
 	}
 
-	if (!varToChange->canChangeValueByDebugger)
+	if (!varToChange->CanDebuggerChangeValue())
 	{
 		response.SetFailed("Variable cannot have it's value changed by a debugger");
 		return false;
 	}
 
-	assert(varToChange->originalVariable);
+	assert(varToChange->internalValue);
 	std::string reason;
 	bool changedValue = varToChange->OverrideValue(request.value, reason);
 	if (!changedValue)
@@ -567,7 +571,7 @@ bool ExecutorDebugServer::OnSetVariableRequest(const dap::SetVariableRequest& re
 	}
 
 	response.value = varToChange->GetDisplayValue();
-	response.variablesReference = varToChange->reference;
+	response.variablesReference = varToChange->id;
 	return true;
 }
 
@@ -619,9 +623,9 @@ bool ExecutorDebugServer::OnStackTraceRequest(const dap::StackTraceRequest& requ
 	{
 		return false;
 	}
-	auto& frames = m_debugState->GetFramesOfThread(request.threadId, framesToCache);
 
-	response.totalFrames = thread->frameCount;
+	auto& frames = m_debugState->GetFrames(request.threadId, framesToCache);
+	response.totalFrames = thread->internalThread->size();
 	if (startFrame >= frames.size())
 	{
 		return true;
@@ -630,25 +634,25 @@ bool ExecutorDebugServer::OnStackTraceRequest(const dap::StackTraceRequest& requ
 	const size_t endFrame = levels == 0 ? frames.size() : std::min(startFrame + levels, frames.size());
 
 	response.stackFrames.reserve(endFrame - startFrame);
-	for (size_t i = startFrame; i < endFrame; ++i)
+	for (size_t i = endFrame; i-- > startFrame; )
 	{
-		const DebugFrame& frame = frames.at(frames.size() - 1 - i);
-		const DebugSource* source = m_debugState->GetSource(frame.functionNamespace);
+		const nebula::debugger::Frame& frame = frames.at(frames.size() - 1 - i);
+		const nebula::debugger::Source* source = frame.source;
 
 		::dap::StackFrame stackFrame;
 		stackFrame.id = frame.id;
-		stackFrame.line = DeNormalizeLineNumber(frame.line);
+		stackFrame.line = DeNormalizeLineNumber(frame.currentLine);
 		stackFrame.column = 0;
 
-		if (source != nullptr)
+		if (source != nullptr && frame.functionSymbols != nullptr)
 		{
-			stackFrame.name = frame.functionName;
+			stackFrame.name = frame.functionSymbols->name;
 			stackFrame.source = ::dap::Source{};
 			utility::assign(stackFrame.source.value(), *source);
 		}
 		else
 		{
-			stackFrame.name = std::format("{} - NO SOURCE", frame.functionName);
+			stackFrame.name = std::format("No debug information");
 		}
 
 		response.stackFrames.push_back(std::move(stackFrame));
@@ -665,16 +669,16 @@ bool ExecutorDebugServer::OnScopesRequest(const dap::ScopesRequest& request, dap
 		return false;
 	}
 
-	const DebugFrame* frame = m_debugState->GetFrameById(request.frameId);
+	const nebula::debugger::Frame* frame = m_debugState->GetFrameById(request.frameId);
 	if (frame == nullptr)
 	{
 		response.SetFailed(std::format("Could not find frame with id {}", request.frameId));
 		return false;
 	}
 
-	const std::vector<DebugScope>& scopes = m_debugState->GetScopes(frame);
+	const std::vector<nebula::debugger::GenericScope>& scopes = m_debugState->GetScopes(frame);
 	response.scopes.reserve(scopes.size());
-	for (const DebugScope& scope : scopes)
+	for (const nebula::debugger::GenericScope& scope : scopes)
 	{
 		::dap::Scope dapScope;
 		utility::assign(dapScope, scope);
@@ -696,15 +700,15 @@ bool ExecutorDebugServer::OnVariablesRequest(const dap::VariablesRequest& reques
 	}
 
 	const size_t reference = request.variablesReference;
-	auto& variables = m_debugState->GetVariables(reference);
+	auto& variables = m_debugState->GetValues(reference);
 	response.variables.reserve(variables.size());
 	for (auto& var : variables)
 	{
-		if (var.reference > 0)
+		if (var.id > 0)
 		{
 			// We need to allocate the child variables so the next request can fetch them
-			assert(var.debugInformation->internalType == "bundle" || var.debugInformation->internalType == "array");
-			m_debugState->PopulateChildVariables(var);
+			// todo assert(var.debugInformation->internalType == "bundle" || var.debugInformation->internalType == "array");
+			m_debugState->PopulateChildValues(var);
 		}
 
 		::dap::Variable variable;
@@ -809,7 +813,7 @@ void ExecutorDebugServer::OnInterpreterTerminated()
 	m_dapServer->SendEvent<dap::TerminatedEvent>();
 }
 
-void ExecutorDebugServer::OnBreakpointHit(DebugBreakpoint& breakpoint)
+void ExecutorDebugServer::OnBreakpointHit(Breakpoint& breakpoint)
 {
 	dap::StoppedEvent::Reason reason = dap::StoppedEvent::ReasonValues::Breakpoint;
 	if (breakpoint.isFunctionBreakpoint)
@@ -825,7 +829,7 @@ void ExecutorDebugServer::OnOutput(const std::string&)
 	assert(false);
 }
 
-void ExecutorDebugServer::OnInterpreterFatalError(const nebula::shared::ErrorCallStack* error)
+void ExecutorDebugServer::OnInterpreterFatalError(const nebula::shared::ExceptionCallstack* error)
 {
 	assert(error);
 
@@ -856,7 +860,7 @@ void ExecutorDebugServer::OnInterpreterFatalError(const nebula::shared::ErrorCal
 				outputEvent.source = ::dap::Source();
 				utility::assign(outputEvent.source.value(), *source);
 
-				if (event.line != nebula::debugger::symbols::DebugFunction::NoLineInfo)
+				if (event.line != nebula::debugger::symbols::FunctionInformation::NoLineInfo)
 				{
 					outputEvent.line = DeNormalizeLineNumber(event.line);
 					outputEvent.output += std::format(" Line {}", outputEvent.line.value());

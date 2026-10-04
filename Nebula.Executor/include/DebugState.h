@@ -3,41 +3,41 @@
 #ifndef _H_DEBUG_STATE_
 #define _H_DEBUG_STATE_
 
-#include "DebugFile.h"
+#include "Interpreter.h"
 
-#include "DebugController.h"
-#include "DebugTypes.h"
-#include "DAPTypes.h"
+#include "DebugSymbols.h"
+#include "DebuggerEntities.h"
 
 #include <vector>
 #include <optional>
-#include <tuple>
 
 namespace nebula::debugger
 {
 	class DebugState
 	{
 	public:
-		DebugState(DebugController* interpreter);
+		DebugState(Interpreter* interpreter);
 
-		const DebugSource* CreateSource(const symbols::DebugFile* information);
-		std::optional<DebugSource> RemoveSource(const std::string& namespace_);
+		const Source* CreateSource(const symbols::DebugSymbols* information);
+		std::optional<Source> RemoveSource(const std::string& namespace_);
 		void ClearSources();
 
-		const std::unordered_map<std::string, DebugSource>& GetSources() const;
-		const DebugSource* GetSource(const std::string& namespace_) const;
-		const DebugSource* GetSource(size_t reference) const;
-		const DebugSource* GetSourceByPath(const std::string& path) const;
+		const std::unordered_map<std::string, Source>& GetSources() const;
+		const Source* GetSource(const std::string& namespace_) const;
+		const Source* GetSource(size_t reference) const;
+		const Source* GetSourceByPath(const std::string& path) const;
 
-		const std::vector<DebugThread>& GetThreads();
-		const DebugThread* GetThread(ThreadId id) const;
+		const std::vector<Thread>& GetThreads();
+		const Thread* GetThread(ThreadId id) const;
 		// Fetches the frames of a specific thread in their reversed order
-		const std::vector<DebugFrame>& GetFramesOfThread(ThreadId id, size_t requestedFrames);
-		const DebugFrame* GetFrameById(FrameId frameId) const;
+		const std::vector<Frame>& GetFrames(ThreadId id, size_t requestedFrames);
+		const Frame* GetFrameById(FrameId frameId) const;
 
-		const std::vector<DebugScope>& GetScopes(const DebugFrame* frame);
-		std::vector<DebugVariable>& GetVariables(size_t refence);
-		void PopulateChildVariables(DebugVariable& variable);
+		const std::vector<GenericScope>& GetScopes(const Frame* frame);
+		const GlobalScope GetGlobalScope() const;
+
+		std::vector<Value>& GetValues(size_t refence);
+		void PopulateChildValues(Value& variable);
 
 		size_t GetNextSourceReference();
 		size_t GetNextFrameReference();
@@ -50,11 +50,10 @@ namespace nebula::debugger
 		void InvalidateState();
 
 	private:
-		void DeclareVariable(VariableId reference, DebugVariable::Scope scope, nebula::Value& variable, const symbols::DebugVariable& debugVariable);
+		void DeclareVariable(VariableId reference, nebula::Value& variable, const nebula::debugger::symbols::DebugSymbols* debugSymbols, const symbols::ValueInformation& debugVariable);
 
-		size_t GetLineNumber(const nebula::Frame& frame);
+		Interpreter* m_interpreter;
 
-		DebugController* m_controller;
 		size_t m_sourceReference = 0;
 		size_t m_frameReference = 0;
 		size_t m_variableReference = 0;
@@ -62,15 +61,15 @@ namespace nebula::debugger
 		bool m_isRemoteDebugging{ false };
 
 		// Data that should be reset between steps
+		std::vector<debugger::Thread> m_threads;
+		std::unordered_map<ThreadId, std::vector<debugger::Frame>> m_frames;
+		std::unordered_map<FrameId, debugger::Frame*> m_framesById;
 
-		std::unordered_map<FrameId, DebugFrame*> m_cachedFramesById;
+		std::unordered_map<FrameId, std::vector<GenericScope>> m_scopes;
+		GlobalScope m_globalScope;
+		std::unordered_map<VariableId, std::vector<Value>> m_values;
 
-		std::vector<DebugThread> m_threads;
-		std::unordered_map<ThreadId, std::vector<DebugFrame>> m_frames;
-		std::unordered_map<FrameId, std::vector<DebugScope>> m_scopes;
-		std::unordered_map<VariableId, std::vector<DebugVariable>> m_variables;
-
-		std::unordered_map<std::string /* namespace */, DebugSource> m_cachedSources;
+		std::unordered_map<std::string /* namespace */, Source> m_cachedSources;
 	};
 } // namespace nebula::debugger
 

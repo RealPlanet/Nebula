@@ -9,12 +9,11 @@
 #include <string_view>
 #include <charconv>
 
+#include "DebuggerEntities.h"
 #include "DAPTypes.h"
-#include "DAPEvents.h"
-#include "DebugTypes.h"
-#include "ErrorCallstack.h"
+#include "ExceptionCallstack.h"
 
-namespace nebula::utility
+namespace nebula::debugger::utility
 {
 	std::uint64_t GetProcessPID();
 	bool IsProcessActive(std::uint64_t pid);
@@ -24,11 +23,11 @@ namespace nebula::utility
 
 	std::string ReadAllText(const std::filesystem::path& path);
 
-	void assign(::dap::Source& source, const nebula::debugger::DebugSource& debugSource);
-	void assign(::dap::Scope& scope, const nebula::debugger::DebugScope& debugScope);
-	void assign(::dap::Variable& variable, const nebula::debugger::DebugVariable& debugVariable);
+	void assign(::dap::Source& source, const nebula::debugger::Source& debugSource);
+	void assign(::dap::Scope& scope, const nebula::debugger::GenericScope& debugScope);
+	void assign(::dap::Variable& variable, const nebula::debugger::Value& debugValue);
 
-	std::vector<nebula::debugger::DebugOutput> build_fatal_error_outputs(const nebula::shared::ErrorCallStack* callstack);
+	std::vector<nebula::debugger::InterpreterOutput> build_fatal_error_outputs(const nebula::shared::ExceptionCallstack* callstack);
 	std::string load_script_line_from_source(const std::string& path, size_t line);
 	std::string get_line_at(std::ifstream& stream, size_t line);
 

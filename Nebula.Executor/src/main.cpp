@@ -1,7 +1,9 @@
-#define _CRTDBG_MAP_ALLOC
 #define _PL_ARGPARSER_IMPL_
 
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
 #include <crtdbg.h>
+#define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
 
 #include <iostream>
 #include <filesystem>
@@ -16,13 +18,12 @@
 // Interpreter
 #include "Script.h"
 #include "Interpreter.h"
-#include "ErrorCallStack.h"
+#include "ExceptionCallStack.h"
 
 #include "ConsoleWriter.h"
 #include "DiagnosticReport.h"
 #include "DebuggerDefinitions.h"
 #include "DebugServer.h"
-#include "DefaultDebugServer.h"
 // Is marked as unused but is actually used for the declaration of some global functions
 #include "NebulaStandardLib.h"
 #include "ExecutorDebugServer.h"
@@ -111,6 +112,40 @@ static void BindNativeFunctions(Interpreter& vm, const std::filesystem::path& dl
 	}
 }
 
+static bool launchDebugger()
+{
+	// Get System directory, typically c:\windows\system32
+	std::wstring systemDir(MAX_PATH + 1, '\0');
+	UINT nChars = GetSystemDirectoryW(&systemDir[0], (UINT)systemDir.length());
+	if (nChars == 0) return false; // failed to get system directory
+	systemDir.resize(nChars);
+
+	// Get process ID and create the command line
+	DWORD pid = GetCurrentProcessId();
+	std::wostringstream s;
+	s << systemDir << L"\\vsjitdebugger.exe -p " << pid;
+	std::wstring cmdLine = s.str();
+
+	// Start debugger process
+	STARTUPINFOW si;
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+
+	PROCESS_INFORMATION pi;
+	ZeroMemory(&pi, sizeof(pi));
+
+	if (!CreateProcessW(NULL, &cmdLine[0], NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) return false;
+
+	// Close debugger process handles to eliminate resource leak
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
+
+	// Wait for the debugger to attach
+	while (!IsDebuggerPresent()) Sleep(100);
+
+	return true;
+}
+
 #else
 
 #error "Unsupported platform"
@@ -123,7 +158,7 @@ static int PrintVMLastError(nebula::Interpreter& vm)
 	{
 		writer::ConsoleWrite("VM was aborted, stack trace is:", writer::FG_RED);
 
-		shared::ErrorCallStack* callstack = vm.GetFatalErrorCallstack();
+		shared::ExceptionCallstack* callstack = vm.GetFatalExceptionCallstack();
 		writer::ConsoleWrite(callstack->GetAsText().data(), writer::FG_RED);
 
 		return (int)callstack->GetErrorCode();
@@ -171,44 +206,6 @@ static int LoadInputScripts(std::vector< std::shared_ptr<Script>>& loadedScripts
 	return !foundError;
 }
 
-// Source - https://stackoverflow.com/a/20387632
-// Posted by Ivan Krivyakov
-// Retrieved 2026-09-13, License - CC BY-SA 3.0
-
-bool launchDebugger()
-{
-	// Get System directory, typically c:\windows\system32
-	std::wstring systemDir(MAX_PATH + 1, '\0');
-	UINT nChars = GetSystemDirectoryW(&systemDir[0], (UINT)systemDir.length());
-	if (nChars == 0) return false; // failed to get system directory
-	systemDir.resize(nChars);
-
-	// Get process ID and create the command line
-	DWORD pid = GetCurrentProcessId();
-	std::wostringstream s;
-	s << systemDir << L"\\vsjitdebugger.exe -p " << pid;
-	std::wstring cmdLine = s.str();
-
-	// Start debugger process
-	STARTUPINFOW si;
-	ZeroMemory(&si, sizeof(si));
-	si.cb = sizeof(si);
-
-	PROCESS_INFORMATION pi;
-	ZeroMemory(&pi, sizeof(pi));
-
-	if (!CreateProcessW(NULL, &cmdLine[0], NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) return false;
-
-	// Close debugger process handles to eliminate resource leak
-	CloseHandle(pi.hThread);
-	CloseHandle(pi.hProcess);
-
-	// Wait for the debugger to attach
-	while (!IsDebuggerPresent()) Sleep(100);
-
-	return true;
-}
-
 static int ExecuteVM() {
 
 	int executionResult = -1;
@@ -244,7 +241,7 @@ static int ExecuteVM() {
 					writer::ConsoleWrite(errMessage, writer::Code::FG_RED);
 					allScriptsLoaded = false;
 
-					shared::ErrorCallStack* errCallstack = vm.GetFatalErrorCallstack();
+					shared::ExceptionCallstack* errCallstack = vm.GetFatalExceptionCallstack();
 					if (errCallstack != nullptr) {
 						writer::ConsoleWrite(errCallstack->GetAsText(), writer::Code::FG_RED);
 					}
@@ -285,7 +282,7 @@ static int ExecuteVM() {
 		// will free the server while its doing work
 		while (debugServer->IsDebugging())
 		{
-			std::this_thread::sleep_for(std::chrono::seconds{ 1 });
+			std::this_thread::sleep_for(std::chrono::milliseconds{ 500 });
 		}
 
 		nebula::debugger::DebugServer::RegisterDebugServer(nullptr);
@@ -299,8 +296,8 @@ int main(int argc, char* argv[]) {
 	// Enable memory anal
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
-
-#endif // DEBUG
+	//_CrtSetBreakAlloc(9979);
+#endif // DEBUG	
 
 	launchDebugger();
 

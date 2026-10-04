@@ -42,6 +42,14 @@
       <Platform Project="x64" />
     </Project>
   </Folder>
+  <Folder Name="/Dependencies/">
+    <Project Path="../mNET/mNET.Core/mNET.Core.vcxproj" Id="051c525b-f04e-49ac-a5a2-51d41d13630b" />
+    <Project Path="../Strata.DAP/Strata.DAP.vcxproj" Id="6da20fb5-11bd-49df-9cef-b638be1fdee0">
+      <BuildDependency Project="../mNET/mNET.Core/mNET.Core.vcxproj" />
+      <BuildDependency Project="../Strata.JSON/Strata.JSON.vcxproj" />
+    </Project>
+    <Project Path="../Strata.JSON/Strata.JSON.vcxproj" Id="4e11c12a-2c02-46ce-a9e5-0ce42bc88407" />
+  </Folder>
   <Folder Name="/Frontend/">
     <Project Path="Nebula.Compiler/Nebula.Compiler.csproj">
       <Platform Project="x64" />
@@ -58,14 +66,7 @@
       <BuildDependency Project="Nebula.Shared/Nebula.Shared.vcxproj" />
     </Project>
   </Folder>
-  <Folder Name="/Frontend/Dependencies/">
-    <Project Path="../mNET/mNET.Core/mNET.Core.vcxproj" Id="051c525b-f04e-49ac-a5a2-51d41d13630b" />
-    <Project Path="../Strata.DAP/Strata.DAP.vcxproj" Id="6da20fb5-11bd-49df-9cef-b638be1fdee0">
-      <BuildDependency Project="../mNET/mNET.Core/mNET.Core.vcxproj" />
-      <BuildDependency Project="../Strata.JSON/Strata.JSON.vcxproj" />
-    </Project>
-    <Project Path="../Strata.JSON/Strata.JSON.vcxproj" Id="4e11c12a-2c02-46ce-a9e5-0ce42bc88407" />
-  </Folder>
+  <Folder Name="/Frontend/Executor/" />
   <Folder Name="/Other/" />
   <Folder Name="/Other/Samples/">
     <File Path="Samples/0_HelloWorld.nebula" />
