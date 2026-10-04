@@ -4,7 +4,7 @@
 
 #include "LanguageTypes.h"
 #include "Value.h"
-#include "interfaces/IGCObject.h"
+#include "GCUser.h"
 
 namespace nebula
 {
@@ -31,7 +31,7 @@ namespace nebula
 
     // In memory rapresentation of a bundle
     class Bundle
-        : public IGCObject
+        : public GCUser
     {
     public:
         static std::shared_ptr<Bundle> FromDefinition(const BundleDefinition& definition);

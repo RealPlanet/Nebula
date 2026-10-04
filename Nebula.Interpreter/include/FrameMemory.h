@@ -8,7 +8,7 @@ namespace nebula
     {
     public:
         FrameMemory(size_t paramCount, size_t localCount);
-        FrameMemory(FrameMemory&& f) = delete;
+        FrameMemory(FrameMemory&& f) noexcept;
         FrameMemory(const FrameMemory&) = delete; // No copy allowed
         ~FrameMemory();
 

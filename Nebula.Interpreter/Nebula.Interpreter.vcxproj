@@ -30,7 +30,7 @@
     <ClInclude Include="include\InterpreterStandardOutput.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="include\Value.cpp" />
+    <ClCompile Include="src\Value.cpp" />
     <ClCompile Include="src\DefaultDebugServer.cpp" />
     <ClCompile Include="src\VariantArray.cpp" />
     <ClCompile Include="src\InterpreterMemory.cpp" />

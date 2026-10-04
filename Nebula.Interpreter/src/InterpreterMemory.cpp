@@ -57,7 +57,7 @@ static void GatherStackRoots(Interpreter* vm, std::vector<AllocableObjectPtr>& f
 }
 
 InterpreterMemory::InterpreterMemory(Interpreter* parent)
-    : m_pParent{ parent }, m_IGCObjects{}, m_iGCThreshold{ g_MinGCThreshold }
+    : m_pParent{ parent }, m_GCUsers{}, m_iGCThreshold{ g_MinGCThreshold }
 {
 }
 
@@ -68,7 +68,7 @@ TBundle InterpreterMemory::AllocBundle(const BundleDefinition& definition)
     // This shared pointer is passed around function frames
     TBundle ptr = Bundle::FromDefinition(definition);
     // Keep track of the allocated objectsw
-    m_IGCObjects.push_back(dynamic_pointer_cast<IGCObject>(ptr));
+    m_GCUsers.push_back(dynamic_pointer_cast<GCUser>(ptr));
 
     return ptr;
 }
@@ -78,7 +78,7 @@ TArray InterpreterMemory::AllocArray()
     // Attempt to free memory at each allocation
     Collect();
     TArray ptr = std::make_shared<VariantArray>();
-    m_IGCObjects.push_back(dynamic_pointer_cast<IGCObject>(ptr));
+    m_GCUsers.push_back(dynamic_pointer_cast<GCUser>(ptr));
 
     return ptr;
 }
@@ -86,7 +86,7 @@ TArray InterpreterMemory::AllocArray()
 void InterpreterMemory::Collect(bool force)
 {
     Interpreter* vm = m_pParent;
-    size_t startingSize = m_IGCObjects.size();
+    size_t startingSize = m_GCUsers.size();
 
     if (force || startingSize >= m_iGCThreshold)
     {
@@ -126,7 +126,7 @@ void InterpreterMemory::Collect(bool force)
 
         Sweep();
 
-        size_t reductionAmount = startingSize - m_IGCObjects.size();
+        size_t reductionAmount = startingSize - m_GCUsers.size();
         size_t quarter = startingSize / 4;
         if (reductionAmount < quarter)
         {
@@ -144,8 +144,8 @@ void InterpreterMemory::Collect(bool force)
 
 void InterpreterMemory::Sweep()
 {
-    auto it = m_IGCObjects.begin();
-    while (it != m_IGCObjects.end())
+    auto it = m_GCUsers.begin();
+    while (it != m_GCUsers.end())
     {
         AllocableObjectPtr obj = *it;
         // We didn't reach it, so release it
@@ -156,7 +156,7 @@ void InterpreterMemory::Sweep()
                 bundle->ClearFields();
             }
 
-            it = m_IGCObjects.erase(it);
+            it = m_GCUsers.erase(it);
         }
         else
         {

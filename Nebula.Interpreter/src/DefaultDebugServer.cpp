@@ -1,6 +1,5 @@
-#include "DebugFile.h"
-#include "DebugServer.h"
 #include "DefaultDebugServer.h"
+#include "DebugServer.h"
 #include "Script.h"
 
 #include <cassert>
@@ -12,7 +11,8 @@
 #include "json.h"
 #include "json_serialization.h"
 // Despite compiler message we NEED this header for the implementation of the JSerializer classes
-#include "SymbolsSerializer.h" // VCIC-Excluded 
+#include "DebugSymbolSerializers.h" // VCIC-Excluded
+#include "DebugSymbols.h"
 
 using namespace nebula;
 using namespace nebula::debugger;
@@ -46,7 +46,7 @@ void DefaultDebugServer::UnloadAll()
 	m_loadedScripts.clear();
 }
 
-DebugFilePtr DefaultDebugServer::LoadScriptFileFromDisk(const std::string& namespace_)
+symbols::DebugSymbols* DefaultDebugServer::LoadScriptFileFromDisk(const std::string& namespace_)
 {
 	auto it = m_loadedScripts.find(namespace_);
 	if (it == m_loadedScripts.end())
@@ -66,13 +66,13 @@ DebugFilePtr DefaultDebugServer::LoadScriptFileFromDisk(const std::string& names
 		return nullptr;
 	}
 
-	DebugFilePtr filePtr{ nullptr };
+	symbols::DebugSymbols* filePtr{ nullptr };
 	try
 	{
 		// Must be a json file
 		auto data = strata::json::json::from_file(path);
 		auto insertIt = m_debugSymbols.insert(
-			std::make_pair(namespace_, strata::json::serialization::Deserialize<symbols::DebugFile>(data)));
+			std::make_pair(namespace_, strata::json::serialization::Deserialize<symbols::DebugSymbols>(data)));
 
 		if (!insertIt.second)
 		{
@@ -105,7 +105,7 @@ DebugFilePtr DefaultDebugServer::LoadScriptFileFromDisk(const std::string& names
 	return filePtr;
 }
 
-DebugFilePtr DefaultDebugServer::GetScript(const std::string& namespace_)
+symbols::DebugSymbols* DefaultDebugServer::GetDebugSymbols(const std::string& namespace_)
 {
 	auto it = m_debugSymbols.find(namespace_);
 	if (it != m_debugSymbols.end())
@@ -114,38 +114,4 @@ DebugFilePtr DefaultDebugServer::GetScript(const std::string& namespace_)
 	}
 
 	return LoadScriptFileFromDisk(namespace_);
-}
-
-DebugBundleDefinitionPtr DefaultDebugServer::GetBundle(const std::string& namespace_, const std::string& type)
-{
-	auto scriptInfo = GetScript(namespace_);
-	if (!scriptInfo)
-	{
-		return nullptr;
-	}
-
-	auto it = scriptInfo->types.find(type);
-	if (it == scriptInfo->types.end())
-	{
-		return nullptr;
-	}
-
-	return &it->second;
-}
-
-DebugFunctionPtr DefaultDebugServer::GetFunction(const std::string& namespace_, const std::string& functionName)
-{
-	auto scriptInfo = GetScript(namespace_);
-	if (!scriptInfo)
-	{
-		return nullptr;
-	}
-
-	auto it = scriptInfo->functions.find(functionName);
-	if (it == scriptInfo->functions.end())
-	{
-		return nullptr;
-	}
-
-	return &it->second;
 }

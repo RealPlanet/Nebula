@@ -2,7 +2,6 @@
 
 #include "Frame.h"
 #include "InterpreterStandardOutput.h"
-#include "Utility.h"
 
 #include <cassert>
 #include <chrono>
@@ -10,7 +9,8 @@
 
 using namespace nebula;
 
-Interpreter::Interpreter() : m_LastErrorCallstack{ nullptr }, m_pStandardOutput{ nullptr }, m_Memory{ this }
+Interpreter::Interpreter()
+	: m_LastExceptionCallstack{ nullptr }, m_pStandardOutput{ nullptr }, m_Memory{ this }
 {
 	static_assert(std::atomic<State>::is_always_lock_free);
 
@@ -28,11 +28,14 @@ Interpreter::~Interpreter()
 	m_Scripts.clear();
 	m_NativeFunctions.clear();
 	ClearStandardOutput();
-	delete m_LastErrorCallstack;
+	delete m_initializersToRun;
+	delete m_LastExceptionCallstack;
 }
 
 Interpreter::State Interpreter::Init(bool startPaused /*= false*/)
 {
+	RunInitializers();
+
 	SetState(startPaused ? State::Paused : State::Running);
 	m_LastSchedulingUpdate = std::chrono::high_resolution_clock::now();
 	SwapExecutingThread();
@@ -88,7 +91,7 @@ void Interpreter::Reset()
 {
 	m_Threads.Clear();
 	m_CurrentThreadIndex = 0;
-	delete m_LastErrorCallstack;
+	delete m_LastExceptionCallstack;
 
 	m_NativeFunctions.clear();
 	m_Scripts.clear();
@@ -132,6 +135,13 @@ bool Interpreter::BindTypeFunction(const std::string& name, DataStackVariantInde
 
 bool Interpreter::AddScript(std::shared_ptr<Script> script)
 {
+	// Allow adding scripts only when the interpreter is not running or paused
+	// to properly handle static initializers
+	if (m_running.test() || m_paused.test())
+	{
+		return false;
+	}
+
 	if (script->Namespace() == "")
 	{
 		return false;
@@ -143,7 +153,6 @@ bool Interpreter::AddScript(std::shared_ptr<Script> script)
 	}
 
 	m_Scripts.insert(std::make_pair(script->Namespace(), script));
-
 	m_Memory.AddGlobals(script.get());
 
 	for (auto& kvp : script->Functions())
@@ -153,16 +162,14 @@ bool Interpreter::AddScript(std::shared_ptr<Script> script)
 			continue;
 		}
 
-		bool highPriority = kvp.second.HasAttribute(VMAttribute::Initializer);
-		if (highPriority)
+		if (kvp.second.HasAttribute(VMAttribute::Initializer))
 		{
-			Frame newFrame{ nullptr, &kvp.second, true };
-			Frame::Status initResult = newFrame.RunToCompletion(this);
-			if (initResult != Frame::Status::Finished)
+			if (m_initializersToRun == nullptr)
 			{
-				BuildErrorStack(&newFrame);
-				return false;
+				m_initializersToRun = new std::vector<Frame>();
 			}
+
+			m_initializersToRun->emplace_back((Frame*)nullptr, &kvp.second, true);
 		}
 		else
 		{
@@ -245,6 +252,29 @@ bool Interpreter::Step()
 	}
 
 	CheckAndSetExitState();
+	return true;
+}
+
+bool nebula::Interpreter::RunInitializers()
+{
+	if (!m_initializersToRun)
+	{
+		return true;
+	}
+
+	for (size_t i = 0; i < m_initializersToRun->size(); i++)
+	{
+		Frame& f = m_initializersToRun->at(i);
+		Frame::Status initResult = f.RunToCompletion(this);
+		if (initResult != Frame::Status::Finished)
+		{
+			BuildErrorStack(&f);
+			return false;
+		}
+	}
+
+	delete m_initializersToRun;
+	m_initializersToRun = nullptr;
 	return true;
 }
 
@@ -369,15 +399,15 @@ void Interpreter::BuildErrorStack(Frame* fatalFrame)
 	if (!fatalFrame)
 		return;
 
-	delete m_LastErrorCallstack;
-	m_LastErrorCallstack = new nebula::shared::ErrorCallStack();
+	delete m_LastExceptionCallstack;
+	m_LastExceptionCallstack = new nebula::shared::ExceptionCallstack();
 
 	Frame* current = fatalFrame;
 
 	InstructionErrorCode eCode = fatalFrame->GetLastError();
 	std::string readableError = InstructionErrorCodeToString(eCode);
 	std::string readableErrorFormatted = std::format("Fatal error ({}) : {}", (int)eCode, readableError);
-	m_LastErrorCallstack->SetExplanation(eCode, readableErrorFormatted);
+	m_LastExceptionCallstack->SetExplanation(eCode, readableErrorFormatted);
 
 	// size_t spaceCount = 0;
 	while (current)
@@ -390,8 +420,8 @@ void Interpreter::BuildErrorStack(Frame* fatalFrame)
 
 		// callstackLine.insert(0, spaceCount++, ' ');
 		const std::string& sourcePath = current->GetFunction()->GetScript()->GetSourcePath();
-		m_LastErrorCallstack->Append(
-			nebula::shared::ErrorCallStackLine{ sourcePath, ns, funcName, labelIndex, callstackLine });
+		m_LastExceptionCallstack->Append(
+			nebula::shared::ExceptionCallstackLine{ sourcePath, ns, funcName, labelIndex, callstackLine });
 		current = current->Parent();
 	}
 }

@@ -203,6 +203,13 @@ bool LiteralScriptParser::ParseType(DataStackVariantIndex& result, char stopAt)
 		return false;
 	}
 
+	// TEMP Ignore type metadata
+	size_t separatorIndex = strType.find('/');
+	if (separatorIndex >= 0)
+	{
+		strType = strType.substr(0, separatorIndex);
+	}
+
 	result = StringToStackValue(strType);
 	if (result == _UnknownType)
 	{
@@ -548,27 +555,3 @@ bool LiteralScriptParser::ReadLiteralUntil(std::string& out, char c, bool stopAt
 
 	return out.size() > 0;
 }
-
-bool LiteralScriptParser::ReadInt(TInt32& i)
-{
-	SkipWhitespace();
-	if (!std::isdigit(Current())) {
-		ReportExpectedNumberAt(m_CurrentDataIndex);
-		return false;
-	}
-
-	std::string strNum;
-	while (std::isdigit(Current())) {
-		strNum = Current();
-		m_CurrentDataIndex++;
-	}
-
-	i = std::stoi(strNum);
-	return true;
-}
-
-bool LiteralScriptParser::ReadFloat(TFloat&)
-{
-	return false;
-}
-

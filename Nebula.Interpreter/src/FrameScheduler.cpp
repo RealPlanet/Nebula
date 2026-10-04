@@ -1,15 +1,15 @@
 #include <cassert>
 
-#include "Utility.h"
+#include "TimeUtility.h"
 #include "FrameScheduler.h"
-#include "interfaces/IGCObject.h"
+#include "GCUser.h"
 #include "Frame.h"
 
 using namespace nebula;
 
 static std::hash<std::string> gStringHasher;
 
-static void AddOrUpdateWaitingHashSet(std::map<IGCObject*, std::unordered_set<size_t>>& map, IGCObject* notifier, size_t hash)
+static void AddOrUpdateWaitingHashSet(std::map<GCUser*, std::unordered_set<size_t>>& map, GCUser* notifier, size_t hash)
 {
 	auto it = map.find(notifier);
 	if (it == map.end())
@@ -40,14 +40,14 @@ void FrameScheduler::Kill()
 	m_WaitingEndonHashes.clear();
 }
 
-void FrameScheduler::WaitForNotification(IGCObject* notifier, const std::string& notification)
+void FrameScheduler::WaitForNotification(GCUser* notifier, const std::string& notification)
 {
 	size_t hash = gStringHasher(notification);
 	AddOrUpdateWaitingHashSet(m_WaitingHashes, notifier, hash);
 	notifier->Subscribe(this);
 }
 
-void FrameScheduler::EndOnNotification(IGCObject* notifier, const std::string& notification)
+void FrameScheduler::EndOnNotification(GCUser* notifier, const std::string& notification)
 {
 	size_t hash = gStringHasher(notification);
 
@@ -71,7 +71,7 @@ bool FrameScheduler::IsSleeping()
 	return false;
 }
 
-bool FrameScheduler::OnNotification(IGCObject* sender, const size_t notification)
+bool FrameScheduler::OnNotification(GCUser* sender, const size_t notification)
 {
 	// We are either waiting to unlock sleep or kill the frame, cant have both (doesn't make sense so wait always wins)
 	bool foundListener = FindAndRemoveWaitingHash(sender, notification);
@@ -81,7 +81,7 @@ bool FrameScheduler::OnNotification(IGCObject* sender, const size_t notification
 	return !foundListener && !foundEndon;
 }
 
-bool FrameScheduler::FindAndRemoveWaitingHash(IGCObject* sender, const size_t notification)
+bool FrameScheduler::FindAndRemoveWaitingHash(GCUser* sender, const size_t notification)
 {
 	auto it = m_WaitingHashes.find(sender);
 	if (it == m_WaitingHashes.end())
@@ -99,7 +99,7 @@ bool FrameScheduler::FindAndRemoveWaitingHash(IGCObject* sender, const size_t no
 	return false;
 }
 
-bool FrameScheduler::FindAndRemoveEndonHash(IGCObject* sender, const size_t notification)
+bool FrameScheduler::FindAndRemoveEndonHash(GCUser* sender, const size_t notification)
 {
 	auto it = m_WaitingEndonHashes.find(sender);
 	if (it == m_WaitingEndonHashes.end())

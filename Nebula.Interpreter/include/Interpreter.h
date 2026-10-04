@@ -10,7 +10,7 @@
 #include "Frame.h"
 #include "Script.h"
 #include "Instruction.h"
-#include "ErrorCallStack.h"
+#include "ExceptionCallStack.h"
 #include "InterpreterMemory.h"
 
 namespace nebula
@@ -75,10 +75,12 @@ namespace nebula
 		const CallStack& GetThread(size_t index) const { return m_Threads.At(index); }
 
 		IStreamWrapper* StandardOutput() { return m_pStandardOutput; }
-		shared::ErrorCallStack* GetFatalErrorCallstack() { return m_LastErrorCallstack; }
+		shared::ExceptionCallstack* GetFatalExceptionCallstack() { return m_LastExceptionCallstack; }
 
 		const ScriptMap& GetLoadedScripts() const { return m_Scripts; }
 	private:
+		bool RunInitializers();
+
 		bool CheckAndSetExitState();
 
 		void SetState(State);
@@ -102,6 +104,7 @@ namespace nebula
 		std::map<const std::string, NativeFunctionDelegate> m_NativeFunctions{};
 		std::map<const DataStackVariantIndex, std::map < const std::string, NativeFunctionDelegate>> m_TypeNativeFunctions;
 
+		std::vector<Frame>* m_initializersToRun{ nullptr };
 		ScriptMap m_Scripts{};
 		ThreadMap m_Threads{};
 		size_t m_CurrentThreadIndex{ 0 };
@@ -110,7 +113,7 @@ namespace nebula
 		bool m_StartedOnce{ false };
 		std::atomic_flag m_running = ATOMIC_FLAG_INIT;
 		std::atomic_flag m_paused = ATOMIC_FLAG_INIT;
-		shared::ErrorCallStack* m_LastErrorCallstack;
+		shared::ExceptionCallstack* m_LastExceptionCallstack;
 
 		int m_MaxExecutionTime = 10;// Milliseconds
 		std::chrono::steady_clock::time_point m_LastSchedulingUpdate{};

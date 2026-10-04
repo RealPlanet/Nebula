@@ -5,7 +5,7 @@
 using namespace nebula;
 
 VariantArray::VariantArray()
-    : IGCObject(ObjectType::Array)
+    : GCUser(ObjectType::Array)
 {
 }
 

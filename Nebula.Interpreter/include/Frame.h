@@ -31,7 +31,7 @@ namespace nebula
 		// Async functions receive the parent ptr to fetch the parameters data
 		// but musn't store the parent ptr, otherwise they'll try to return values to it
 		Frame(Frame* parent, const Function* f, bool discardParent);
-		Frame(Frame&& f) = delete;
+		Frame(Frame&& f) noexcept;
 		Frame(const Frame& f) = delete;
 		~Frame() = default;
 
@@ -53,8 +53,8 @@ namespace nebula
 	public:
 		void SetScheduledSleep(const size_t& amount);
 		void SetNextInstruction(size_t index);
-		void WaitForNotification(IGCObject*, const std::string& notification);
-		void EndOnNotification(IGCObject*, const std::string& hashNotification);
+		void WaitForNotification(GCUser*, const std::string& notification);
+		void EndOnNotification(GCUser*, const std::string& hashNotification);
 
 	private:
 		void Kill();
