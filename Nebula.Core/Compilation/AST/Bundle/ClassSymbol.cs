@@ -5,14 +5,14 @@ using System.Collections.Immutable;
 
 namespace Nebula.Core.Compilation.AST.Bundle
 {
-    public sealed class BundleSymbol
+    public sealed class ClassSymbol
         : TypeSymbol
     {
         public override SymbolType SymbolType => SymbolType.Object;
         public BundleDeclaration Declaration { get; }
         public ImmutableArray<AbstractBundleField> Fields { get; }
 
-        public BundleSymbol(string name, BundleDeclaration declaration, ImmutableArray<AbstractBundleField> fields)
+        public ClassSymbol(string name, BundleDeclaration declaration, ImmutableArray<AbstractBundleField> fields)
             : base(string.Empty, name)
         {
             Declaration = declaration;

@@ -126,7 +126,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
 
             if (_currentUnit.Bundles.Any(a => a.Name.Text == bundleName.Text))
             {
-                _parseReport.ReportBundleAlreadyDefined(bundleName);
+                _parseReport.ReportClassAlreadyDefined(bundleName);
                 return false;
             }
 

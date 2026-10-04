@@ -14,6 +14,7 @@ namespace Nebula.Core.Utility
             return value != null && value.Value != null;
         }
 
+        // TODO Is this still needed ?
         public static void GetTypeInformation(this TypeSymbol type, out string typeNamespace, out string typeName)
         {
             if (type is ObjectTypeSymbol objSymbol)

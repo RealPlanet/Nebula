@@ -27,7 +27,7 @@ namespace Nebula.Interop.Structures
                             IntPtr ptr = NativeMethods.FrameVariable_GetStringValue(_borrowedHandle);
                             return Marshal.PtrToStringAnsi(ptr) ?? string.Empty;
                         }
-                    case TypeIdentifier.Bundle:
+                    case TypeIdentifier.Object:
                         {
                             IntPtr ptr = NativeMethods.FrameVariable_GetBundleValue(_borrowedHandle);
                             Bundle bundle = new(ptr);

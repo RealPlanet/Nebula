@@ -17,7 +17,7 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression.Bundles
         }
 
         public override AbstractNodeType Type => AbstractNodeType.ObjectFieldAccessExpression;
-        public override TypeSymbol ResultType => Field.FieldType;
+        public override TypeSymbol ResultType => Field.Type;
         public AbstractBundleField Field { get; }
         public FieldMode Mode { get; set; } = FieldMode.Read;
 

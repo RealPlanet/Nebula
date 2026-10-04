@@ -10,8 +10,8 @@ namespace Nebula.Core.Compilation.AST.Symbols
         public TypeSymbol Type { get; }
         public AbstractConstant? Constant { get; private set; }
 
-        public VariableSymbol(string @namespace, string name, bool isReadOnly, TypeSymbol variableType, AbstractConstant? constant)
-            : base(@namespace, name)
+        public VariableSymbol(string name, bool isReadOnly, TypeSymbol variableType, AbstractConstant? constant)
+            : base(name)
         {
             IsReadOnly = isReadOnly;
             Type = variableType;

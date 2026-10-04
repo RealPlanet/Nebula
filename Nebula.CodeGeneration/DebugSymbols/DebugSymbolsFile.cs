@@ -3,24 +3,26 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Nebula.Commons.Debugger
+namespace Nebula.CodeGeneration.DebugSymbols
 {
     public sealed class DebugSymbolsFile
     {
-        [JsonIgnore]
+        [JsonInclude]
         public string SourceFilePath { get; set; } = string.Empty;
         [JsonInclude]
         public string MD5Hash { get; init; } = string.Empty;
         [JsonInclude]
         public string Namespace { get; init; } = string.Empty;
 
+        public List<VariableDebugSymbol> Globals { get; init; } = [];
+
         /// <summary> Types defined in this script </summary>
         [JsonInclude]
-        public Dictionary<string, DebugTypeSymbols> Types { get; init; } = [];
+        public Dictionary<int, BaseTypeDebugSymbol> Types { get; init; } = [];
 
         /// <summary> The functions present in this script </summary>
         [JsonInclude]
-        public Dictionary<string, DebugFunctionSymbols> Functions { get; init; } = [];
+        public Dictionary<string, FunctionSymbol> Functions { get; init; } = [];
 
         /// <summary> The native functions referenced by this script </summary>
         [JsonInclude]

@@ -1,7 +1,6 @@
-﻿using Nebula.CodeGeneration.Interfaces;
-using Nebula.Commons.Syntax;
+﻿using Nebula.Commons.Syntax;
 
-namespace Nebula.CodeGeneration
+namespace Nebula.CodeGeneration.Interfaces
 {
     public interface IEmitterObject
         : ISupportsComments

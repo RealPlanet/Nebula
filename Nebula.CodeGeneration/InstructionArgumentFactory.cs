@@ -93,7 +93,7 @@ namespace Nebula.CodeGeneration
 
         private static string RequireGlobalVariableIndex(Instruction input)
         {
-            if (input.Operand is VariableDefinition varDef)
+            if (input.Operand is GlobalVariableDefinition varDef)
             {
                 if (string.IsNullOrEmpty(varDef.Namespace))
                 {
