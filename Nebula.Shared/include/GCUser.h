@@ -34,7 +34,7 @@ namespace nebula
 
         void Notify(const std::string& notification);
 
-        virtual InstructionErrorCode CallVirtual(const std::string_view& name, nebula::Interpreter* vm, Frame* context);
+        virtual InstructionErrorCode CallVirtual(const std::string_view& name, std::vector<DataStackVariant>& arguments, nebula::Interpreter* vm, Frame* context);
 
     protected:
         void Unsubscribe(std::unordered_set<NotificationListener*>::iterator&);

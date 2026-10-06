@@ -59,7 +59,7 @@ void GCUser::Notify(const std::string& notification)
 	}
 }
 
-InstructionErrorCode nebula::GCUser::CallVirtual(const std::string_view&, nebula::Interpreter*, Frame*)
+InstructionErrorCode nebula::GCUser::CallVirtual(const std::string_view&, std::vector<DataStackVariant>&, nebula::Interpreter*, Frame*)
 {
 	return InstructionErrorCode::Fatal;
 }
