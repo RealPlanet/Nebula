@@ -43,5 +43,31 @@ namespace Nebula.Core.Compilation
             NativeFunction.Clear();
             Bundles.Clear();
         }
+
+        public IEnumerator<Node> GetEnumerator()
+        {
+            yield return NamespaceStatement;
+            foreach (var n in Imports)
+                yield return n;
+
+            foreach (var n in Functions)
+                yield return n;
+
+            foreach (var n in NativeFunctions)
+                yield return n;
+
+            foreach (var n in Bundles)
+                yield return n;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        public override string ToString()
+        {
+            return $"Compilation unit: {NamespaceStatement.Namespace.Text}";
+        }
     }
 }

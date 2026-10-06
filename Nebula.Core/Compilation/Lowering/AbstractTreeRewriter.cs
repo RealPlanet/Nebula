@@ -54,7 +54,7 @@ namespace Nebula.Core.Compilation.Lowering
             AbstractNodeType.ConversionExpression => RewriteConversionExpression((AbstractConversionExpression)node),
             AbstractNodeType.ObjectCallExpression => RewriteObjectCallExpression((AbstractObjectCallExpression)node),
             AbstractNodeType.ObjectFieldAccessExpression => RewriteObjectFieldAccessExpression((AbstractObjectFieldAccessExpression)node),
-            AbstractNodeType.ArrayAccessExpression => RewriteArrayAccessExpression((AbstractArrayAccessExpression)node),
+            AbstractNodeType.IndexExpression => RewriteIndexExpression((AbstractIndexExpression)node),
             AbstractNodeType.IsDefinedExpression => RewriteIsDefinedExpression((AbstractIsDefinedExpression)node),
             _ => throw new Exception($"Unexpected node: {node.Type}"),
         };
@@ -95,7 +95,7 @@ namespace Nebula.Core.Compilation.Lowering
                 return node;
             }
 
-            return new AbstractObjectCallExpression(node.OriginalNode, node.Variable, node.Function, builder.MoveToImmutable());
+            return new AbstractObjectCallExpression(node.OriginalNode, node.Target, node.Function, builder.MoveToImmutable());
 
         }
 
@@ -104,15 +104,15 @@ namespace Nebula.Core.Compilation.Lowering
             return node;
         }
 
-        protected virtual AbstractArrayAccessExpression RewriteArrayAccessExpression(AbstractArrayAccessExpression node)
+        protected virtual AbstractIndexExpression RewriteIndexExpression(AbstractIndexExpression node)
         {
-            var indexExpression = RewriteExpression(node.IndexExpression);
-            if (indexExpression == node.IndexExpression)
+            var indexExpression = RewriteExpression(node.Target);
+            if (indexExpression == node.Target)
             {
                 return node;
             }
 
-            return new AbstractArrayAccessExpression(node.OriginalNode, node.Variable, indexExpression);
+            return new AbstractIndexExpression(node.OriginalNode, node.Target, indexExpression);
         }
 
         protected virtual AbstractIsDefinedExpression RewriteIsDefinedExpression(AbstractIsDefinedExpression node)
@@ -379,7 +379,7 @@ namespace Nebula.Core.Compilation.Lowering
                 return node;
             }
 
-            return new AbstractArrayAssignmentExpression(node.OriginalNode, node.ArrayVariable, indexExpression, expression);
+            return new AbstractArrayAssignmentExpression(node.OriginalNode, node.Target, indexExpression, expression);
         }
 
         protected virtual AbstractExpression RewriteCompoundAssignmentExpression(AbstractCompoundAssignmentExpression node)

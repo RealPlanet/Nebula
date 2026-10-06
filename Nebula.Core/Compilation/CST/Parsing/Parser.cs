@@ -16,7 +16,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 
@@ -655,7 +654,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
             else
             {
                 // This is not a math expression so parse it accordingly
-                left = ParsePrimaryExpression();
+                left = ParsePostfixExpression();
             }
 
             while (true)
@@ -672,6 +671,47 @@ namespace Nebula.Core.Compilation.CST.Parsing
             }
 
             return left;
+        }
+
+        private Expression ParsePostfixExpression()
+        {
+            Expression expr = ParsePrimaryExpression();
+
+            while (true)
+            {
+                switch (Current.Type)
+                {
+                    case NodeType.DotToken:
+                        {
+                            Token dot = MatchToken(NodeType.DotToken);
+                            Token member = MatchToken(NodeType.IdentifierToken);
+
+                            if (Current.Type == NodeType.OpenParenthesisToken)
+                            {
+                                Token open = MatchToken(NodeType.OpenParenthesisToken);
+                                TokenSeparatedList<Expression> args = ParseArguments();
+                                Token close = MatchToken(NodeType.ClosedParenthesisToken);
+                                expr = new ObjectCallExpression(_currentSource, expr, dot, member, open, args, close);
+                            }
+                            else
+                            {
+                                expr = new ObjectFieldAccess(_currentSource, expr, dot, member);
+                            }
+
+                            break;
+                        }
+                    case NodeType.OpenSquareBracketToken:
+                        {
+                            Token openSquare = MatchToken(NodeType.OpenSquareBracketToken);
+                            Expression index = ParseExpression();
+                            Token closeSquare = MatchToken(NodeType.ClosedSquareBracketToken);
+                            expr = new IndexExpression(_currentSource, expr, openSquare, index, closeSquare);
+                            break;
+                        }
+                    default:
+                        return expr;
+                }
+            }
         }
 
         private Expression ParsePrimaryExpression()
@@ -779,41 +819,10 @@ namespace Nebula.Core.Compilation.CST.Parsing
                 return functionCall;
             }
 
-            Expression? objectFunctionCall = ParseObjectFunctionCall();
-            if (objectFunctionCall is not null)
-            {
-                return objectFunctionCall;
-            }
-
             return ParseNameExpression();
         }
 
-        private Expression? ParseObjectFunctionCall()
-        {
-            if (Current.Type == NodeType.IdentifierToken &&
-                Peek(1).Type == NodeType.DotToken &&
-                Peek(2).Type == NodeType.IdentifierToken &&
-                Peek(3).Type == NodeType.OpenParenthesisToken)
-            {
-                Token name = MatchToken(NodeType.IdentifierToken);
-                Token accessToken = MatchToken(NodeType.DotToken);
-                Token fieldName = MatchToken(NodeType.IdentifierToken);
-                Token openParenthesis = MatchToken(NodeType.OpenParenthesisToken);
-                TokenSeparatedList<Expression> args = ParseArguments();
-                Token closeParenthesis = MatchToken(NodeType.ClosedParenthesisToken);
-                return new ObjectCallExpression(_currentSource,
-                                                name,
-                                                accessToken,
-                                                fieldName,
-                                                openParenthesis,
-                                                args,
-                                                closeParenthesis);
-            }
-
-            return null;
-        }
-
-        private Expression ParseNameExpression()
+        private NameExpression ParseNameExpression()
         {
             Token? nsToken = null;
             Token? dcToken = null;
@@ -825,30 +834,7 @@ namespace Nebula.Core.Compilation.CST.Parsing
                 name = MatchToken(NodeType.IdentifierToken);
             }
 
-            //if (Current.Type == NodeType.DotToken)
-            //{
-            //    Token accessToken = MatchToken(NodeType.DotToken);
-            //    Token fieldName = MatchToken(NodeType.IdentifierToken);
-            //    return new ObjectFieldAccess(_currentSource, nsToken, dcToken, name, accessToken, fieldName);
-            //}
-
-            if (Current.Type == NodeType.OpenSquareBracketToken)
-            {
-                Token openSquare = MatchToken(NodeType.OpenSquareBracketToken);
-                Expression accessExpression = ParseExpression();
-                Token closeSquare = MatchToken(NodeType.ClosedSquareBracketToken);
-                return new ArrayAccessExpression(_currentSource, nsToken, dcToken, name, openSquare, accessExpression, closeSquare);
-            }
-
-            var nameExpression = new NameExpression(_currentSource, nsToken, dcToken, name);
-            //if (Current.Type == NodeType.EqualsToken)
-            //{
-            //    var equalsToken = MatchToken(NodeType.EqualsToken);
-            //    var initializerExpression = ParseExpression();
-            //    return new AssignmentExpression(_currentSource, nameExpression, equalsToken, initializerExpression);
-            //}
-
-            return nameExpression;
+            return new NameExpression(_currentSource, nsToken, dcToken, name);
         }
 
         private Expression? ParseFunctionCall()

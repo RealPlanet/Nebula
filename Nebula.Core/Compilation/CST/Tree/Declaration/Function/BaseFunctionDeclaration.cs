@@ -35,7 +35,23 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
             ClosedParenthesis = closedParenthesis;
         }
 
+        public TextLocation SignatureLocation
+        {
+            get
+            {
+                TextSpan first = GetSignatureNodes().First().Span;
+                TextSpan last = GetSignatureNodes().Last().Span;
+                var span = TextSpan.FromBounds(first.Start, last.End);
+                return new TextLocation(SourceCode, span);
+            }
+        }
+
         public override IEnumerable<Node> GetChildren()
+        {
+            return GetSignatureNodes();
+        }
+
+        public virtual IEnumerable<Node> GetSignatureNodes()
         {
             yield return Keyword;
             foreach (Node child in ReturnType.GetChildren())

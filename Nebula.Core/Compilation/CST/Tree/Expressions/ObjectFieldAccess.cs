@@ -1,5 +1,6 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
+using Nebula.Core.Compilation.CST.Tree.Base;
 using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.CST.Tree.Expressions
@@ -8,24 +9,29 @@ namespace Nebula.Core.Compilation.CST.Tree.Expressions
     /// Access a field in a bundle to read/write it's value
     /// </summary>
     public sealed class ObjectFieldAccess
-        : NameExpression
+        : Expression
     {
         public override NodeType Type => NodeType.ObjectFieldAccessExpression;
-        public Token AccessToken { get; }
-        public Token FieldName { get; }
 
-        public ObjectFieldAccess(SourceCode sourceCode, Token? @namespace, Token? separator, Token identifier, Token accessToken, Token fieldName)
-            : base(sourceCode, @namespace, separator, identifier)
+        public Expression Target { get; }
+        public Token Dot { get; }
+        public Token Member { get; }
+
+        public ObjectFieldAccess(SourceCode source, Expression target, Token dot, Token member)
+            : base(source)
         {
-            AccessToken = accessToken;
-            FieldName = fieldName;
+            Target = target;
+            Dot = dot;
+            Member = member;
         }
 
         public override IEnumerable<Node> GetChildren()
         {
-            yield return Identifier;
-            yield return AccessToken;
-            yield return FieldName;
+            foreach(var c in Target.GetChildren())
+                yield return c;
+
+            yield return Dot;
+            yield return Member;
         }
     }
 }

@@ -7,33 +7,38 @@ using System.Collections.Generic;
 namespace Nebula.Core.Compilation.CST.Tree.Expressions
 {
     public class ObjectCallExpression
-        : CallExpression
+        : GenericCallExpression
     {
         public override NodeType Type => NodeType.ObjectCallExpression;
-        public Token ObjectIdentifier { get; }
-        public Token DotToken { get; }
+        public Expression Target { get; }
+        public Token Dot { get; }
 
         public ObjectCallExpression(SourceCode sourceCode,
-                                    Token objectIdentifier,
-                                    Token dotToken,
-                                    Token identifier,
+                                    Expression target,
+                                    Token dot,
+                                    Token member,
                                     Token openParenthesis,
                                     TokenSeparatedList<Expression> args,
                                     Token closeParenthesis)
-            : base(sourceCode, null, null, null, identifier, openParenthesis, args, closeParenthesis)
+            : base(sourceCode, member, openParenthesis, args, closeParenthesis)
         {
-            ObjectIdentifier = objectIdentifier;
-            DotToken = dotToken;
+            Target = target;
+            Dot = dot;
         }
 
         public override IEnumerable<Node> GetChildren()
         {
-            yield return ObjectIdentifier;
-            yield return DotToken;
-            foreach (Node c in base.GetChildren())
-            {
+            foreach(var c in Target.GetChildren())
                 yield return c;
+            yield return Dot;
+            yield return FunctionName;
+            yield return OpenParenthesis;
+            foreach (Node argument in Arguments.GetWithSeparators())
+            {
+                yield return argument;
             }
+
+            yield return CloseParenthesis;
         }
     }
 }

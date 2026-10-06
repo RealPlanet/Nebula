@@ -265,7 +265,7 @@ namespace Nebula.Core.Reporting
                     r.ReportUnreachableCode(expression);
                     return;
                 case NodeType.CallExpression:
-                    r.ReportUnreachableCode(((CallExpression)node).Identifier.Location);
+                    r.ReportUnreachableCode(((CallExpression)node).FunctionName.Location);
                     return;
                 default:
                     r.ReportUnreachableCode(node.Location);

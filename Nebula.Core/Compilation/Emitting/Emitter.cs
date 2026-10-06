@@ -431,26 +431,6 @@ namespace Nebula.Core.Compilation.Emitting
             }
         }
 
-        private void StoreNewArrIntoLocal(NILProcessor processor,
-                                          VariableDefinition variableDefinition,
-                                          ArrayTypeSymbol arraySymbol,
-                                          TypeReference baseValueType,
-                                          Node originalNode)
-        {
-            processor.Emit(InstructionOpcode.Newarr, originalNode);
-            processor.Emit(InstructionOpcode.Stloc, variableDefinition, originalNode);
-        }
-
-        private void StoreNewArrIntoParameter(NILProcessor processor,
-                                          ParameterDefinition parameter,
-                                          ArrayTypeSymbol arraySymbol,
-                                          TypeReference baseValueType,
-                                          Node originalNode)
-        {
-            processor.Emit(InstructionOpcode.Newarr, originalNode);
-            processor.Emit(InstructionOpcode.StArg, parameter, originalNode);
-        }
-
         private static void ExtractBundleNamespaceAndName(ObjectTypeSymbol objTypeSymbol, out string typeNamespace, out string typedName)
         {
             typeNamespace = string.Empty;
@@ -526,8 +506,8 @@ namespace Nebula.Core.Compilation.Emitting
                 case AbstractNodeType.ObjectCallExpression:
                     EmitObjectCallExpression(processor, (AbstractObjectCallExpression)node, originalStatement);
                     break;
-                case AbstractNodeType.ArrayAccessExpression:
-                    EmitArrayAccessExpression(processor, (AbstractArrayAccessExpression)node, originalStatement);
+                case AbstractNodeType.IndexExpression:
+                    EmitIndexExpression(processor, (AbstractIndexExpression)node, originalStatement);
                     break;
                 case AbstractNodeType.ObjectFieldAccessExpression:
                     EmitObjectFieldAccess(processor, (AbstractObjectFieldAccessExpression)node, originalStatement);
@@ -555,29 +535,20 @@ namespace Nebula.Core.Compilation.Emitting
 
         private void EmitObjectCallExpression(NILProcessor processor, AbstractObjectCallExpression node, Node originalStatement)
         {
+            EmitExpression(processor, node.Target, originalStatement);
+
             foreach (AbstractExpression argument in node.Arguments)
             {
                 EmitExpression(processor, argument, originalStatement);
             }
 
-            VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
-            processor.Emit(InstructionOpcode.Callvirt, new string[] { variableDefinition.Index.ToString(), node.Function.Name }, originalStatement);
+            processor.Emit(InstructionOpcode.Callvirt, new string[] { node.Function.Name, node.Arguments.Length.ToString() }, originalStatement);
         }
 
-        private void EmitArrayAccessExpression(NILProcessor processor, AbstractArrayAccessExpression node, Node originalStatement)
+        private void EmitIndexExpression(NILProcessor processor, AbstractIndexExpression node, Node originalStatement)
         {
-            if (node.Variable is ParameterSymbol parameter)
-            {
-                ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
-                processor.Emit(InstructionOpcode.Ldarg, parameterDefinition, originalStatement);
-            }
-            else
-            {
-                VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
-                processor.Emit(InstructionOpcode.Ldloc, variableDefinition, originalStatement);
-            }
-
-            EmitExpression(processor, node.IndexExpression, originalStatement);
+            EmitExpression(processor, node.Target, originalStatement);
+            EmitExpression(processor, node.IndexToAccess, originalStatement);
             processor.Emit(InstructionOpcode.Ldelem, originalStatement);
         }
 
@@ -596,6 +567,7 @@ namespace Nebula.Core.Compilation.Emitting
         {
             if (node.Mode == AbstractObjectFieldAccessExpression.FieldMode.Read)
             {
+                EmitExpression(processor, node.Target, originalStatement);
                 processor.Emit(InstructionOpcode.Ldfld, node.Field.OrdinalPosition, originalStatement);
             }
         }
@@ -638,17 +610,7 @@ namespace Nebula.Core.Compilation.Emitting
 
         private void EmitArrayAssignmentExpression(NILProcessor processor, AbstractArrayAssignmentExpression node, Node originalStatement)
         {
-            if (node.ArrayVariable is ParameterSymbol parameter)
-            {
-                ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
-                processor.Emit(InstructionOpcode.Ldarg, parameterDefinition, originalStatement);
-            }
-            else
-            {
-                VariableDefinition? variableDefinition = _currentContext.Locals[node.ArrayVariable];
-                processor.Emit(InstructionOpcode.Ldloc, variableDefinition, originalStatement);
-            }
-
+            EmitExpression(processor, node.Target, originalStatement);
             EmitExpression(processor, node.IndexExpression, originalStatement);
             EmitExpression(processor, node.Expression, originalStatement);
             processor.Emit(InstructionOpcode.Stelem, originalStatement);
@@ -659,17 +621,6 @@ namespace Nebula.Core.Compilation.Emitting
             if (node.Variable is ParameterSymbol parameter)
             {
                 ParameterDefinition? parameterDefinition = _currentContext.Parameters[node.Variable];
-                if (parameter.Type == TypeSymbol.BaseObject)
-                {
-                    throw new NotImplementedException();
-                }
-
-                if (parameter.Type == TypeSymbol.BaseArray)
-                {
-                    EmitArrayParameterReassignment(processor, parameterDefinition, node, originalStatement);
-                    return;
-                }
-
                 EmitExpression(processor, node.Expression, originalStatement);
                 processor.Emit(InstructionOpcode.Dup, originalStatement); // Takes current value on stack and pushes it again
                 processor.Emit(InstructionOpcode.StArg, parameterDefinition, originalStatement); // Writes value into parameter
@@ -687,17 +638,6 @@ namespace Nebula.Core.Compilation.Emitting
             {
                 isGlobal = false;
                 variableDefinition = _currentContext.Locals[node.Variable];
-            }
-
-            if (node.Variable.Type == TypeSymbol.BaseObject)
-            {
-                throw new NotImplementedException();
-            }
-
-            if (node.Variable.Type == TypeSymbol.BaseArray)
-            {
-                EmitArrayLocalReassignment(processor, variableDefinition, node);
-                return;
             }
 
             EmitExpression(processor, node.Expression, originalStatement);
@@ -723,23 +663,6 @@ namespace Nebula.Core.Compilation.Emitting
                 case ParameterSymbol parameter:
                     {
                         ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
-
-                        if (node is AbstractArrayAccessExpression arrAccess)
-                        {
-                            processor.Emit(InstructionOpcode.Ldarg, parameterDefinition, originalStatement);
-                            EmitExpression(processor, arrAccess.IndexExpression, originalStatement);
-
-                            if (arrAccess.IndexExpression.ConstantValue.IsNotNull())
-                            {
-                                EmitOptimizeLdcI4Instruction(processor, (int)arrAccess.IndexExpression.ConstantValue.Value, originalStatement);
-                            }
-                            else
-                            {
-                                processor.Emit(InstructionOpcode.Ldc_i4, arrAccess.IndexExpression, originalStatement);
-                            }
-
-                        }
-
                         InstructionOpcode paramOpcode = InstructionOpcode.Ldarg;
                         processor.Emit(paramOpcode, parameterDefinition, originalStatement);
                         break;
@@ -756,7 +679,6 @@ namespace Nebula.Core.Compilation.Emitting
                     {
                         // TODO :: Figure out if we want to keep this variable definition as instruction argument or pass the index
                         // directly
-
                         VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
                         InstructionOpcode opcode = InstructionOpcode.Ldloc;
                         object argument = variableDefinition;
@@ -1067,20 +989,6 @@ namespace Nebula.Core.Compilation.Emitting
             }
 
             throw new EmitterException($"Unable to resolve a TypeReference for '{type}' ({type.GetType().Name})");
-        }
-
-        private void EmitArrayParameterReassignment(NILProcessor processor, ParameterDefinition parameter, AbstractAssignmentExpression node, Node originalStatement)
-        {
-            ArrayTypeSymbol arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
-            TypeReference typeReference = ResolveTypeReference(arraySymbol);
-            StoreNewArrIntoParameter(processor, parameter, arraySymbol, typeReference, originalStatement);
-        }
-
-        private void EmitArrayLocalReassignment(NILProcessor processor, VariableDefinition variableDefinition, AbstractAssignmentExpression node)
-        {
-            ArrayTypeSymbol arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
-            TypeReference typeReference = ResolveTypeReference(arraySymbol);
-            StoreNewArrIntoLocal(processor, variableDefinition, arraySymbol, typeReference, node.OriginalNode);
         }
 
         private static void EmitOptimizeLdcI4Instruction(NILProcessor processor, int constantValue, Node originalStatement)
