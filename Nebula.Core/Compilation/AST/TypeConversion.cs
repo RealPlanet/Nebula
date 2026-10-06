@@ -38,28 +38,38 @@ namespace Nebula.Core.Compilation.AST
 
             //if (from == TypeSymbol.Any && to != TypeSymbol.Void)
             //    return Explicit;
-
-            if (from == TypeSymbol.Int || from == TypeSymbol.Bool || from == TypeSymbol.Float)
+            if(from == TypeSymbol.Int)
             {
-                if (to == TypeSymbol.String)
+                if (to == TypeSymbol.String || to == TypeSymbol.Bool)
+                {
+                    return Explicit;
+                }
+
+                if(to == TypeSymbol.Float)
+                {
+                    return Implict;
+                }
+            }
+
+            if(from == TypeSymbol.Bool)
+            {
+                if (to == TypeSymbol.String || to == TypeSymbol.Int || to == TypeSymbol.Float)
                 {
                     return Explicit;
                 }
             }
 
-            if (from == TypeSymbol.Int && to == TypeSymbol.Float)
+            if (from == TypeSymbol.Float)
             {
-                return Implict;
-            }
-
-            if (from == TypeSymbol.Float && to == TypeSymbol.Int)
-            {
-                return Explicit;
+                if (to == TypeSymbol.String || to == TypeSymbol.Int || to == TypeSymbol.Bool)
+                {
+                    return Explicit;
+                }
             }
 
             if (from == TypeSymbol.String)
             {
-                if (to == TypeSymbol.Int || to == TypeSymbol.Bool)
+                if (to == TypeSymbol.Int || to == TypeSymbol.Bool || to == TypeSymbol.Float)
                 {
                     return Explicit;
                 }
