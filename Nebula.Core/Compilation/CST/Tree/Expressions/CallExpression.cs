@@ -6,31 +6,31 @@ using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.CST.Tree.Expressions
 {
+
     public class CallExpression
-        : Expression
+        : GenericCallExpression
     {
         public override NodeType Type => NodeType.CallExpression;
 
         public Token? AsyncCall { get; }
         public Token? Namespace { get; }
         public Token? DoubleColon { get; }
-        public Token Identifier { get; }
-        public Token OpenParenthesis { get; }
-        public TokenSeparatedList<Expression> Arguments { get; }
-        public Token CloseParenthesis { get; }
 
         public bool IsAsyncCall => AsyncCall != null;
 
-        public CallExpression(SourceCode sourceCode, Token? asyncCall, Token? @namespace, Token? doubleColon, Token identifier, Token openParenthesis, TokenSeparatedList<Expression> args, Token closeParenthesis)
-            : base(sourceCode)
+        public CallExpression(SourceCode sourceCode,
+                              Token? asyncCall,
+                              Token? @namespace,
+                              Token? doubleColon,
+                              Token functionName,
+                              Token openParenthesis,
+                              TokenSeparatedList<Expression> args,
+                              Token closeParenthesis)
+            : base(sourceCode, functionName, openParenthesis, args, closeParenthesis)
         {
             AsyncCall = asyncCall;
             Namespace = @namespace;
             DoubleColon = doubleColon;
-            Identifier = identifier;
-            OpenParenthesis = openParenthesis;
-            Arguments = args;
-            CloseParenthesis = closeParenthesis;
         }
 
         public override IEnumerable<Node> GetChildren()
@@ -50,7 +50,7 @@ namespace Nebula.Core.Compilation.CST.Tree.Expressions
                 yield return Namespace;
             }
 
-            yield return Identifier;
+            yield return FunctionName;
             yield return OpenParenthesis;
 
             foreach (Node argument in Arguments.GetWithSeparators())

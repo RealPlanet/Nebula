@@ -96,7 +96,6 @@ namespace Nebula.Commons.Syntax
         {
             return type switch
             {
-                NodeType.DotToken => 6,
                 NodeType.StarToken or NodeType.SlashToken or NodeType.ModuloToken => 5,
                 NodeType.PlusToken or NodeType.MinusToken => 4,
                 NodeType.BangEqualsToken or NodeType.DoubleEqualsToken or NodeType.LessToken or NodeType.LessOrEqualsToken or NodeType.GreaterToken or NodeType.GreaterOrEqualsToken => 3,

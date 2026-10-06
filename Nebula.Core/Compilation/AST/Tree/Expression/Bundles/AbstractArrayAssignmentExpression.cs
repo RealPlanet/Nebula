@@ -11,14 +11,14 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression.Bundles
         public override TypeSymbol ResultType => Expression.ResultType;
         public override AbstractNodeType Type => AbstractNodeType.ArrayAssignmentExpression;
 
-        public VariableSymbol ArrayVariable { get; }
+        public AbstractExpression Target { get; }
         public AbstractExpression IndexExpression { get; }
         public AbstractExpression Expression { get; }
 
-        public AbstractArrayAssignmentExpression(Node syntax, VariableSymbol arrayVariable, AbstractExpression indexExpression, AbstractExpression expression)
+        public AbstractArrayAssignmentExpression(Node syntax, AbstractExpression target, AbstractExpression indexExpression, AbstractExpression expression)
             : base(syntax)
         {
-            ArrayVariable = arrayVariable;
+            Target = target;
             IndexExpression = indexExpression;
             Expression = expression;
         }

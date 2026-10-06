@@ -102,7 +102,7 @@
         BinaryExpression,
         AssignmentExpression,
         ObjectFieldAccessExpression,
-        ArrayAccessExpression,
+        IndexExpression,
         NameExpression,
         ParenthesizedExpression,
         CallExpression,

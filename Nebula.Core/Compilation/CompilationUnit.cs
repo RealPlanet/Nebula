@@ -67,5 +67,10 @@ namespace Nebula.Core.Compilation
         {
             return GetEnumerator();
         }
+
+        public override string ToString()
+        {
+            return $"Compilation unit: {NamespaceStatement.Namespace.Text}";
+        }
     }
 }

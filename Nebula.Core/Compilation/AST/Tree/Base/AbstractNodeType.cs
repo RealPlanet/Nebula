@@ -39,7 +39,7 @@
         ObjectFieldAccessExpression,
         ObjectCallExpression,
         ArrayAssignmentExpression,
-        ArrayAccessExpression,
+        IndexExpression,
         CallExpression,
         ConversionExpression,
         IsDefinedExpression,

@@ -18,18 +18,20 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression.Bundles
 
         public override AbstractNodeType Type => AbstractNodeType.ObjectFieldAccessExpression;
         public override TypeSymbol ResultType => Field.Type;
+        public AbstractExpression Target { get; }
         public AbstractBundleField Field { get; }
         public FieldMode Mode { get; set; } = FieldMode.Read;
 
-        public AbstractObjectFieldAccessExpression(Node syntax, AbstractBundleField field)
+        public AbstractObjectFieldAccessExpression(Node syntax, AbstractExpression target, AbstractBundleField field)
             : base(syntax)
         {
+            Target = target;
             Field = field;
         }
 
         public override IEnumerable<AbstractNode> GetChildren()
         {
-            yield break;
+            yield return Target;
         }
     }
 }
