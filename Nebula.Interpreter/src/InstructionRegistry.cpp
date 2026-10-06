@@ -376,8 +376,8 @@ InstructionArguments nebula::GenerateArgumentsForOpcode(VMInstruction opcode, co
 	{
 		assert(args.size() == 2);
 		char* p{ nullptr };
-		long converted = strtol(args[0].data(), &p, 10);
-		return { converted, args[1] };
+		long converted = strtol(args[1].data(), &p, 10);
+		return { args[0], converted };
 	}
 	case VMInstruction::AddStr:     // Number of strings on stack to sum
 	{
@@ -522,34 +522,41 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 	case VMInstruction::CallVirt:
 	{
 		assert(args.size() == 2);
-		assert(std::holds_alternative<TInt32>(args[0]));
-		assert(std::holds_alternative<TString>(args[1]));
+		assert(std::holds_alternative<TString>(args[0])); //Function name to call
+		assert(std::holds_alternative<TInt32>(args[1])); //Number of arguments to pass to the function
 
-		int localIndex = std::get<DataStackVariantIndex::_TypeInt32>(args[0]);
-		const TString& funcName = std::get<DataStackVariantIndex::_TypeString>(args[1]);
+		const TString& funcName = std::get<DataStackVariantIndex::_TypeString>(args[0]);
+		const TInt32 numArgs = std::get<DataStackVariantIndex::_TypeInt32>(args[1]);
 
-		Value& var = context->Memory().LocalAt(localIndex);
-		const TGCObject& ptr = var.AsGCObject();
-		if (ptr.get() != nullptr)
+		assert(stack.Size() >= numArgs + 1);
+
+		std::vector<DataStackVariant> arguments;
+		arguments.reserve(numArgs);
+		for (TInt32 i = 0; i < numArgs; ++i)
 		{
-			InstructionErrorCode result = ptr->CallVirtual(funcName, interpreter, context);
+			arguments.push_back(std::move(stack.Peek()));
+			stack.Pop();
+		}
+
+		assert(stack.Peek().index() == DataStackVariantIndex::_TypeObject);
+
+		if (const TGCObject* objPtr = std::get_if<TGCObject>(&stack.Peek()))
+		{
+
+			if (objPtr->get() == nullptr)
+			{
+				return InstructionErrorCode::UndefinedObject;
+			}
+
+			// Free before call to allow for a return value
+			stack.Pop();
+			// Call the virtual function on the object
+			InstructionErrorCode result = objPtr->get()->CallVirtual(funcName, arguments, interpreter, context);
 			assert(result == InstructionErrorCode::None);
 			return result;
 		}
 
-		if (var.GetValueType() == DataStackVariantIndex::_TypeObject)
-		{
-			return InstructionErrorCode::NotAPrimitive;
-		}
-
-		auto func = interpreter->GetTypeFunction(var.GetValueType(), funcName);
-		if (func != nullptr)
-		{
-			context->Stack().Push(var.GetInternalValue());
-			return (*func)(interpreter, context);
-		}
-
-		return InstructionErrorCode::FunctionNotFound;
+		return InstructionErrorCode::NotABundle;
 	}
 	case VMInstruction::Call_t:
 	case VMInstruction::Call:

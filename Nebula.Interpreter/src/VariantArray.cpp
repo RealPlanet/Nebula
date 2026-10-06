@@ -2,6 +2,8 @@
 #include "Instruction.h"
 #include "Frame.h"
 
+#include <cassert>
+
 using namespace nebula;
 
 VariantArray::VariantArray()
@@ -33,29 +35,35 @@ const Value& nebula::VariantArray::At(size_t i) const
     return m_Vector.at(i);
 }
 
-InstructionErrorCode VariantArray::CallVirtual(const std::string_view& funcName, Interpreter*, Frame* context)
+InstructionErrorCode VariantArray::CallVirtual(const std::string_view& funcName, std::vector<DataStackVariant>& arguments, Interpreter*, Frame* context)
 {
     if (funcName == "Append")
     {
-        DataStackVariant& v = context->Stack().Peek();
+        if (arguments.size() != 1)
+        {
+            return InstructionErrorCode::Fatal;
+        }
+
+        DataStackVariant& v = arguments[0];
         if (!m_Vector.empty() && m_Vector[0].GetValueType() != v.index())
         {
             return InstructionErrorCode::Fatal;
         }
 
         Append(std::move(v));
-        context->Stack().Pop();
         return InstructionErrorCode::None;
     }
 
     if (funcName == "Clear")
     {
+        assert(arguments.size() == 0);
         Clear();
         return InstructionErrorCode::None;
     }
 
     if (funcName == "Count")
     {
+        assert(arguments.size() == 0);
         context->Stack().Push({ (TInt32)Size() });
         return InstructionErrorCode::None;
     }

@@ -20,7 +20,7 @@ namespace nebula
         Value& At(size_t i);
         const Value& At(size_t i) const;
 
-        virtual InstructionErrorCode CallVirtual(const std::string_view& funcName, nebula::Interpreter* interpreter, Frame* context) override;
+        virtual InstructionErrorCode CallVirtual(const std::string_view& funcName, std::vector<DataStackVariant>& arguments, nebula::Interpreter* interpreter, Frame* context) override;
 
     private:
         std::vector<Value> m_Vector;
