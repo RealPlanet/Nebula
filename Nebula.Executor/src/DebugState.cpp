@@ -175,8 +175,7 @@ const std::vector<nebula::debugger::Frame>& nebula::debugger::DebugState::GetFra
 		const size_t alreadyCached = cachedFrames.size();
 		const size_t framesToCache = requestedFrames - alreadyCached;
 
-		cachedFrames.reserve(requestedFrames);
-
+		cachedFrames.reserve(totalFrames);
 		for (size_t i = 0; i < framesToCache; ++i)
 		{
 			const size_t frameIndex = totalFrames - alreadyCached - i - 1;
@@ -230,7 +229,7 @@ const std::vector<nebula::debugger::GenericScope>& nebula::debugger::DebugState:
 	auto insertIt = m_scopes.insert(it, std::make_pair(frame->id, std::vector<nebula::debugger::GenericScope>{}));
 	if (!frame->source || !frame->source->debugSymbols)
 	{
-		return it->second;
+		return insertIt->second;
 	}
 
 	const nebula::debugger::symbols::FunctionInformation* debugInformation = frame->functionSymbols;
@@ -405,7 +404,6 @@ void nebula::debugger::DebugState::DeclareVariable(nebula::debugger::VariableId 
 	{
 		if (wrapValue.internalValue->ContainsGCObject())
 		{
-			// Only assign a reference if the object is initialized
 			wrapValue.id = GetNextVariableReference();
 		}
 	}

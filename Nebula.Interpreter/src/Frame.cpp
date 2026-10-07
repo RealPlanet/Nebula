@@ -1,6 +1,7 @@
 #include "Frame.h"
 #include "Interpreter.h"
 #include "InstructionRegistry.h"
+#include <cassert>
 
 using namespace nebula;
 
@@ -19,8 +20,19 @@ Frame::Frame(Frame* parent, const Function* f, bool discardParent)
 	for (long i = paramCount - 1; i >= 0; i--)
 	{
 		Value& param = m_Memory.ParamAt(i);
-		param.SetValue(dataStack.Peek());
+		auto& paramValue = dataStack.Peek();
+		param.Initialize((DataStackVariantIndex)paramValue.index());
+		bool setOk = param.SetValue(paramValue);
+		assert(setOk);
+
 		dataStack.Pop();
+	}
+
+	auto& locals = f->Locals();
+	size_t localCount = locals.size();
+	for (size_t i = 0; i < localCount; i++) {
+		Value& local = m_Memory.LocalAt(i);
+		local.Initialize(locals[i]);
 	}
 
 	if (discardParent)

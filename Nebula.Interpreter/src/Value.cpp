@@ -18,13 +18,29 @@ Value::Value(DataStackVariant&& other)
 
 bool Value::SetValue(const DataStackVariant& val)
 {
-	if (_type != nebula::DataStackVariantIndex::_UnknownType && _type != val.index())
+	if (val.index() != _type)
 	{
-		assert(false);
+		if (val.index() == DataStackVariantIndex::_TypeInt32 &&
+			_type == DataStackVariantIndex::_TypeBool)
+		{
+			_value = std::get<DataStackVariantIndex::_TypeInt32>(val) != 0;
+			return true;
+		}
+
 		return false;
 	}
 
 	_value = val;
-	_type = (nebula::DataStackVariantIndex)val.index();
 	return true;
+}
+
+void Value::Initialize(DataStackVariantIndex type)
+{
+	if (_type != DataStackVariantIndex::_UnknownType)
+	{
+		assert(false);
+		return;
+	}
+
+	_type = type;
 }
