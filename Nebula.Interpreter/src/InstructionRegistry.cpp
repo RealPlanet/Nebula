@@ -20,17 +20,46 @@ static InstructionErrorCode CastToInt(DataStackVariant& valueToCast, DataStack& 
 	if (fromType == DataStackVariantIndex::_TypeFloat)
 	{
 		TFloat fromValue = std::get<DataStackVariantIndex::_TypeFloat>(valueToCast);
-		stack.Pop();
-		stack.Push({ (TInt32)fromValue });
+		stack.Peek().emplace<TInt32>(static_cast<TInt32>(fromValue));
 		return InstructionErrorCode::None;
 	}
 
-	[[unlikely]]
+	if (fromType == DataStackVariantIndex::_TypeBool)
+	{
+		TBool fromValue = std::get<DataStackVariantIndex::_TypeBool>(valueToCast);
+		stack.Peek().emplace<TInt32>(static_cast<TInt32>(fromValue));
+		return InstructionErrorCode::None;
+	}
+
+	if (fromType == DataStackVariantIndex::_TypeInt32)
+	{
+		// No need to push/pop
+		return InstructionErrorCode::None;
+	}
+
+	return InstructionErrorCode::Fatal;
+}
+
+static InstructionErrorCode CastToBool(DataStackVariant& valueToCast, DataStack& stack)
+{
+	DataStackVariantIndex fromType = (DataStackVariantIndex)valueToCast.index();
+	if (fromType == DataStackVariantIndex::_TypeFloat)
+	{
+		TFloat fromValue = std::get<DataStackVariantIndex::_TypeFloat>(valueToCast);
+		stack.Peek().emplace<TBool>(static_cast<TBool>((TInt32)fromValue));
+		return InstructionErrorCode::None;
+	}
+
 	if (fromType == DataStackVariantIndex::_TypeInt32)
 	{
 		TInt32 fromValue = std::get<DataStackVariantIndex::_TypeInt32>(valueToCast);
-		stack.Pop();
-		stack.Push({ (TInt32)fromValue });
+		stack.Peek().emplace<TBool>(static_cast<TBool>(fromValue));
+		return InstructionErrorCode::None;
+	}
+
+	if (fromType == DataStackVariantIndex::_TypeBool)
+	{
+		// No need to push/pop
 		return InstructionErrorCode::None;
 	}
 
@@ -43,17 +72,19 @@ static InstructionErrorCode CastToFloat(DataStackVariant& valueToCast, DataStack
 	if (fromType == DataStackVariantIndex::_TypeInt32)
 	{
 		TInt32 fromValue = std::get<DataStackVariantIndex::_TypeInt32>(valueToCast);
-		stack.Pop();
-		stack.Push({ (TFloat)fromValue });
+		stack.Peek().emplace<TFloat>(static_cast<TFloat>(fromValue));
 		return InstructionErrorCode::None;
 	}
 
-	[[unlikely]]
+	if (fromType == DataStackVariantIndex::_TypeBool)
+	{
+		TBool fromValue = std::get<DataStackVariantIndex::_TypeBool>(valueToCast);
+		stack.Peek().emplace<TFloat>(static_cast<TFloat>(fromValue));
+		return InstructionErrorCode::None;
+	}
+
 	if (fromType == DataStackVariantIndex::_TypeFloat)
 	{
-		TFloat fromValue = std::get<DataStackVariantIndex::_TypeFloat>(valueToCast);
-		stack.Pop();
-		stack.Push({ (TFloat)fromValue });
 		return InstructionErrorCode::None;
 	}
 
@@ -70,19 +101,15 @@ static InstructionErrorCode SumDataStackVariants(DataStack& stack)
 
 		if (const TInt32* iValB = std::get_if<TInt32>(&b))
 		{
-			stack.Pop();
-
 			TInt32 v = *iValA + *iValB;
-			stack.Push({ v });
+			stack.Peek().emplace<TInt32>(v);
 			return InstructionErrorCode::None;
 		}
 
 		if (const TFloat* fValB = std::get_if<TFloat>(&b))
 		{
-			stack.Pop();
-
 			TFloat v = *iValA + *fValB;
-			stack.Push({ v });
+			stack.Peek().emplace<TFloat>(v);
 			return InstructionErrorCode::None;
 		}
 
@@ -95,19 +122,15 @@ static InstructionErrorCode SumDataStackVariants(DataStack& stack)
 
 		if (const TInt32* iValB = std::get_if<TInt32>(&b))
 		{
-			stack.Pop();
-
 			TFloat v = *fValA + *iValB;
-			stack.Push({ v });
+			stack.Peek().emplace<TFloat>(v);
 			return InstructionErrorCode::None;
 		}
 
 		if (const TFloat* fValB = std::get_if<TFloat>(&b))
 		{
-			stack.Pop();
-
 			TFloat v = *fValA + *fValB;
-			stack.Push({ v });
+			stack.Peek().emplace<TFloat>(v);
 			return InstructionErrorCode::None;
 		}
 
@@ -128,19 +151,15 @@ static InstructionErrorCode SubDataStackVariants(DataStack& stack)
 
 		if (const TInt32* iValB = std::get_if<TInt32>(&b))
 		{
-			stack.Pop();
-
 			TInt32 v = *iValA - *iValB;
-			stack.Push({ v });
+			stack.Peek().emplace<TInt32>(v);
 			return InstructionErrorCode::None;
 		}
 
 		if (const TFloat* fValB = std::get_if<TFloat>(&b))
 		{
-			stack.Pop();
-
 			TFloat v = *iValA - *fValB;
-			stack.Push({ v });
+			stack.Peek().emplace<TFloat>(v);
 			return InstructionErrorCode::None;
 		}
 
@@ -153,19 +172,15 @@ static InstructionErrorCode SubDataStackVariants(DataStack& stack)
 
 		if (const TInt32* iValB = std::get_if<TInt32>(&b))
 		{
-			stack.Pop();
-
 			TFloat v = *fValA - *iValB;
-			stack.Push({ v });
+			stack.Peek().emplace<TFloat>(v);
 			return InstructionErrorCode::None;
 		}
 
 		if (const TFloat* fValB = std::get_if<TFloat>(&b))
 		{
-			stack.Pop();
-
 			TFloat v = *fValA - *fValB;
-			stack.Push({ v });
+			stack.Peek().emplace<TFloat>(v);
 			return InstructionErrorCode::None;
 		}
 
@@ -185,19 +200,15 @@ static InstructionErrorCode MulDataStackVariants(DataStack& stack)
 
 		if (const TInt32* iValB = std::get_if<TInt32>(&b))
 		{
-			stack.Pop();
-
 			TInt32 v = *iValA * *iValB;
-			stack.Push({ v });
+			stack.Peek().emplace<TInt32>(v);
 			return InstructionErrorCode::None;
 		}
 
 		if (const TFloat* fValB = std::get_if<TFloat>(&b))
 		{
-			stack.Pop();
-
 			TFloat v = *iValA * *fValB;
-			stack.Push({ v });
+			stack.Peek().emplace<TFloat>(v);
 			return InstructionErrorCode::None;
 		}
 
@@ -210,19 +221,15 @@ static InstructionErrorCode MulDataStackVariants(DataStack& stack)
 
 		if (const TInt32* iValB = std::get_if<TInt32>(&b))
 		{
-			stack.Pop();
-
 			TFloat v = *fValA * *iValB;
-			stack.Push({ v });
+			stack.Peek().emplace<TFloat>(v);
 			return InstructionErrorCode::None;
 		}
 
 		if (const TFloat* fValB = std::get_if<TFloat>(&b))
 		{
-			stack.Pop();
-
 			TFloat v = *fValA * *fValB;
-			stack.Push({ v });
+			stack.Peek().emplace<TFloat>(v);
 			return InstructionErrorCode::None;
 		}
 
@@ -242,29 +249,25 @@ static InstructionErrorCode DivDataStackVariants(DataStack& stack)
 
 		if (const TInt32* iValB = std::get_if<TInt32>(&b))
 		{
-			stack.Pop();
-
 			if (iValB == 0)
 			{
 				return InstructionErrorCode::DivideByZero;
 			}
 
 			TInt32 v = *iValA / *iValB;
-			stack.Push({ v });
+			stack.Peek().emplace<TInt32>(v);
 			return InstructionErrorCode::None;
 		}
 
 		if (const TFloat* fValB = std::get_if<TFloat>(&b))
 		{
-			stack.Pop();
-
 			if (fValB == 0)
 			{
 				return InstructionErrorCode::DivideByZero;
 			}
 
 			TFloat v = *iValA / *fValB;
-			stack.Push({ v });
+			stack.Peek().emplace<TFloat>(v);
 			return InstructionErrorCode::None;
 		}
 
@@ -277,27 +280,25 @@ static InstructionErrorCode DivDataStackVariants(DataStack& stack)
 
 		if (const TInt32* iValB = std::get_if<TInt32>(&b))
 		{
-			stack.Pop();
 			if (iValB == 0)
 			{
 				return InstructionErrorCode::DivideByZero;
 			}
 
 			TFloat v = *fValA / *iValB;
-			stack.Push({ v });
+			stack.Peek().emplace<TFloat>(v);
 			return InstructionErrorCode::None;
 		}
 
 		if (const TFloat* fValB = std::get_if<TFloat>(&b))
 		{
-			stack.Pop();
 			if (fValB == 0)
 			{
 				return InstructionErrorCode::DivideByZero;
 			}
 
 			TFloat v = *fValA / *fValB;
-			stack.Push({ v });
+			stack.Peek().emplace<TFloat>(v);
 			return InstructionErrorCode::None;
 		}
 
@@ -497,11 +498,8 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 		}
 
 		TInt32 valA = std::get<DataStackVariantIndex::_TypeInt32>(a);
-		stack.Pop();
-
 		TInt32 result = valA % div;
-		stack.Push(result);
-
+		stack.Peek().emplace<TInt32>(result);
 		return InstructionErrorCode::None;
 	}
 	// General
@@ -637,8 +635,7 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 		assert(args.size() == 0);
 		assert(std::holds_alternative<TGCObject>(stack.Peek()));
 		bool isDefined = std::get<TGCObject>(stack.Peek()).get() != nullptr;
-		stack.Pop();
-		stack.Push(isDefined);
+		stack.Peek().emplace<bool>(isDefined);
 		return InstructionErrorCode::None;
 	}
 	case VMInstruction::Wait_n:
@@ -871,7 +868,6 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 
 		stack.Push(var.GetInternalValue());
 		return InstructionErrorCode::None;
-
 	}
 	case VMInstruction::LdSfld:
 	{
@@ -1211,8 +1207,12 @@ InstructionErrorCode nebula::ExecuteInstruction(VMInstruction opcode, Interprete
 		{
 			return CastToInt(prevValue, stack);
 		}
+		case DataStackVariantIndex::_TypeBool:
+		{
+			return CastToBool(prevValue, stack);
+		}
 		default:
-			__debugbreak(); //  should Not happen in normal operation
+			assert(false); //  should Not happen in normal operation
 			return InstructionErrorCode::Fatal;
 		}
 

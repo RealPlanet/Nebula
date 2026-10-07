@@ -23,6 +23,7 @@ namespace nebula
 
 	// Datastack types
 	// using TByte = uint8_t;
+	using TBool = bool;
 	using TInt32 = int32_t;
 	using TFloat = float_t;
 	using TString = std::string;
@@ -32,6 +33,7 @@ namespace nebula
 	enum DataStackVariantIndex : uint8_t
 	{
 		_TypeInt32 = 0,
+		_TypeBool,
 		_TypeFloat,
 		_TypeString,
 		_TypeObject,
@@ -41,7 +43,7 @@ namespace nebula
 	};
 
 	// using DataStackVariant = std::variant<TByte, TInt32, TFloat, TString, TBundle>;
-	using DataStackVariant = std::variant<TInt32, TFloat, TString, TGCObject>;
+	using DataStackVariant = std::variant<TInt32, TBool, TFloat, TString, TGCObject>;
 
 	DataStackVariantIndex StringToStackValue(const std::string& str);
 
@@ -61,6 +63,11 @@ namespace nebula
 		if (std::holds_alternative<TInt32>(var))
 		{
 			return std::to_string(std::get<_TypeInt32>(var));
+		}
+
+		if (std::holds_alternative<TBool>(var))
+		{
+			return std::get<_TypeBool>(var) != 0 ? "true" : "false";
 		}
 
 		if (std::holds_alternative<TFloat>(var))

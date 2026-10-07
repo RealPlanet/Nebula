@@ -9,7 +9,7 @@ DataStackVariantIndex nebula::StringToStackValue(const std::string& str)
 {
 	static std::map<std::string, DataStackVariantIndex> valMap = {
 		//{ "char",	DataStackVariantIndex::_TypeByte },
-		{"bool", DataStackVariantIndex::_TypeInt32},
+		{"bool", DataStackVariantIndex::_TypeBool},
 		{"int32", DataStackVariantIndex::_TypeInt32},
 		{"float", DataStackVariantIndex::_TypeFloat},
 		{"string", DataStackVariantIndex::_TypeString},
