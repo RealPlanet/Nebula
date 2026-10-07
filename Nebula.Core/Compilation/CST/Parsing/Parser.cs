@@ -361,6 +361,10 @@ namespace Nebula.Core.Compilation.CST.Parsing
                     {
                         return ParseIfStatement();
                     }
+                case NodeType.DoKeyword:
+                    {
+                        return ParseDoWhileStatement();
+                    }
                 case NodeType.WhileKeyword:
                     {
                         return ParseWhileStatement();
@@ -497,6 +501,18 @@ namespace Nebula.Core.Compilation.CST.Parsing
             Token closeParenthesis = MatchToken(NodeType.ClosedParenthesisToken);
             Statement body = ParseStatement();
             return new WhileStatement(_currentSource, keyword, openParenthesis, condition, closeParenthesis, body);
+        }
+
+        private Statement ParseDoWhileStatement()
+        {
+            Token keyword = MatchToken(NodeType.DoKeyword);
+            Statement body = ParseStatement();
+            Token whileKeyword = MatchToken(NodeType.WhileKeyword);
+            Token openParenthesis = MatchToken(NodeType.OpenParenthesisToken);
+            Expression condition = ParseExpression();
+            Token closeParenthesis = MatchToken(NodeType.ClosedParenthesisToken);
+            Token semicolon = MatchToken(NodeType.SemicolonToken);
+            return new DoWhileStatement(_currentSource, keyword, body, whileKeyword, openParenthesis, condition, closeParenthesis, semicolon);
         }
 
         #region For loop

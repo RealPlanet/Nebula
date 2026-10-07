@@ -11,17 +11,28 @@ namespace Nebula.Core.Compilation.CST.Tree.Statements
         public Token DoKeyword { get; }
         public Statement Body { get; }
         public Token WhileKeyword { get; }
+        public Token OpenParenthesis { get; }
         public Expression Condition { get; }
+        public Token CloseParenthesis { get; }
         public Token Semicolon { get; }
 
         public override NodeType Type => NodeType.DoWhileStatement;
-        public DoWhileStatement(SourceCode sourceCode, Token doKeyword, Statement body, Token whileKeyword, Expression condition, Token semicolon)
+        public DoWhileStatement(SourceCode sourceCode,
+                                Token doKeyword,
+                                Statement body,
+                                Token whileKeyword,
+                                Token openParenthesis,
+                                Expression condition,
+                                Token closeParenthesis,
+                                Token semicolon)
             : base(sourceCode)
         {
             DoKeyword = doKeyword;
             Body = body;
             WhileKeyword = whileKeyword;
+            OpenParenthesis = openParenthesis;
             Condition = condition;
+            CloseParenthesis = closeParenthesis;
             Semicolon = semicolon;
         }
 
@@ -30,7 +41,9 @@ namespace Nebula.Core.Compilation.CST.Tree.Statements
             yield return DoKeyword;
             yield return Body;
             yield return WhileKeyword;
+            yield return OpenParenthesis;
             yield return Condition;
+            yield return CloseParenthesis;
             yield return Semicolon;
         }
     }
