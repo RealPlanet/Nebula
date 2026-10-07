@@ -137,7 +137,7 @@
     <value>Binary operator '{0}' is not defined for types '{1}' and '{2}'.</value>
     <comment>E</comment>
   </data>
-  <data name="BinderFunctionAlreadyExists" xml:space="preserve">
+  <data name="FunctionAlreadyExists" xml:space="preserve">
     <value>Function symbol '{0}' already declared.</value>
     <comment>E</comment>
   </data>

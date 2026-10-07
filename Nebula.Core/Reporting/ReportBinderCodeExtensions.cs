@@ -20,7 +20,7 @@ namespace Nebula.Core.Reporting
         #region Errors
         public static void ReportBinderFunctionAlreadyExists(this Report r, BaseFunctionDeclaration func)
         {
-            (EBinderMessages code, string MessageTemplate) = BinderMessagesProvider.BinderFunctionAlreadyExists;
+            (EBinderMessages code, string MessageTemplate) = BinderMessagesProvider.FunctionAlreadyExists;
             string message = string.Format(MessageTemplate, func.Name.Text);
             r.PushError(message, func.Name.Location, code.ToString());
         }

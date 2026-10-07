@@ -1086,6 +1086,12 @@ namespace Nebula.Core.Compilation.AST.Binding
             }
 
             Symbol? symbol = _currentScope.TryLookupSymbol(callExpression.FunctionName.Text);
+            if(symbol is null)
+            {
+                _binderReport.ReportUndefinedFunction(callExpression.FunctionName.Location, callExpression.FunctionName.Text);
+                return null;
+            }
+
             if (symbol is not FunctionSymbol localFunction)
             {
                 _binderReport.ReportNotAFunction(callExpression.FunctionName.Location, callExpression.FunctionName.Text);
@@ -1137,8 +1143,10 @@ namespace Nebula.Core.Compilation.AST.Binding
                 }
                 else
                 {
-                    span = expression.CloseParenthesis.Span;
+                    span = new TextSpan(expression.OpenParenthesis.Span.Start,
+                                        expression.CloseParenthesis.Span.End - expression.OpenParenthesis.Span.Start);
                 }
+
                 TextLocation location = new(expression.SourceCode, span);
                 _binderReport.ReportWrongNumberOfArguments(location, function.Name, function.Parameters.Length, expression.Arguments.Count);
                 return false;

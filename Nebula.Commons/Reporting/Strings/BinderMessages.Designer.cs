@@ -97,15 +97,6 @@ namespace Nebula.Commons.Reporting.Strings {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Function symbol &apos;{0}&apos; already declared..
-        /// </summary>
-        public static string BinderFunctionAlreadyExists {
-            get {
-                return ResourceManager.GetString("BinderFunctionAlreadyExists", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Parameter &apos;{0}&apos; could not be declared..
         /// </summary>
         public static string CannotBindParameter {
@@ -192,6 +183,15 @@ namespace Nebula.Commons.Reporting.Strings {
         public static string FloatTooManyMarkers {
             get {
                 return ResourceManager.GetString("FloatTooManyMarkers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Function symbol &apos;{0}&apos; already declared..
+        /// </summary>
+        public static string FunctionAlreadyExists {
+            get {
+                return ResourceManager.GetString("FunctionAlreadyExists", resourceCulture);
             }
         }
         
