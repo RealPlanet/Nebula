@@ -24,31 +24,37 @@ namespace Nebula.Compiler.Tests
         public static string SamplesFolder => @"..\..\..\..\..\Samples";
 
         [TestMethod]
-        public void AllSamplesCompile()
+        [DynamicData(nameof(GetSamplesWithMetadata))]
+        public void AllSamplesCompile(string path, TestMetadata md)
         {
+            string compiledName = Path.GetFileName(Path.ChangeExtension(path, ".neb"));
+            string compiledPath = Path.Combine(Directory.GetCurrentDirectory(), compiledName);
+
             Core.Compilation.Compiler.Options options = new()
             {
                 EmitProgram = true,
                 OutputFolder = ".",
             };
 
-            foreach (var sample in GetAllSamples)
-            {
-                options.Sources.Add(SourceCode.From(sample));
-            }
+            List<SourceCode> references = CreateReferences(Path.GetDirectoryName(path)!, md, out string[]? compiledReferencesPath);
 
+            options.Sources.AddRange(references);
+            options.Sources.Add(SourceCode.From(path));
             bool compileOk = Core.Compilation.Compiler.Compile(options, out Core.Compilation.Compiler.Result? result);
 
             WriteReport(result.Report);
 
             Assert.IsTrue(compileOk);
+            Assert.IsTrue(File.Exists(compiledPath));
+
+            Assert.IsTrue(compileOk);
+            Assert.IsFalse(result.Report.HasErrors);
         }
 
         [TestMethod]
         [DynamicData(nameof(GetSamplesWithMetadata))]
         public void AllSamplesRunAsExpected(string path, TestMetadata md)
         {
-
             string compiledName = Path.GetFileName(Path.ChangeExtension(path, ".neb"));
             string compiledPath = Path.Combine(Directory.GetCurrentDirectory(), compiledName);
 
@@ -138,18 +144,6 @@ namespace Nebula.Compiler.Tests
         private static void P_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {
             Console.WriteLine(e.Data);
-        }
-
-        private static IEnumerable<string> GetAllSamples
-        {
-            get
-            {
-                Assert.IsTrue(Directory.Exists(SamplesFolder));
-                foreach (string file in Directory.GetFiles(SamplesFolder, "*.nebula"))
-                {
-                    yield return file;
-                }
-            }
         }
 
         private static IEnumerable<object[]> GetSamplesWithMetadata
