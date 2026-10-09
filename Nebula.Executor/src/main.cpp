@@ -111,41 +111,6 @@ static void BindNativeFunctions(Interpreter& vm, const std::filesystem::path& dl
 		writer::ConsoleWrite(errorLine, writer::FG_RED);
 	}
 }
-
-static bool launchDebugger()
-{
-	// Get System directory, typically c:\windows\system32
-	std::wstring systemDir(MAX_PATH + 1, '\0');
-	UINT nChars = GetSystemDirectoryW(&systemDir[0], (UINT)systemDir.length());
-	if (nChars == 0) return false; // failed to get system directory
-	systemDir.resize(nChars);
-
-	// Get process ID and create the command line
-	DWORD pid = GetCurrentProcessId();
-	std::wostringstream s;
-	s << systemDir << L"\\vsjitdebugger.exe -p " << pid;
-	std::wstring cmdLine = s.str();
-
-	// Start debugger process
-	STARTUPINFOW si;
-	ZeroMemory(&si, sizeof(si));
-	si.cb = sizeof(si);
-
-	PROCESS_INFORMATION pi;
-	ZeroMemory(&pi, sizeof(pi));
-
-	if (!CreateProcessW(NULL, &cmdLine[0], NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) return false;
-
-	// Close debugger process handles to eliminate resource leak
-	CloseHandle(pi.hThread);
-	CloseHandle(pi.hProcess);
-
-	// Wait for the debugger to attach
-	while (!IsDebuggerPresent()) Sleep(100);
-
-	return true;
-}
-
 #else
 
 #error "Unsupported platform"
@@ -296,10 +261,7 @@ int main(int argc, char* argv[]) {
 	// Enable memory anal
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
-	//_CrtSetBreakAlloc(9979);
 #endif // DEBUG	
-
-	launchDebugger();
 
 	planet::argparser::ArgParser argParser([](const std::string& err) {
 		writer::ConsoleWrite(err + '\n', writer::Code::BG_RED);
