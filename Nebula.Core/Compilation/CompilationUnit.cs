@@ -1,14 +1,17 @@
-﻿using Nebula.Commons.Text;
+﻿using Nebula.Commons.Syntax;
+using Nebula.Commons.Text;
 using Nebula.Core.Compilation.CST.Tree.Declaration;
 using Nebula.Core.Compilation.CST.Tree.Declaration.Bundle;
 using Nebula.Core.Compilation.CST.Tree.Declaration.Function;
 using Nebula.Core.Compilation.CST.Tree.Statements;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation
 {
     /// <summary>Root of the concrete syntax tree</summary>
     public sealed class CompilationUnit
+        : IEnumerable<Node>
     {
         /// <summary>Namespace of this compilation unit</summary>
         public NamespaceStatement NamespaceStatement { get; set; } = NamespaceStatement.Empty;
@@ -22,7 +25,7 @@ namespace Nebula.Core.Compilation
         public IList<FunctionDeclaration> Functions { get; } = new List<FunctionDeclaration>();
 
         /// <summary>Native function declaration which will be used by the binder to resolve native function calls</summary>
-        public IList<NativeFunctionDeclaration> NativeFunction { get; } = new List<NativeFunctionDeclaration>();
+        public IList<NativeFunctionDeclaration> NativeFunctions { get; } = new List<NativeFunctionDeclaration>();
 
         /// <summary>Bundles defined in this compilation unit</summary>
         public IList<BundleDeclaration> Bundles { get; } = new List<BundleDeclaration>();
@@ -40,7 +43,7 @@ namespace Nebula.Core.Compilation
             NamespaceStatement = NamespaceStatement.Empty;
             Imports.Clear();
             Functions.Clear();
-            NativeFunction.Clear();
+            NativeFunctions.Clear();
             Bundles.Clear();
         }
 

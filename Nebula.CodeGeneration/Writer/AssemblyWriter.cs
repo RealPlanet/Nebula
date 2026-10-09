@@ -1,8 +1,6 @@
 ﻿using Nebula.CodeGeneration.DebugSymbols;
 using Nebula.CodeGeneration.Definitions;
-using Nebula.Commons.Syntax;
 using Nebula.Commons.Text;
-using Nebula.Commons.Text.Printers;
 using Nebula.Interop.Enumerators;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;

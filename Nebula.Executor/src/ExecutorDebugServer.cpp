@@ -572,6 +572,10 @@ bool ExecutorDebugServer::OnSetVariableRequest(const dap::SetVariableRequest& re
 
 	response.value = varToChange->GetDisplayValue();
 	response.variablesReference = varToChange->id;
+
+	auto event = dap::Create<dap::InvalidatedEvent>();
+	event->areas = { dap::InvalidatedEvent::InvalidatedAreasValues::Variables };
+	m_dapServer->QueueEventAfterResponse(std::move(event));
 	return true;
 }
 

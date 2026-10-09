@@ -4,6 +4,7 @@ using Nebula.Commons.Text;
 using Nebula.Core.Compilation.CST.Tree.Base;
 using Nebula.Core.Compilation.CST.Tree.Types;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
 {

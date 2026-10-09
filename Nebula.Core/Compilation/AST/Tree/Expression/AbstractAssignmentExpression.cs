@@ -1,7 +1,6 @@
 ﻿using Nebula.Commons.Syntax;
 using Nebula.Core.Compilation.AST.Symbols;
 using Nebula.Core.Compilation.AST.Tree.Base;
-using Nebula.Interop.Structures;
 using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.AST.Tree.Expression

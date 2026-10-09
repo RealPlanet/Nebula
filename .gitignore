@@ -362,3 +362,5 @@ MigrationBackup/
 OutputCompile
 Nebula.Compiler/Properties/launchSettings.json
 .idea
+Samples/.out
+*.json

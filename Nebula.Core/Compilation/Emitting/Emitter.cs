@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualBasic.FileIO;
-using Nebula.CodeGeneration;
+﻿using Nebula.CodeGeneration;
 using Nebula.CodeGeneration.Definitions;
 using Nebula.CodeGeneration.Exceptions;
 using Nebula.Commons.Reporting;
@@ -26,7 +25,6 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Xml.Linq;
 
 namespace Nebula.Core.Compilation.Emitting
 {

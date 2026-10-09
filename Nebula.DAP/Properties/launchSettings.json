@@ -1,9 +1,0 @@
-{
-  "profiles": {
-    "Nebula.Debugger": {
-      "commandName": "Project",
-      "commandLineArgs": "-server_port 4711\r\n",
-      "nativeDebugging": true
-    }
-  }
-}

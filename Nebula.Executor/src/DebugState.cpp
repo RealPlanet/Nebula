@@ -287,6 +287,12 @@ std::vector<nebula::debugger::Value>& nebula::debugger::DebugState::GetValues(si
 
 void nebula::debugger::DebugState::PopulateChildValues(Value& variable)
 {
+	if (m_values.find(variable.id) != m_values.end())
+	{
+		// Already populated
+		return;
+	}
+
 	assert(variable.typeInformation);
 	assert(variable.internalValue);
 	assert(variable.debugSymbols);
