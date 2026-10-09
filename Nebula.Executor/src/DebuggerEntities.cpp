@@ -78,11 +78,6 @@ std::string nebula::debugger::Value::GetDisplayValue() const
 		return "undefined array";
 	}
 
-	if (typeInformation->name == "bool")
-	{
-		return std::to_string(internalValue->AsInt32() != 0);
-	}
-
 	if (typeInformation->name == "string")
 	{
 		return "\"" + nebula::ToString(internalValue->GetInternalValue()) + "\"";
@@ -119,7 +114,7 @@ bool nebula::debugger::Value::OverrideInt32Value(const std::string& newValue, st
 	size_t value;
 	if (utility::try_parse(newValue, value))
 	{
-		return internalValue->SetValue({ value != 0 });
+		return internalValue->SetValue({ (TInt32)value });
 	}
 
 	failReason = std::format("Value '{}' is not convertible to type '{}'", newValue, typeInformation->name);
