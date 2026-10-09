@@ -96,13 +96,13 @@
         FunctionDeclaration,
         NativeFunctionDeclaration,
         BundleDeclaration,
-        BundleFieldDeclaration,
+        ObjectFieldDeclaration,
 
         UnaryExpression,
         BinaryExpression,
         AssignmentExpression,
         ObjectFieldAccessExpression,
-        ArrayAccessExpression,
+        IndexExpression,
         NameExpression,
         ParenthesizedExpression,
         CallExpression,
@@ -114,8 +114,9 @@
         IsDefinedExpression,
 
         EndOfFileToken,
+        ArrayTypeClause,
+        ObjectTypeClause,
         TypeClause,
-        RankSpecifier,
         ElseClause,
         Parameter,
 

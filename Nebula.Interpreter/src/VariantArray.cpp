@@ -2,37 +2,68 @@
 #include "Instruction.h"
 #include "Frame.h"
 
+#include <cassert>
+
 using namespace nebula;
 
-nebula::VariantArray::VariantArray(const DataStackVariantIndex& type)
-    : IGCObject(ObjectType::Array), m_eVariantType{ type }
+VariantArray::VariantArray()
+    : GCUser(ObjectType::Array)
 {
 }
 
-InstructionErrorCode VariantArray::CallVirtual(const std::string_view& funcName, nebula::Interpreter*, Frame* context)
+void VariantArray::Append(const DataStackVariant& v)
+{
+    m_Vector.emplace_back(v);
+}
+
+void nebula::VariantArray::Append(DataStackVariant&& v)
+{
+    m_Vector.emplace_back(std::move(v));
+}
+
+void VariantArray::Clear() { m_Vector.clear(); }
+
+size_t VariantArray::Size() { return m_Vector.size(); }
+
+Value& nebula::VariantArray::At(size_t i)
+{
+    return m_Vector.at(i);
+}
+
+const Value& nebula::VariantArray::At(size_t i) const
+{
+    return m_Vector.at(i);
+}
+
+InstructionErrorCode VariantArray::CallVirtual(const std::string_view& funcName, std::vector<DataStackVariant>& arguments, Interpreter*, Frame* context)
 {
     if (funcName == "Append")
     {
-        DataStackVariant& v = context->Stack().Peek();
-
-        if (v.index() != this->m_eVariantType)
+        if (arguments.size() != 1)
         {
             return InstructionErrorCode::Fatal;
         }
 
-        Append(v);
-        context->Stack().Pop();
+        DataStackVariant& v = arguments[0];
+        if (!m_Vector.empty() && m_Vector[0].GetValueType() != v.index())
+        {
+            return InstructionErrorCode::Fatal;
+        }
+
+        Append(std::move(v));
         return InstructionErrorCode::None;
     }
 
     if (funcName == "Clear")
     {
+        assert(arguments.size() == 0);
         Clear();
         return InstructionErrorCode::None;
     }
 
     if (funcName == "Count")
     {
+        assert(arguments.size() == 0);
         context->Stack().Push({ (TInt32)Size() });
         return InstructionErrorCode::None;
     }

@@ -4,13 +4,11 @@
         : TypeSymbol
     {
         public TypeSymbol ValueType { get; }
-        public int Rank { get; }
 
-        public ArrayTypeSymbol(TypeSymbol valueType, int rank)
+        public ArrayTypeSymbol(TypeSymbol valueType)
             : base(string.Empty, BaseArray.Name)
         {
             ValueType = valueType;
-            Rank = rank;
 
             _registeredFunctions.Add(new FunctionSymbol("Count", [], [], Int, null!));
             _registeredFunctions.Add(new FunctionSymbol("Append", [new ParameterSymbol("item", ValueType, 0)], [], Void, null!));

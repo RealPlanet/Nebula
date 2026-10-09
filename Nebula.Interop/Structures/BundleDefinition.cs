@@ -14,7 +14,7 @@ namespace Nebula.Interop.Structures
 
         public IReadOnlyList<BundleField> Fields => _fields;
 
-        private readonly List<BundleField> _fields = new List<BundleField>();
+        private readonly List<BundleField> _fields = new();
 
         public BundleDefinition(string @namespace, IntPtr handle)
         {

@@ -20,7 +20,7 @@ namespace Nebula.Core.Reporting
         #region Errors
         public static void ReportBinderFunctionAlreadyExists(this Report r, BaseFunctionDeclaration func)
         {
-            (EBinderMessages code, string MessageTemplate) = BinderMessagesProvider.BinderFunctionAlreadyExists;
+            (EBinderMessages code, string MessageTemplate) = BinderMessagesProvider.FunctionAlreadyExists;
             string message = string.Format(MessageTemplate, func.Name.Text);
             r.PushError(message, func.Name.Location, code.ToString());
         }
@@ -137,10 +137,15 @@ namespace Nebula.Core.Reporting
             string message = string.Format(template, name);
             r.PushError(message, location, code.ToString());
         }
+        public static void ReportUndefinedGlobalVariable(this Report r, TextLocation location, string @namespace, string name)
+        {
+            (EBinderMessages code, string template) = BinderMessagesProvider.GlobalVariableDoesNotExists;
+            string message = string.Format(template, name, @namespace);
+            r.PushError(message, location, code.ToString());
+        }
         public static void ReportPrimitiveTypesDontHaveFields(this Report r, string variable, TextLocation location)
         {
-            // todo
-            (EBinderMessages code, string template) = BinderMessagesProvider.AllPathsMustReturn;
+            (EBinderMessages code, string template) = BinderMessagesProvider.PrimitiveTypeDoesNotHaveFields;
             string message = string.Format(template, variable.ToString());
             r.PushError(message, location, code.ToString());
         }
@@ -260,7 +265,7 @@ namespace Nebula.Core.Reporting
                     r.ReportUnreachableCode(expression);
                     return;
                 case NodeType.CallExpression:
-                    r.ReportUnreachableCode(((CallExpression)node).Identifier.Location);
+                    r.ReportUnreachableCode(((CallExpression)node).FunctionName.Location);
                     return;
                 default:
                     r.ReportUnreachableCode(node.Location);

@@ -52,6 +52,16 @@ namespace Nebula.Core.Compilation.Emitting
         private readonly Options _options;
         private Context _currentContext = null!;
         private AbstractProgram _currentProgram = null!;
+        // Primitives only — these are the true singletons with no further shape.
+        private static readonly Dictionary<TypeSymbol, TypeReference> _primitiveTypes = new()
+        {
+            { TypeSymbol.Error, TypeReference.Unknown },
+            { TypeSymbol.Void,  TypeReference.Void },
+            { TypeSymbol.Bool,  TypeReference.Bool },
+            { TypeSymbol.Int,   TypeReference.Int },
+            { TypeSymbol.Float, TypeReference.Float },
+            { TypeSymbol.String, TypeReference.String },
+        };
 
         public Emitter(Options options)
         {
@@ -71,7 +81,7 @@ namespace Nebula.Core.Compilation.Emitting
                 EmitNativeFunctionDeclaration(nativeFunc);
             }
 
-            foreach (KeyValuePair<string, BundleSymbol> bundle in program.Bundles)
+            foreach (KeyValuePair<string, ClassSymbol> bundle in program.Classes)
             {
                 EmitBundleDeclaration(bundle.Value);
             }
@@ -93,7 +103,7 @@ namespace Nebula.Core.Compilation.Emitting
             }
             else
             {
-                string sourceLoc = Path.GetDirectoryName(program.SourceCode.FileName)
+                string sourceLoc = Path.GetDirectoryName(program.SourceCode.FullPath)
                     ?? throw new Exception("Could not get source path!");
 
                 outputFilePath = Path.Combine(sourceLoc, compiledFileName);
@@ -104,24 +114,23 @@ namespace Nebula.Core.Compilation.Emitting
 
             if (_options.ReadableBytecode)
             {
-                using (FileStream output = File.Create(outputFilePath))
-                using (FileStream outputDbg = File.Create(outputDbgFilePath))
-                using (StreamWriter writer = new(output))
-                using (StreamWriter dbgWriter = new(outputDbg))
+                using FileStream output = File.Create(outputFilePath);
+                using FileStream outputDbg = File.Create(outputDbgFilePath);
+                using StreamWriter writer = new(output);
+                using StreamWriter dbgWriter = new(outputDbg);
+
+                _currentContext.Assembly.Write(writer);
+                output.Flush();
+                output.Position = 0;
+                string md5Checksum = string.Empty;
+                using (MD5 md5 = MD5.Create())
                 {
-                    _currentContext.Assembly.Write(writer);
-                    output.Flush();
-                    output.Position = 0;
-                    string md5Checksum = string.Empty;
-                    using (MD5 md5 = MD5.Create())
-                    {
 
-                        md5Checksum = BitConverter.ToString(md5.ComputeHash(output)).Replace("-", "").ToLowerInvariant();
-                    }
-
-                    Debug.Assert(!string.IsNullOrEmpty(md5Checksum));
-                    _currentContext.Assembly.WriteDebuggingInfo(dbgWriter, md5Checksum);
+                    md5Checksum = BitConverter.ToString(md5.ComputeHash(output)).Replace("-", "").ToLowerInvariant();
                 }
+
+                Debug.Assert(!string.IsNullOrEmpty(md5Checksum));
+                _currentContext.Assembly.WriteDebuggingInfo(dbgWriter, md5Checksum);
             }
             else
             {
@@ -146,7 +155,7 @@ namespace Nebula.Core.Compilation.Emitting
                 .Where(kvp => !allCompiledNamespaces.Contains(kvp.Key))
                 .Select(kvp => kvp.Value);
 
-            // Declare the referenced global variables, I don't really like this solution but what w
+            // Declare the referenced global variables, I don't really like this solution but whatever
             foreach (var reference in usableReferences)
             {
                 foreach (var globalReference in reference.Globals.Values)
@@ -166,7 +175,7 @@ namespace Nebula.Core.Compilation.Emitting
                 int tmpGlobalCount = 0;
                 foreach (var globalReference in otherProgram.Globals.Keys)
                 {
-                    VariableDefinition variableDefinition = GenerateVariableDefinition(tmpGlobalCount, globalReference);
+                    GlobalVariableDefinition variableDefinition = GenerateVariableDefinition(tmpGlobalCount, globalReference);
                     _currentContext.Globals[globalReference] = variableDefinition;
                     tmpGlobalCount++;
                 }
@@ -176,24 +185,16 @@ namespace Nebula.Core.Compilation.Emitting
             // Define our local scope globals
             foreach (var variable in program.Globals.Keys)
             {
-                VariableDefinition variableDefinition = GenerateVariableDefinition(localGlobalCount, variable);
-                variableDefinition.Namespace = string.Empty;
-
+                GlobalVariableDefinition variableDefinition = GenerateVariableDefinition(localGlobalCount, variable);
                 _currentContext.Globals[variable] = variableDefinition;
                 _currentContext.Assembly.TypeDefinition.Globals.Add(variableDefinition);
                 localGlobalCount++;
             }
 
-            VariableDefinition GenerateVariableDefinition(int globalCount, VariableSymbol variable)
+            static GlobalVariableDefinition GenerateVariableDefinition(int globalCount, GlobalVariableSymbol variable)
             {
-                TypeReference typeReference = _knownTypes[variable.Type.BaseType];
-                VariableDefinition variableDefinition = new(typeReference, variable.Namespace, variable.Name, globalCount);
-                if (variable.Type is ObjectTypeSymbol objSymbol)
-                {
-                    variableDefinition.SourceNamespace = objSymbol.Namespace;
-                    variableDefinition.SourceTypeName = objSymbol.Name;
-                }
-
+                TypeReference typeReference = ResolveTypeReference(variable.Type);
+                GlobalVariableDefinition variableDefinition = new(typeReference, variable.Namespace, variable.Name, globalCount);
                 return variableDefinition;
             }
         }
@@ -211,20 +212,20 @@ namespace Nebula.Core.Compilation.Emitting
             _currentContext.LabelReferences.Clear();
             _currentContext.Labels.Clear();
 
-            TypeReference returnType = _knownTypes[declaration.ReturnType.BaseType];
+            TypeReference returnType = ResolveTypeReference(declaration.ReturnType);
             AttributeType attributes = GenerateAttributeMask(declaration.Attributes);
             MethodDefinition method = new(declaration.Name, attributes, returnType, declaration.Declaration);
             _currentContext.Assembly.TypeDefinition.Methods.Add(method);
 
             foreach (ParameterSymbol? parameter in declaration.Parameters)
             {
-                TypeReference? parameterType = _knownTypes[parameter.Type.BaseType];
-                ParameterDefinition parameterDefinition = new(parameterType, parameter.Name, method.Parameters.Count);
-                if (parameter.Type is ObjectTypeSymbol objSymbol)
-                {
-                    parameterDefinition.SourceNamespace = objSymbol.Namespace;
-                    parameterDefinition.SourceTypeName = objSymbol.Name;
-                }
+                TypeReference parameterType = ResolveTypeReference(parameter.Type);
+                parameter.Type.GetTypeInformation(out var @namespace, out var sourceTypeName);
+                ParameterDefinition parameterDefinition = new(parameterType,
+                                                              @namespace,
+                                                              sourceTypeName,
+                                                              parameter.Name,
+                                                              method.Parameters.Count);
 
                 method.Parameters.Add(parameterDefinition);
                 _currentContext.Parameters.Add(parameter, parameterDefinition);
@@ -233,25 +234,24 @@ namespace Nebula.Core.Compilation.Emitting
             EmitFunctionBody(method, body);
         }
 
-        private void EmitBundleDeclaration(BundleSymbol value)
+        private void EmitBundleDeclaration(ClassSymbol value)
         {
             string bundleName = value.Name;
-            BundleDefinition bundle = new(bundleName);
+            ClassDefinition bundle = new(bundleName);
 
             foreach (AbstractBundleField field in value.Fields)
             {
-                TypeReference? fieldType = _knownTypes[field.FieldType.BaseType];
-                ParameterDefinition fieldDef = new(fieldType, field.FieldName, bundle.Fields.Count);
-                if (field.FieldType is ObjectTypeSymbol objSymbol)
-                {
-                    fieldDef.SourceNamespace = objSymbol.Namespace;
-                    fieldDef.SourceTypeName = objSymbol.Name;
-                }
-
+                TypeReference fieldType = ResolveTypeReference(field.Type);
+                field.Type.GetTypeInformation(out var typeNamespace, out var typeName);
+                ParameterDefinition fieldDef = new(fieldType,
+                                                   typeNamespace,
+                                                   typeName,
+                                                   field.FieldName,
+                                                   bundle.Fields.Count);
                 bundle.Fields.Add(fieldDef);
             }
 
-            _currentContext.Assembly.TypeDefinition.Bundles.Add(bundle);
+            _currentContext.Assembly.TypeDefinition.Classes.Add(bundle);
         }
 
         private void EmitFunctionBody(MethodDefinition method, AbstractBlockStatement body)
@@ -327,7 +327,7 @@ namespace Nebula.Core.Compilation.Emitting
 
         private void EmitWaitNotificationStatement(NILProcessor processor, AbstractWaitNotificationStatement node)
         {
-            EmitExpression(processor, node.BundleToWaitOn, node.OriginalNode);
+            EmitExpression(processor, node.ObjectToWait, node.OriginalNode);
             EmitExpression(processor, node.NotifyExpression, node.OriginalNode);
             processor.Emit(InstructionOpcode.Wait_n, node.OriginalNode);
         }
@@ -341,7 +341,7 @@ namespace Nebula.Core.Compilation.Emitting
 
         private void EmitNotifyStatement(NILProcessor processor, AbstractNotifyStatement node)
         {
-            EmitExpression(processor, node.BundleToNotifyFrom, node.OriginalNode);
+            EmitExpression(processor, node.ObjectToNotifyFrom, node.OriginalNode);
             EmitExpression(processor, node.NotifyExpression, node.OriginalNode);
             processor.Emit(InstructionOpcode.Notify, node.OriginalNode);
         }
@@ -391,15 +391,9 @@ namespace Nebula.Core.Compilation.Emitting
 
         private void EmitVariableDeclaration(NILProcessor processor, AbstractVariableDeclaration node, Node originalStatement)
         {
-            TypeReference typeReference = _knownTypes[node.Variable.Type.BaseType];
-
-            VariableDefinition variableDefinition = new(typeReference, node.Variable.Namespace, node.Variable.Name, processor.Body.Variables.Count);
-
-            if (node.Variable.Type is ObjectTypeSymbol objSymbol)
-            {
-                variableDefinition.SourceNamespace = objSymbol.Namespace;
-                variableDefinition.SourceTypeName = objSymbol.Name;
-            }
+            TypeReference typeReference = ResolveTypeReference(node.Variable.Type);
+            node.Variable.Type.GetTypeInformation(out var typeNamespace, out var typeName);
+            VariableDefinition variableDefinition = new(typeReference, node.Variable.Name, processor.Body.Variables.Count);
 
             _currentContext.Locals.Add(node.Variable, variableDefinition);
             processor.Body.Variables.Add(variableDefinition);
@@ -433,55 +427,6 @@ namespace Nebula.Core.Compilation.Emitting
                     processor.Emit(InstructionOpcode.Stfld, assignment.Field.OrdinalPosition, originalStatement);
                 }
             }
-        }
-
-        private void StoreNewArrIntoLocal(NILProcessor processor,
-                                          VariableDefinition variableDefinition,
-                                          ArrayTypeSymbol arraySymbol,
-                                          TypeReference baseValueType,
-                                          Node originalNode)
-        {
-
-            object arguments = ExtractNewArrArguments(arraySymbol, baseValueType);
-
-            processor.Emit(InstructionOpcode.Newarr, arguments, originalNode);
-            processor.Emit(InstructionOpcode.Stloc, variableDefinition, originalNode);
-        }
-
-        private void StoreNewArrIntoParameter(NILProcessor processor,
-                                          ParameterDefinition parameter,
-                                          ArrayTypeSymbol arraySymbol,
-                                          TypeReference baseValueType,
-                                          Node originalNode)
-        {
-            object arguments = ExtractNewArrArguments(arraySymbol, baseValueType);
-
-            processor.Emit(InstructionOpcode.Newarr, arguments, originalNode);
-            processor.Emit(InstructionOpcode.StArg, parameter, originalNode);
-        }
-
-        private object ExtractNewArrArguments(ArrayTypeSymbol arraySymbol, TypeReference baseValueType)
-        {
-            object arguments = baseValueType.Name;
-            if (arraySymbol.ValueType.IsObject)
-            {
-                ExtractBundleNamespaceAndName((ObjectTypeSymbol)arraySymbol.ValueType, out string typeNamespace, out string typedName);
-                if (_currentContext.Assembly.Namespace != typeNamespace)
-                {
-                    arguments = new string[] { baseValueType.Name, typeNamespace, typedName };
-                }
-                else
-                {
-                    arguments = new string[] { baseValueType.Name, typedName };
-                }
-            }
-
-            if (arraySymbol.ValueType.IsArray)
-            {
-                throw new NotSupportedException("Array within array is not supported!");
-            }
-
-            return arguments;
         }
 
         private static void ExtractBundleNamespaceAndName(ObjectTypeSymbol objTypeSymbol, out string typeNamespace, out string typedName)
@@ -559,8 +504,8 @@ namespace Nebula.Core.Compilation.Emitting
                 case AbstractNodeType.ObjectCallExpression:
                     EmitObjectCallExpression(processor, (AbstractObjectCallExpression)node, originalStatement);
                     break;
-                case AbstractNodeType.ArrayAccessExpression:
-                    EmitArrayAccessExpression(processor, (AbstractArrayAccessExpression)node, originalStatement);
+                case AbstractNodeType.IndexExpression:
+                    EmitIndexExpression(processor, (AbstractIndexExpression)node, originalStatement);
                     break;
                 case AbstractNodeType.ObjectFieldAccessExpression:
                     EmitObjectFieldAccess(processor, (AbstractObjectFieldAccessExpression)node, originalStatement);
@@ -582,34 +527,26 @@ namespace Nebula.Core.Compilation.Emitting
         private void EmitConversionExpression(NILProcessor processor, AbstractConversionExpression node, Node originalStatement)
         {
             EmitExpression(processor, node.Expression, originalStatement);
-            processor.Emit(InstructionOpcode.ConvType, _knownTypes[node.ResultType.BaseType], originalStatement);
+            TypeReference targetType = ResolveTypeReference(node.ResultType);
+            processor.Emit(InstructionOpcode.ConvType, targetType, originalStatement);
         }
 
         private void EmitObjectCallExpression(NILProcessor processor, AbstractObjectCallExpression node, Node originalStatement)
         {
+            EmitExpression(processor, node.Target, originalStatement);
+
             foreach (AbstractExpression argument in node.Arguments)
             {
                 EmitExpression(processor, argument, originalStatement);
             }
 
-            VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
-            processor.Emit(InstructionOpcode.Callvirt, new string[] { variableDefinition.Index.ToString(), node.Function.Name }, originalStatement);
+            processor.Emit(InstructionOpcode.Callvirt, new string[] { node.Function.Name, node.Arguments.Length.ToString() }, originalStatement);
         }
 
-        private void EmitArrayAccessExpression(NILProcessor processor, AbstractArrayAccessExpression node, Node originalStatement)
+        private void EmitIndexExpression(NILProcessor processor, AbstractIndexExpression node, Node originalStatement)
         {
-            if (node.Variable is ParameterSymbol parameter)
-            {
-                ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
-                processor.Emit(InstructionOpcode.Ldarg, parameterDefinition, originalStatement);
-            }
-            else
-            {
-                VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
-                processor.Emit(InstructionOpcode.Ldloc, variableDefinition, originalStatement);
-            }
-
-            EmitExpression(processor, node.IndexExpression, originalStatement);
+            EmitExpression(processor, node.Target, originalStatement);
+            EmitExpression(processor, node.IndexToAccess, originalStatement);
             processor.Emit(InstructionOpcode.Ldelem, originalStatement);
         }
 
@@ -628,6 +565,7 @@ namespace Nebula.Core.Compilation.Emitting
         {
             if (node.Mode == AbstractObjectFieldAccessExpression.FieldMode.Read)
             {
+                EmitExpression(processor, node.Target, originalStatement);
                 processor.Emit(InstructionOpcode.Ldfld, node.Field.OrdinalPosition, originalStatement);
             }
         }
@@ -670,17 +608,7 @@ namespace Nebula.Core.Compilation.Emitting
 
         private void EmitArrayAssignmentExpression(NILProcessor processor, AbstractArrayAssignmentExpression node, Node originalStatement)
         {
-            if (node.ArrayVariable is ParameterSymbol parameter)
-            {
-                ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
-                processor.Emit(InstructionOpcode.Ldarg, parameterDefinition, originalStatement);
-            }
-            else
-            {
-                VariableDefinition? variableDefinition = _currentContext.Locals[node.ArrayVariable];
-                processor.Emit(InstructionOpcode.Ldloc, variableDefinition, originalStatement);
-            }
-
+            EmitExpression(processor, node.Target, originalStatement);
             EmitExpression(processor, node.IndexExpression, originalStatement);
             EmitExpression(processor, node.Expression, originalStatement);
             processor.Emit(InstructionOpcode.Stelem, originalStatement);
@@ -691,17 +619,6 @@ namespace Nebula.Core.Compilation.Emitting
             if (node.Variable is ParameterSymbol parameter)
             {
                 ParameterDefinition? parameterDefinition = _currentContext.Parameters[node.Variable];
-                if (parameter.Type == TypeSymbol.BaseObject)
-                {
-                    throw new NotImplementedException();
-                }
-
-                if (parameter.Type == TypeSymbol.BaseArray)
-                {
-                    EmitArrayParameterReassignment(processor, parameterDefinition, node, originalStatement);
-                    return;
-                }
-
                 EmitExpression(processor, node.Expression, originalStatement);
                 processor.Emit(InstructionOpcode.Dup, originalStatement); // Takes current value on stack and pushes it again
                 processor.Emit(InstructionOpcode.StArg, parameterDefinition, originalStatement); // Writes value into parameter
@@ -719,17 +636,6 @@ namespace Nebula.Core.Compilation.Emitting
             {
                 isGlobal = false;
                 variableDefinition = _currentContext.Locals[node.Variable];
-            }
-
-            if (node.Variable.Type == TypeSymbol.BaseObject)
-            {
-                throw new NotImplementedException();
-            }
-
-            if (node.Variable.Type == TypeSymbol.BaseArray)
-            {
-                EmitArrayLocalReassignment(processor, variableDefinition, node);
-                return;
             }
 
             EmitExpression(processor, node.Expression, originalStatement);
@@ -750,29 +656,11 @@ namespace Nebula.Core.Compilation.Emitting
 
         private void EmitVariableExpression(NILProcessor processor, AbstractVariableExpression node, Node originalStatement)
         {
-            // TODO :: Rethink how variables vs bundles are handled to simplify the instruction set
             switch (node.Variable)
             {
                 case ParameterSymbol parameter:
                     {
                         ParameterDefinition? parameterDefinition = _currentContext.Parameters[parameter];
-
-                        if (node is AbstractArrayAccessExpression arrAccess)
-                        {
-                            processor.Emit(InstructionOpcode.Ldarg, parameterDefinition, originalStatement);
-                            EmitExpression(processor, arrAccess.IndexExpression, originalStatement);
-
-                            if (arrAccess.IndexExpression.ConstantValue.IsNotNull())
-                            {
-                                EmitOptimizeLdcI4Instruction(processor, (int)arrAccess.IndexExpression.ConstantValue.Value, originalStatement);
-                            }
-                            else
-                            {
-                                processor.Emit(InstructionOpcode.Ldc_i4, arrAccess.IndexExpression, originalStatement);
-                            }
-
-                        }
-
                         InstructionOpcode paramOpcode = InstructionOpcode.Ldarg;
                         processor.Emit(paramOpcode, parameterDefinition, originalStatement);
                         break;
@@ -789,7 +677,6 @@ namespace Nebula.Core.Compilation.Emitting
                     {
                         // TODO :: Figure out if we want to keep this variable definition as instruction argument or pass the index
                         // directly
-
                         VariableDefinition? variableDefinition = _currentContext.Locals[node.Variable];
                         InstructionOpcode opcode = InstructionOpcode.Ldloc;
                         object argument = variableDefinition;
@@ -1082,30 +969,24 @@ namespace Nebula.Core.Compilation.Emitting
             return mask;
         }
 
-        private readonly Dictionary<TypeSymbol, TypeReference> _knownTypes = new()
+        private static TypeReference ResolveTypeReference(TypeSymbol type)
         {
-            {TypeSymbol.Error, TypeReference.Unknown},
-            {TypeSymbol.Void, TypeReference.Void},
-            {TypeSymbol.Bool, TypeReference.Bool},
-            {TypeSymbol.Int, TypeReference.Int},
-            {TypeSymbol.Float, TypeReference.Float},
-            {TypeSymbol.String, TypeReference.String},
-            {TypeSymbol.BaseObject, TypeReference.Bundle},
-            {TypeSymbol.BaseArray, TypeReference.Array},
-        };
+            if (_primitiveTypes.TryGetValue(type, out TypeReference? known))
+            {
+                return known;
+            }
 
-        private void EmitArrayParameterReassignment(NILProcessor processor, ParameterDefinition parameter, AbstractAssignmentExpression node, Node originalStatement)
-        {
-            ArrayTypeSymbol arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
-            TypeReference typeReference = _knownTypes[arraySymbol.ValueType.BaseType];
-            StoreNewArrIntoParameter(processor, parameter, arraySymbol, typeReference, originalStatement);
-        }
+            if (type is ArrayTypeSymbol arraySymbol)
+            {
+                return TypeReference.ArrayOf(ResolveTypeReference(arraySymbol.ValueType));
+            }
 
-        private void EmitArrayLocalReassignment(NILProcessor processor, VariableDefinition variableDefinition, AbstractAssignmentExpression node)
-        {
-            ArrayTypeSymbol arraySymbol = (ArrayTypeSymbol)node.Variable.Type;
-            TypeReference typeReference = _knownTypes[arraySymbol.ValueType.BaseType];
-            StoreNewArrIntoLocal(processor, variableDefinition, arraySymbol, typeReference, node.OriginalNode);
+            if (type is ObjectTypeSymbol objectSymbol)
+            {
+                return TypeReference.ObjectOf(objectSymbol.Namespace ?? string.Empty, objectSymbol.Name);
+            }
+
+            throw new EmitterException($"Unable to resolve a TypeReference for '{type}' ({type.GetType().Name})");
         }
 
         private static void EmitOptimizeLdcI4Instruction(NILProcessor processor, int constantValue, Node originalStatement)
@@ -1149,7 +1030,7 @@ namespace Nebula.Core.Compilation.Emitting
                     }
                 case 7:
                     {
-                        processor.Emit(InstructionOpcode.Ldc_i4_8, originalStatement);
+                        processor.Emit(InstructionOpcode.Ldc_i4_7, originalStatement);
                         break;
                     }
                 case 8:

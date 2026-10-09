@@ -4,6 +4,7 @@ using Nebula.Commons.Text;
 using Nebula.Core.Compilation.CST.Tree.Base;
 using Nebula.Core.Compilation.CST.Tree.Types;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
 {
@@ -11,7 +12,7 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
         : Statement
     {
         public Token Keyword { get; }
-        public TypeClause ReturnType { get; }
+        public BaseTypeClause ReturnType { get; }
         public Token Name { get; }
         public Token OpenParenthesis { get; }
         public TokenSeparatedList<Parameter> Parameters { get; }
@@ -20,7 +21,7 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
         private protected BaseFunctionDeclaration(
             SourceCode syntaxTree,
             Token keyword,
-            TypeClause returnType,
+            BaseTypeClause returnType,
             Token name,
             Token openParenthesis,
             TokenSeparatedList<Parameter> parameters,
@@ -35,10 +36,30 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
             ClosedParenthesis = closedParenthesis;
         }
 
+        public TextLocation SignatureLocation
+        {
+            get
+            {
+                TextSpan first = GetSignatureNodes().First().Span;
+                TextSpan last = GetSignatureNodes().Last().Span;
+                var span = TextSpan.FromBounds(first.Start, last.End);
+                return new TextLocation(SourceCode, span);
+            }
+        }
+
         public override IEnumerable<Node> GetChildren()
         {
+            return GetSignatureNodes();
+        }
+
+        public virtual IEnumerable<Node> GetSignatureNodes()
+        {
             yield return Keyword;
-            yield return ReturnType;
+            foreach (Node child in ReturnType.GetChildren())
+            {
+                yield return child;
+            }
+
             yield return Name;
             yield return OpenParenthesis;
             foreach (Node child in Parameters.GetWithSeparators())

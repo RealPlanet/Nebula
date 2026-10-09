@@ -10,12 +10,12 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression.Bundles
     {
         public override AbstractNodeType Type => AbstractNodeType.ObjectCallExpression;
 
-        public VariableSymbol Variable { get; }
+        public AbstractExpression Target { get; }
 
-        public AbstractObjectCallExpression(Node syntax, VariableSymbol variable, FunctionSymbol function, ImmutableArray<AbstractExpression> arguments)
+        public AbstractObjectCallExpression(Node syntax, AbstractExpression target, FunctionSymbol function, ImmutableArray<AbstractExpression> arguments)
             : base(syntax, false, string.Empty, function, arguments)
         {
-            Variable = variable;
+            Target = target;
         }
     }
 }

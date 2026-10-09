@@ -97,15 +97,6 @@ namespace Nebula.Commons.Reporting.Strings {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Function symbol &apos;{0}&apos; already declared..
-        /// </summary>
-        public static string BinderFunctionAlreadyExists {
-            get {
-                return ResourceManager.GetString("BinderFunctionAlreadyExists", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Parameter &apos;{0}&apos; could not be declared..
         /// </summary>
         public static string CannotBindParameter {
@@ -196,6 +187,15 @@ namespace Nebula.Commons.Reporting.Strings {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Function symbol &apos;{0}&apos; already declared..
+        /// </summary>
+        public static string FunctionAlreadyExists {
+            get {
+                return ResourceManager.GetString("FunctionAlreadyExists", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Function &apos;{0}&apos; does not exist..
         /// </summary>
         public static string FunctionDoesNotExists {
@@ -210,6 +210,15 @@ namespace Nebula.Commons.Reporting.Strings {
         public static string FunctionExpectsReturn {
             get {
                 return ResourceManager.GetString("FunctionExpectsReturn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Global variable &apos;{0}&apos; does not exist in namespace &apos;{1}&apos;. Did you forget an import?.
+        /// </summary>
+        public static string GlobalVariableDoesNotExists {
+            get {
+                return ResourceManager.GetString("GlobalVariableDoesNotExists", resourceCulture);
             }
         }
         
@@ -295,6 +304,15 @@ namespace Nebula.Commons.Reporting.Strings {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Primitive type &apos;{0}&apos; does not have fields.
+        /// </summary>
+        public static string PrimitiveTypeDoesNotHaveFields {
+            get {
+                return ResourceManager.GetString("PrimitiveTypeDoesNotHaveFields", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unary operator &apos;{0}&apos; is not defined for type &apos;{1}&apos;..
         /// </summary>
         public static string UnaryOperatorNotDefined {
@@ -349,7 +367,7 @@ namespace Nebula.Commons.Reporting.Strings {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Variable name does not exist &apos;{0}&apos;..
+        ///   Looks up a localized string similar to Variable &apos;{0}&apos; does not exist..
         /// </summary>
         public static string VariableDoesNotExists {
             get {

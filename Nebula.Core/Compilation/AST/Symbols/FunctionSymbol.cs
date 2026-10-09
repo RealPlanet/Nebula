@@ -22,7 +22,7 @@ namespace Nebula.Core.Compilation.AST.Symbols
                                 TypeSymbol returnType,
                                 Scope scope,
                                 BaseFunctionDeclaration? declaration = null)
-            : base(string.Empty, name)
+            : base(name)
         {
             FunctionScope = scope;
             Parameters = parameters;

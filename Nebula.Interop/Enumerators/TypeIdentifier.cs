@@ -3,9 +3,10 @@
     public enum TypeIdentifier
     {
         Int32 = 0,
+        Bool,
         Float,
         String,
-        Bundle,
+        Object,
         Array,
         Void,
         Unknown,

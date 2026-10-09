@@ -2,6 +2,7 @@
 using Nebula.Core.Compilation.AST.Bundle;
 using Nebula.Core.Compilation.AST.Symbols;
 using Nebula.Core.Compilation.AST.Tree.Base;
+using System.Collections.Generic;
 
 namespace Nebula.Core.Compilation.AST.Tree.Expression
 {
@@ -36,13 +37,18 @@ namespace Nebula.Core.Compilation.AST.Tree.Expression
             Field = field;
             if(Initializer is AbstractObjectInitializationExpression e)
             {
-                e.SetAllocationResult(Field.FieldType);
+                e.SetAllocationResult(Field.Type);
             }
         }
 
         public void SetFieldInitializer(AbstractExpression expr)
         {
             Initializer = expr;
+        }
+
+        public override IEnumerable<AbstractNode> GetChildren()
+        {
+            yield return Initializer;
         }
     }
 }

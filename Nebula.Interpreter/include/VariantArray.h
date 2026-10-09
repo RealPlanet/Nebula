@@ -1,41 +1,29 @@
 #pragma once
 
-#include <map>
 #include <vector>
 
 #include "LanguageTypes.h"
-#include "interfaces/IGCObject.h"
+#include "GCUser.h"
+#include "Value.h"
 
 namespace nebula
 {
     class VariantArray
-        : public IGCObject {
+        : public GCUser {
     public:
-        VariantArray(const DataStackVariantIndex& type);
+        VariantArray();
 
-        void Append(const DataStackVariant& v)
-        {
-            if (m_eVariantType != _UnknownType &&
-                m_eVariantType != v.index())
-            {
-                throw std::exception("Variant type differs");
-            }
+        void Append(const DataStackVariant& v);
+        void Append(DataStackVariant&& v);
+        void Clear();
+        size_t Size();
+        Value& At(size_t i);
+        const Value& At(size_t i) const;
 
-            m_Vector.emplace_back(v);
-        }
-
-        void Clear() { m_Vector.clear(); }
-        size_t Size() { return m_Vector.size(); }
-        DataStackVariant& operator[](int i) { return m_Vector[i]; }
-
-        virtual InstructionErrorCode CallVirtual(const std::string_view& funcName, nebula::Interpreter* interpreter, Frame* context) override;
+        virtual InstructionErrorCode CallVirtual(const std::string_view& funcName, std::vector<DataStackVariant>& arguments, nebula::Interpreter* interpreter, Frame* context) override;
 
     private:
-        DataStackVariantIndex m_eVariantType{ DataStackVariantIndex::_UnknownType };
-
-        // TODO Store object type to ensure consistency
-
-        std::vector<DataStackVariant> m_Vector;
+        std::vector<Value> m_Vector;
     };
 }
 

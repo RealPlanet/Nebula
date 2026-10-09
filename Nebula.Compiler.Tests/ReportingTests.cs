@@ -125,44 +125,36 @@ namespace Nebula.Compiler.Tests
                 }
             ";
 
-            string diagnostics = @"
-                Unreachable code detected.
-            ";
-
+            string diagnostics = BinderMessagesProvider.UnreachableCodeDetected.MessageTemplate;
             AssertDiagnostics(text, diagnostics);
         }
 
-        //[TestMethod]
-        //public void Evaluator_WhileStatement_Reports_NotReachableCode_Warning()
-        //{
-        //    string text = @"
-        //        fn test()
-        //        {
-        //            while false
-        //            {
-        //                [continue]
-        //            }
-        //        }
-        //    ";
+        [TestMethod]
+        public void WhileStatementReportsNotReachableCodeWarning()
+        {
+            string text = @"
+                func void test()
+                {
+                    while (false)
+                    {
+                        [continue];
+                    }
+                }
+            ";
 
-        //    string diagnostics = @"
-        //        Unreachable code detected.
-        //    ";
+            string diagnostics = BinderMessagesProvider.UnreachableCodeDetected.MessageTemplate;
+            AssertDiagnostics(text, diagnostics);
+        }
 
-        //    AssertDiagnostics(text, diagnostics);
-        //}
-
-        ////[Theory]
-        ////[InlineData("[break]", "break")]
-        ////[InlineData("[continue]", "continue")]
-        ////public void Evaluator_Invalid_Break_Or_Continue(string text, string keyword)
-        ////{
-        ////    string? diagnostics = $@"
-        ////        The keyword <{keyword}> can only be used inside loops.
-        ////    ";
-        ////
-        ////    AssertDiagnostics(text, diagnostics);
-        ////}
+        [TestMethod]
+        [DataRow("func void main() { [break]; }", "break")]
+        [DataRow("func void main() { [continue]; }", "continue")]
+        public void InvalidBreakOrContinue(string text, string keyword)
+        {
+            (EBinderMessages code, string template) = BinderMessagesProvider.InvalidBreakOrContinue;
+            string diagnostics = string.Format(template, keyword);
+            AssertDiagnostics(text, diagnostics);
+        }
 
         [TestMethod]
         public void ParameterAlreadyDeclared()
@@ -171,8 +163,7 @@ namespace Nebula.Compiler.Tests
                 func int sum(int a, int b, [int a])
                 {
                     return a + b;
-                }
-            ";
+                }";
 
             (EBinderMessages code, string template) = BinderMessagesProvider.ParameterAlreadyDeclared;
             string diagnostics = string.Format(template, "a");
@@ -192,8 +183,7 @@ namespace Nebula.Compiler.Tests
                 {
                     const string testValue = ""string"";
                     test([testValue]);
-                }
-            ";
+                }";
 
             (EBinderMessages code, string template) = BinderMessagesProvider.CannotConvertTypeImplicity;
             string diagnostics = string.Format(template, "string", "int");
@@ -201,13 +191,12 @@ namespace Nebula.Compiler.Tests
         }
 
         [TestMethod]
-        public void Evaluator_Bad_Type()
+        public void BadType()
         {
             const string text = @"
                 func void test([invalidtype] n)
                 {
-                }
-            ";
+                }";
 
             (EParserMessages code, string template) = ParserMessagesProvider.TypeDoesNotExist;
             string diagnostics = string.Format(template, "invalidtype");
@@ -215,7 +204,7 @@ namespace Nebula.Compiler.Tests
         }
 
         [TestMethod]
-        public void Evaluator_VariableDeclaration_Reports_Redecleration()
+        public void VariableDeclarationReportsRedecleration()
         {
             const string text = @"
                 func void test()
@@ -226,93 +215,98 @@ namespace Nebula.Compiler.Tests
                         int x = 10;
                     }
                     int [x] = 5;
-                }
-                ";
+                }";
             (EParserMessages code, string template) = ParserMessagesProvider.VariableAlreadyDeclared;
             string diagnostics = string.Format(template, "x");
             AssertDiagnostics(text, diagnostics);
         }
 
-        //[TestMethod]
-        //public void Evaluator_InvokeFunctionArguments_Missing()
-        //{
-        //    const string text = @"
-        //        print([)]
-        //    ";
+        [TestMethod]
+        public void InvokeFunctionArgumentsMissing()
+        {
+            const string text = @"
+                func void main(){
+                    s[()];
+                }
 
-        //    const string diagnostics = @"
-        //        Function <print> requires 1 arguments but was given 0.
-        //    ";
+                func void s(string s){}";
 
-        //    AssertDiagnostics(text, diagnostics);
-        //}
+            (EBinderMessages code, string template) = BinderMessagesProvider.WrongNumberOfArguments;
+            string diagnostics = string.Format(template, "s", 1, 0);
+            AssertDiagnostics(text, diagnostics);
 
-        //[TestMethod]
-        //public void Evaluator_InvokeFunctionArguments_Exceeding()
-        //{
-        //    const string text = @"
-        //        print(""Hello""[, "" "", "" world!""])
-        //    ";
+        }
 
-        //    const string diagnostics = @"
-        //        Function <print> requires 1 arguments but was given 3.
-        //    ";
+        [TestMethod]
+        public void InvokeFunctionArgumentsTooMany()
+        {
+            const string text = @"
+                func void main(){
+                    s(1[, 2 ,3]);
+                }
 
-        //    AssertDiagnostics(text, diagnostics);
-        //}
+                func void s(string s){}";
 
-        //[TestMethod]
-        //public void Evaluator_BlockStatement_NoInfiniteLoop()
-        //{
-        //    const string text = @"
-        //        {
-        //        [)][]
-        //        ";
+            (EBinderMessages code, string template) = BinderMessagesProvider.WrongNumberOfArguments;
+            string diagnostics = string.Format(template, "s", 1, 3);
+            AssertDiagnostics(text, diagnostics);
+        }
 
-        //    const string report = @"
-        //                Unexpected token:<CLOSE_PARENTHESIS_TOKEN>, expected <IDENTIFIER_TOKEN>.
-        //                Unexpected token:<END_OF_FILE_TOKEN>, expected <CLOSE_BRACE_TOKEN>.
-        //                  ";
+        [TestMethod]
+        public void BlockStatementNoInfiniteLoop()
+        {
+            const string text = @"func void main()
+                {
+                {
+                [[)]]
+                }[]";
 
-        //    AssertDiagnostics(text, report);
-        //}
+            const string report = @"
+                        Unexpected token 'ClosedParenthesisToken', expected type 'IdentifierToken'.
+                        Unexpected token 'ClosedParenthesisToken', expected type 'SemicolonToken'.
+                        Unexpected token 'EndOfFileToken', expected type 'ClosedBracketToken'.
+                          ";
 
-        //[TestMethod]
-        //public void Evaluator_InvokeFunctionArguments_NoInfiniteLoop()
-        //{
-        //    const string text = @"
-        //        print(""Hi""[[=]][)]
-        //    ";
+            AssertDiagnostics(text, report);
+        }
 
-        //    const string diagnostics = @"
-        //        Unexpected token:<EQUALS_TOKEN>, expected <CLOSE_PARENTHESIS_TOKEN>.
-        //        Unexpected token:<EQUALS_TOKEN>, expected <IDENTIFIER_TOKEN>.
-        //        Unexpected token:<CLOSE_PARENTHESIS_TOKEN>, expected <IDENTIFIER_TOKEN>.
-        //    ";
+        [TestMethod]
+        public void InvokeFunctionArgumentsNoInfiniteLoop()
+        {
+            const string text = @"func void main()
+            {
+                print(""Hi""=[)];
+            }";
 
-        //    AssertDiagnostics(text, diagnostics);
-        //}
+            const string diagnostics = @"
+                Unexpected token 'ClosedParenthesisToken', expected type 'IdentifierToken'.
+            ";
 
-        //[TestMethod]
-        //public void Evaluator_FunctionParameters_NoInfiniteLoop()
-        //{
-        //    const string text = @"
-        //        fn hi(string name[[[=]]][)]
-        //        {
-        //            print(""Hi "" + name + ""!"" )
-        //        }[]
-        //    ";
+            AssertDiagnostics(text, diagnostics);
+        }
 
-        //    const string diagnostics = @"
-        //        Unexpected token:<EQUALS_TOKEN>, expected <CLOSE_PARENTHESIS_TOKEN>.
-        //        Unexpected token:<EQUALS_TOKEN>, expected <OPEN_BRACE_TOKEN>.
-        //        Unexpected token:<EQUALS_TOKEN>, expected <IDENTIFIER_TOKEN>.
-        //        Unexpected token:<CLOSE_PARENTHESIS_TOKEN>, expected <IDENTIFIER_TOKEN>.
-        //        Unexpected token:<END_OF_FILE_TOKEN>, expected <CLOSE_BRACE_TOKEN>.
-        //    ";
+        [TestMethod]
+        public void FunctionParametersNoInfiniteLoop()
+        {
+            const string text = @"
+                func void hi(string name[[[=]]][[[[)]]]]
+                {
+                    print(""Hi "" + name + ""!"" );
+                }[]";
 
-        //    AssertDiagnostics(text, diagnostics);
-        //}
+            const string diagnostics = @"
+                Unexpected token 'EqualsToken', expected type 'ClosedParenthesisToken'.
+                Unexpected token 'EqualsToken', expected type 'OpenBracketToken'.
+                Unexpected token 'EqualsToken', expected type 'IdentifierToken'.
+                Unexpected token 'ClosedParenthesisToken', expected type 'IdentifierToken'.
+                Unexpected token 'ClosedParenthesisToken', expected type 'SemicolonToken'.
+                Unexpected token 'ClosedParenthesisToken', expected type 'IdentifierToken'.
+                Unexpected token 'ClosedParenthesisToken', expected type 'SemicolonToken'.
+                Unexpected token 'EndOfFileToken', expected type 'ClosedBracketToken'.
+            ";
+
+            AssertDiagnostics(text, diagnostics);
+        }
 
         [TestMethod]
         public void NameExpressionReportsNoErrorForInsertedToken()
@@ -325,7 +319,7 @@ namespace Nebula.Compiler.Tests
         }
 
         [TestMethod]
-        public void Evaluator_Name_Reports_Undefined()
+        public void NameReportsUndefined()
         {
             const string text = "func void main() { int y = [x] * 10;}";
             (EBinderMessages code, string template) = BinderMessagesProvider.VariableDoesNotExists;
@@ -333,198 +327,187 @@ namespace Nebula.Compiler.Tests
             AssertDiagnostics(text, diagnostics);
         }
 
-        //[TestMethod]
-        //public void Evaluator_Assignment_Reports_Undefined()
-        //{
-        //    const string text = "[x] = 10";
-        //    const string report = "Variable name does not exist <x>.";
-
-        //    AssertDiagnostics(text, report);
-        //}
-
-        //[TestMethod]
-        //public void Evaluator_AssignmentExpression_Reports_NotAVariable()
-        //{
-        //    const string text = "[print] = 42";
-
-        //    const string diagnostics = @"
-        //        <print> is not a variable.
-        //    ";
-
-        //    AssertDiagnostics(text, diagnostics);
-        //}
-
-        //[TestMethod]
-        //public void Evaluator_CompoundExpression_Assignment_NonDefinedVariable_Reports_Undefined()
-        //{
-        //    const string text = "[x] += 10";
-
-        //    const string diagnostics = "Variable name does not exist <x>.";
-
-        //    AssertDiagnostics(text, diagnostics);
-        //}
-
-        //[TestMethod]
-        //public void Evaluator_Assignment_Reports_CannotAssign()
-        //{
-        //    const string text = @"
-        //                {
-        //                    const x = 10
-        //                    x [=] 0
-        //                    return x
-        //                }
-        //                ";
-        //    const string report = "Cannot reassign value of read-only variable <x>.";
-
-        //    AssertDiagnostics(text, report);
-        //}
-
-        //[TestMethod]
-        //public void Evaluator_CompoundDeclarationExpression_Reports_CannotAssign()
-        //{
-        //    string? text = @"
-        //        {
-        //            const x = 10
-        //            x [+=] 1
-        //        }
-        //    ";
-
-        //    string? diagnostics = @"
-        //        Cannot reassign value of read-only variable <x>.
-        //    ";
-
-        //    AssertDiagnostics(text, diagnostics);
-        //}
-
-        //[TestMethod]
-        //public void Evaluator_Assignment_Reports_CannotConvert()
-        //{
-        //    const string text = @"
-        //                {
-        //                    var x = 10
-        //                    x = [true]
-        //                }
-        //                ";
-
-        //    const string report = "Cannot convert type of <bool> to <int>.";
-
-        //    AssertDiagnostics(text, report);
-        //}
-
-        //[TestMethod]
-        //public void Evaluator_Unary_Reports_Undefined()
-        //{
-        //    const string text = "[+]true";
-
-        //    const string report = "Unary operator <+> is not defined for type <bool>.";
-
-        //    AssertDiagnostics(text, report);
-        //}
-
-        //[TestMethod]
-        //public void Evaluator_Binary_Reports_Undefined()
-        //{
-        //    const string text = "10 [+] true";
-
-        //    const string report = "Binary operator <+> is not defined for types <int> and <bool>.";
-
-        //    AssertDiagnostics(text, report);
-        //}
-
-        //[TestMethod]
-        //public void Evaluator_CompoundExpression_Reports_Undefined()
-        //{
-        //    string? text = @"var x = 10 
-        //                 x [+=] false";
-
-        //    string? diagnostics = @"
-        //        Binary operator <+=> is not defined for types <int> and <bool>.
-        //    ";
-
-        //    AssertDiagnostics(text, diagnostics);
-        //}
-
-
+        [TestMethod]
+        public void AssignmentReportsUndefined()
+        {
+            const string text = "func void main() { [x] = 10; }";
+            (EBinderMessages code, string template) = BinderMessagesProvider.VariableDoesNotExists;
+            string diagnostics = string.Format(template, "x");
+            AssertDiagnostics(text, diagnostics);
+        }
 
         [TestMethod]
-        public void Evaluator_IfStatement_Reports_CannotConvert()
+        public void AssignmentExpressionReportsNotAVariable()
         {
-            const string text = @"
-                        func void main()
+            const string text = "func void main() { [print] = 42; } func void print(){}";
+
+            (EBinderMessages code, string template) = BinderMessagesProvider.NameIsNotAVariable;
+            string diagnostics = string.Format(template, "print");
+            AssertDiagnostics(text, diagnostics);
+        }
+
+        [TestMethod]
+        public void CompoundExpressionAssignmentNonDefinedVariableReportsUndefined()
+        {
+            const string text = "func void main() { [x] += 10; }";
+
+            (EBinderMessages code, string template) = BinderMessagesProvider.VariableDoesNotExists;
+            string diagnostics = string.Format(template, "x");
+            AssertDiagnostics(text, diagnostics);
+        }
+
+        [TestMethod]
+        public void AssignmentReportsCannotAssign()
+        {
+            const string text = @"func int main()
+                        {
+                            const int x = 10;
+                            x [=] 0;
+                            return x;
+                        }
+                        ";
+            (EBinderMessages code, string template) = BinderMessagesProvider.CannotReassignReadonlyVariable;
+            string diagnostics = string.Format(template, "x");
+            AssertDiagnostics(text, diagnostics);
+        }
+
+        [TestMethod]
+        public void CompoundDeclarationExpression_Reports_CannotAssign()
+        {
+            string? text = @"func void main()
+                {
+                    const int x = 10;
+                    x [+=] 1;
+                }";
+
+            (EBinderMessages code, string template) = BinderMessagesProvider.CannotReassignReadonlyVariable;
+            string diagnostics = string.Format(template, "x");
+            AssertDiagnostics(text, diagnostics);
+        }
+
+        [TestMethod]
+        public void AssignmentReportsCannotConvert()
+        {
+            const string text = @"func void main()
+                        {
+                            int x = 10;
+                            x = [true];
+                        }";
+
+            (EBinderMessages code, string template) = BinderMessagesProvider.CannotConvertTypeImplicity;
+            string diagnostics = string.Format(template, "bool", "int");
+            AssertDiagnostics(text, diagnostics);
+        }
+
+        [TestMethod]
+        public void UnaryReportsUndefined()
+        {
+            const string text = @"func void main()
+                        {
+                            [+]true;
+                        }";
+
+            (EBinderMessages code, string template) = BinderMessagesProvider.UnaryOperatorNotDefined;
+            string diagnostics = string.Format(template, "+", "bool");
+            AssertDiagnostics(text, diagnostics);
+        }
+
+        [TestMethod]
+        public void BinaryReportsUndefined()
+        {
+            const string text = @"func void main()
+                        {
+                            int a = 10 [+] true;
+                        }";
+
+            (EBinderMessages code, string template) = BinderMessagesProvider.BinaryOperatorNotDefined;
+            string diagnostics = string.Format(template, "+", "int", "bool");
+            AssertDiagnostics(text, diagnostics);
+        }
+
+        [TestMethod]
+        public void CompoundExpressionReportsUndefined()
+        {
+            string? text = @"func void main()
+                        {
+                            int x = 10;
+                            x [+=] false;
+                        }";
+
+            (EBinderMessages code, string template) = BinderMessagesProvider.BinaryOperatorNotDefined;
+            string diagnostics = string.Format(template, "+=", "int", "bool");
+            AssertDiagnostics(text, diagnostics);
+        }
+
+        [TestMethod]
+        public void IfStatementReportsCannotConvert()
+        {
+            const string text = @"func void main()
                         {
                             int x = 0;
                             if ([10])
                                 x = 10;
-                        }
-                        ";
+                        }";
 
-            (EBinderMessages code, string template) = BinderMessagesProvider.CannotConvertType;
+            (EBinderMessages code, string template) = BinderMessagesProvider.CannotConvertTypeImplicity;
             string diagnostics = string.Format(template, "int", "bool");
             AssertDiagnostics(text, diagnostics);
         }
 
-        //[TestMethod]
-        //public void Evaluator_WhileStatement_Reports_CannotConvert()
-        //{
-        //    const string text = @"
-        //                {
-        //                    var x = 0
-        //                    while [10]
-        //                        x = 10
+        [TestMethod]
+        public void WhileStatementReportsCannotConvert()
+        {
+            const string text = @"func void main()
+                        {
+                            int x = 0;
+                            while ([10])
+                                x = 10;
+                        }";
 
-        //                }
-        //                ";
+            (EBinderMessages code, string template) = BinderMessagesProvider.CannotConvertTypeImplicity;
+            string diagnostics = string.Format(template, "int", "bool");
+            AssertDiagnostics(text, diagnostics);
+        }
 
-        //    const string report = "Cannot convert type of <int> to <bool>.";
+        [TestMethod]
+        public void DoWhileStatementReportsCannotConvert()
+        {
+            const string text = @"func void main()
+                        {
+                            int x = 0;
+                            do
+                                x = 10;
+                            while ([10]);
+                        }";
 
-        //    AssertDiagnostics(text, report);
-        //}
+            (EBinderMessages code, string template) = BinderMessagesProvider.CannotConvertTypeImplicity;
+            string diagnostics = string.Format(template, "int", "bool");
+            AssertDiagnostics(text, diagnostics);
+        }
 
-        //[TestMethod]
-        //public void Evaluator_DoWhileStatement_Reports_CannotConvert()
-        //{
-        //    const string text = @"
-        //                {
-        //                    var x = 0
-        //                    do
-        //                        x = 10
-        //                    while [10]
-        //                }
-        //                ";
+        [TestMethod]
+        public void CallExpressionReportsUndefined()
+        {
+            const string text = "func void main() { [foo](42); }";
 
-        //    const string report = "Cannot convert type of <int> to <bool>.";
+            (EBinderMessages code, string template) = BinderMessagesProvider.FunctionDoesNotExists;
+            string diagnostics = string.Format(template, "foo");
+            AssertDiagnostics(text, diagnostics);
+        }
 
-        //    AssertDiagnostics(text, report);
-        //}
+        [TestMethod]
+        public void CallExpressionReportsNotAFunction()
+        {
+            const string text = @"func void main()
+                {
+                    const int foo = 42;
+                    [foo](42);
+                }";
 
-        //[TestMethod]
-        //public void Evaluator_CallExpression_Reports_Undefined()
-        //{
-        //    const string text = "[foo](42)";
-
-        //    const string diagnostics = @"
-        //        Function <foo> does not exist.
-        //    ";
-
-        //    AssertDiagnostics(text, diagnostics);
-        //}
-
-        //[TestMethod]
-        //public void Evaluator_CallExpression_Reports_NotAFunction()
-        //{
-        //    const string text = @"
-        //        {
-        //            const foo = 42
-        //            [foo](42)
-        //        }
-        //    ";
-
-        //    const string diagnostics = @"
-        //        <foo> is not a function.
-        //    ";
-
-        //    AssertDiagnostics(text, diagnostics);
-        //}
+            (EBinderMessages code, string template) = BinderMessagesProvider.IdentifierIsNotAFunction;
+            string diagnostics = string.Format(template, "foo");
+            AssertDiagnostics(text, diagnostics);
+        }
 
         [TestMethod]
         public void VariablesCanShadowFunctions()
@@ -535,49 +518,42 @@ namespace Nebula.Compiler.Tests
                 {
                     const int print = 42;
                     [print](""test"");
-                }
-            ";
+                }";
 
             (EBinderMessages code, string template) = BinderMessagesProvider.IdentifierIsNotAFunction;
-
             string diagnostics = string.Format(template, "print");
-
             AssertDiagnostics(text, diagnostics);
         }
 
-        //[TestMethod]
-        //public void Evaluator_ForStatement_Reports_CannotConvert_LowerBound()
-        //{
-        //    const string text = @"
-        //                {
-        //                    var result = 0
-        //                    for i = [false] to 10
-        //                        result = result + i
+        [TestMethod]
+        public void ForStatementReportsBinaryOperatorNotDefined()
+        {
+            const string text = @"func void main()
+                        {
+                            int result = 0;
+                            for (bool i = false; i [!=] 10;) {}
+                        }";
 
-        //                }
-        //                ";
+            (EBinderMessages code, string template) = BinderMessagesProvider.BinaryOperatorNotDefined;
+            string diagnostics = string.Format(template, "!=", "bool", "int");
+            AssertDiagnostics(text, diagnostics);
+        }
 
-        //    const string report = "Cannot convert type of <bool> to <int>.";
+        [TestMethod]
+        public void ForStatementReportsCannotConvertUpperBound()
+        {
+            const string text = @"func void main()
+                        {
+                            int result = 0;
+                            for (int i = 0; i [<] true; i+=1)
+                                result = result + i;
 
-        //    AssertDiagnostics(text, report);
-        //}
+                        }";
 
-        //[TestMethod]
-        //public void Evaluator_ForStatement_Reports_CannotConvert_UpperBound()
-        //{
-        //    const string text = @"
-        //                {
-        //                    var result = 0
-        //                    for i = 1 to [false]
-        //                        result = result + i
-
-        //                }
-        //                ";
-
-        //    const string report = "Cannot convert type of <bool> to <int>.";
-
-        //    AssertDiagnostics(text, report);
-        //}
+            (EBinderMessages code, string template) = BinderMessagesProvider.BinaryOperatorNotDefined;
+            string diagnostics = string.Format(template, "<", "int", "bool");
+            AssertDiagnostics(text, diagnostics);
+        }
 
         private static void AssertDiagnostics(string text, string reportText)
         {

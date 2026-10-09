@@ -13,8 +13,6 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
     {
         public override NodeType Type => NodeType.FunctionDeclaration;
 
-        public TextLocation SignatureLocation => new(SourceCode, SignatureSpan);
-
         public TextSpan SignatureSpan
         {
             get
@@ -32,7 +30,7 @@ namespace Nebula.Core.Compilation.CST.Tree.Declaration.Function
         public FunctionDeclaration(
             SourceCode sourceCode,
             Token keyword,
-            TypeClause returnType,
+            BaseTypeClause returnType,
             Token name,
             Token openParenthesis,
             TokenSeparatedList<Parameter> parameters,

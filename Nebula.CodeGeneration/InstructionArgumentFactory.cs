@@ -39,7 +39,7 @@ namespace Nebula.CodeGeneration
             Register(InstructionOpcode.Callvirt, ConvertGenericOperand);
 
             Register(InstructionOpcode.Newobj, ConvertGenericOperand);
-            Register(InstructionOpcode.Newarr, ConvertGenericOperand);
+            Register(InstructionOpcode.Newarr, NoArgumentsAllowed);
 
             Register(InstructionOpcode.Ldfld, RequireInt32);
             Register(InstructionOpcode.Stfld, RequireInt32);
@@ -93,7 +93,7 @@ namespace Nebula.CodeGeneration
 
         private static string RequireGlobalVariableIndex(Instruction input)
         {
-            if (input.Operand is VariableDefinition varDef)
+            if (input.Operand is GlobalVariableDefinition varDef)
             {
                 if (string.IsNullOrEmpty(varDef.Namespace))
                 {

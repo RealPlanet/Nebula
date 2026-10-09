@@ -1,7 +1,10 @@
 #pragma once
 
+#ifndef _H_NEBULA_SCRIPT_
+#define _H_NEBULA_SCRIPT_
+
+
 #include <string>
-#include <memory>
 #include <map>
 
 #include "DiagnosticReport.h"
@@ -93,4 +96,6 @@ namespace nebula
 		Script* m_InternalScript{ nullptr };
 	};
 }
+
+#endif // !_H_NEBULA_SCRIPT_
 

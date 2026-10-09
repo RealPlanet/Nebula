@@ -3,11 +3,12 @@
 #include <format>
 #include <ostream>
 
-#include "Script.h"
+#include "DebugServer.h"
 #include "interfaces\IScriptParser.h"
 #include "LiteralScriptParser.h"
+#include "Script.h"
+#include "Bundle.h"
 #include "Function.h"
-#include "DebugServer.h"
 
 using namespace nebula;
 
@@ -43,9 +44,9 @@ ScriptLoadResult nebula::Script::FromMemory(const std::string_view& data, const 
 
 nebula::Script::~Script()
 {
-	if (DebugServer::Instance())
+	if (debugger::DebugServer::Instance())
 	{
-		DebugServer::Instance()->NotifyScriptUnloaded(m_SourcePath);
+		debugger::DebugServer::Instance()->UnregisterScript(this);
 	}
 }
 
@@ -67,6 +68,12 @@ Script* ScriptBuilder::Finalize() noexcept
 {
 	Script* result = m_InternalScript;
 	m_InternalScript = nullptr;
+
+	if (debugger::DebugServer::Instance() && result)
+	{
+		debugger::DebugServer::Instance()->RegisterScript(result);
+	}
+
 	return result;
 }
 

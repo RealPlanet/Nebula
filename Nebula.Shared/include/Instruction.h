@@ -1,8 +1,11 @@
 #pragma once
 
-#include <vector>
-#include <string>
+#ifndef _H_NEBULA_INSTRUCTION_
+#define _H_NEBULA_INSTRUCTION_
+
 #include <format>
+#include <string>
+#include <vector>
 
 #include "LanguageTypes.h"
 
@@ -64,4 +67,6 @@ namespace nebula
 
 		return std::format("Unknown error code: {}", (int)c);
 	}
-}
+} // namespace nebula
+
+#endif // !_H_NEBULA_INSTRUCTION_

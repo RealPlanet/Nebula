@@ -15,7 +15,7 @@ namespace Nebula.Core.Compilation.AST.Symbols
         public bool CanHaveParameters { get; } = true;
 
         private AttributeSymbol(string name, bool canHaveReturnType, bool canHaveParameters)
-            : base(string.Empty, name)
+            : base(name)
         {
             CanHaveReturnType = canHaveReturnType;
             CanHaveParameters = canHaveParameters;
@@ -24,6 +24,12 @@ namespace Nebula.Core.Compilation.AST.Symbols
                 Attribute = result;
                 return;
             }
+        }
+
+        public bool Is(AttributeType type)
+        {
+            return IsMethodAttribute
+                && (AttributeType)Attribute! == type;
         }
 
         private static readonly Dictionary<string, AttributeSymbol> _symbols = new(StringComparer.OrdinalIgnoreCase)

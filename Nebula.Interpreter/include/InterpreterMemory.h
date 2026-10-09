@@ -4,16 +4,16 @@
 #include <unordered_set>
 
 #include "LanguageTypes.h"
-#include "Variable.h"
+#include "Value.h"
 #include "Bundle.h"
 
 namespace nebula
 {
-	class IGCObject;
+	class GCUser;
 	class Script;
 	class Interpreter;
 
-	using AllocableObjectPtr = std::shared_ptr<IGCObject>;
+	using AllocableObjectPtr = std::shared_ptr<GCUser>;
 
 	class InterpreterMemory
 	{
@@ -21,20 +21,20 @@ namespace nebula
 		InterpreterMemory(Interpreter* parent);
 
 		TBundle AllocBundle(const BundleDefinition& definition);
-		TArray AllocArray(const DataStackVariantIndex& type);
+		TArray AllocArray();
 
 		void Collect(bool force = false);
 		void Sweep();
-		bool Empty() { return m_IGCObjects.empty(); }
+		bool Empty() { return m_GCUsers.empty(); }
 
 		void AddGlobals(const Script* script);
-		Variable* GetGlobal(const std::string_view& namespaceStr, TInt32 index);
+		Value* GetGlobal(const std::string_view& namespaceStr, TInt32 index);
 
 	private:
 		Interpreter* m_pParent;
-		std::list<AllocableObjectPtr> m_IGCObjects;
+		std::list<AllocableObjectPtr> m_GCUsers;
 		size_t m_iGCThreshold;
-		std::map<const std::string_view, std::vector< Variable>> m_ScriptGlobals{};
+		std::map<const std::string_view, std::vector< Value>> m_ScriptGlobals{};
 	};
 }
 

@@ -1,9 +1,12 @@
-#define _CRTDBG_MAP_ALLOC
 #define _PL_ARGPARSER_IMPL_
 
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
 #include <crtdbg.h>
+#define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
 
 #include <iostream>
+#include <filesystem>
 #include <memory>
 #include <vector>
 #include <string>
@@ -15,26 +18,46 @@
 // Interpreter
 #include "Script.h"
 #include "Interpreter.h"
-#include "ErrorCallStack.h"
+#include "ExceptionCallStack.h"
 
 #include "ConsoleWriter.h"
 #include "DiagnosticReport.h"
 #include "DebuggerDefinitions.h"
 #include "DebugServer.h"
-#include "DefaultDebugServer.h"
-// Is marked as unused but is actually used for the declartion of some global functions
+// Is marked as unused but is actually used for the declaration of some global functions
 #include "NebulaStandardLib.h"
+#include "ExecutorDebugServer.h"
 
 using namespace nebula::frontend;
 using namespace nebula;
 
-std::vector<std::string> g_inputScripts = {};
-std::vector<std::string> g_inputBindings = {};
+const std::string g_nebulaExtension = ".neb";
+std::vector<std::filesystem::path> g_inputScripts = {};
+std::vector<std::filesystem::path> g_inputBindings = {};
+bool g_waitForDebuggerConnection{ false };
 
-static void AddToScripts(const std::string& path) {
-	// TODO :: Validate
-	g_inputScripts.push_back(path);
+static void AddToScripts(const std::filesystem::path& path)
+{
+	if (!std::filesystem::exists(path))
+	{
+		return;
+	}
+
+	if (std::filesystem::is_directory(path))
+	{
+		for (auto& file : std::filesystem::recursive_directory_iterator(path))
+		{
+			AddToScripts(file);
+		}
+	}
+
+	if (std::filesystem::is_regular_file(path)
+		&& path.extension() == g_nebulaExtension)
+	{
+		g_inputScripts.push_back(path);
+	}
 }
+
 static void AddToBindings(const std::string& path) {
 	// TODO :: Validate
 	g_inputBindings.push_back(path);
@@ -59,15 +82,16 @@ static void BindStandardLibFunctions(Interpreter& vm)
 	}
 }
 
-static void BindNativeFunctions(Interpreter& vm, const std::string& dll);
+static void BindNativeFunctions(Interpreter& vm, const std::filesystem::path& dll);
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-static void BindNativeFunctions(Interpreter& vm, const std::string& dll)
+static void BindNativeFunctions(Interpreter& vm, const std::filesystem::path& dll)
 {
 	CHAR buffer[512];
-	GetFullPathNameA(dll.data(), 512, buffer, nullptr);
+	GetFullPathNameA(dll.string().data(), 512, buffer, nullptr);
 	HMODULE ass = LoadLibraryA(buffer);
 	if (ass != NULL)
 	{
@@ -87,7 +111,6 @@ static void BindNativeFunctions(Interpreter& vm, const std::string& dll)
 		writer::ConsoleWrite(errorLine, writer::FG_RED);
 	}
 }
-
 #else
 
 #error "Unsupported platform"
@@ -100,7 +123,7 @@ static int PrintVMLastError(nebula::Interpreter& vm)
 	{
 		writer::ConsoleWrite("VM was aborted, stack trace is:", writer::FG_RED);
 
-		shared::ErrorCallStack* callstack = vm.GetFatalErrorCallstack();
+		shared::ExceptionCallstack* callstack = vm.GetFatalExceptionCallstack();
 		writer::ConsoleWrite(callstack->GetAsText().data(), writer::FG_RED);
 
 		return (int)callstack->GetErrorCode();
@@ -118,13 +141,18 @@ static int LoadInputScripts(std::vector< std::shared_ptr<Script>>& loadedScripts
 	bool foundError = false;
 	for (auto& file : g_inputScripts)
 	{
-		if (file.ends_with(".neb"))
+		if (!std::filesystem::exists(file))
 		{
-			ScriptLoadResult scriptLoadResult = Script::FromFile(file);
+			continue;
+		}
 
+		if (file.has_extension()
+			&& file.extension() == ".neb")
+		{
+			ScriptLoadResult scriptLoadResult = Script::FromFile(file.string());
 			if (scriptLoadResult.ParsingReport.Errors().size() > 0)
 			{
-				std::string errMessage = std::format("Errors while loading script {}", file.data());
+				std::string errMessage = std::format("Errors while loading script {}", file.string());
 				writer::ConsoleWrite(errMessage, writer::Code::FG_RED);
 				PrintReport(scriptLoadResult.ParsingReport);
 				foundError = true;
@@ -151,9 +179,10 @@ static int ExecuteVM() {
 		// Setup interpreter and bind native functions
 		// Might be useful to have them available even if we haven't started the VM (Load time caching ecc..)
 		Interpreter vm;
-		DebugServer::RegisterDebugServer(new DefaultDebugServer());
-		BindStandardLibFunctions(vm);
+		debugger::ExecutorDebugServer* debugServer = new nebula::debugger::ExecutorDebugServer(&vm);
+		nebula::debugger::DebugServer::RegisterDebugServer(debugServer);
 
+		BindStandardLibFunctions(vm);
 		for (auto& file : g_inputBindings)
 		{
 			BindNativeFunctions(vm, file);
@@ -177,7 +206,7 @@ static int ExecuteVM() {
 					writer::ConsoleWrite(errMessage, writer::Code::FG_RED);
 					allScriptsLoaded = false;
 
-					shared::ErrorCallStack* errCallstack = vm.GetFatalErrorCallstack();
+					shared::ExceptionCallstack* errCallstack = vm.GetFatalExceptionCallstack();
 					if (errCallstack != nullptr) {
 						writer::ConsoleWrite(errCallstack->GetAsText(), writer::Code::FG_RED);
 					}
@@ -190,7 +219,7 @@ static int ExecuteVM() {
 
 				std::cout << ">------- Begin execution ---------\n";
 
-				vm.InitAndRun();
+				vm.InitAndRun(g_waitForDebuggerConnection);
 				vm.Wait();
 
 				auto finish = std::chrono::high_resolution_clock::now();
@@ -213,9 +242,17 @@ static int ExecuteVM() {
 			}
 		}
 
+		// If we are debugging we need to wait for the debugger thread to finish
+		// For example during a terminate request we will stop the main thread which
+		// will free the server while its doing work
+		while (debugServer->IsDebugging())
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds{ 500 });
+		}
+
+		nebula::debugger::DebugServer::RegisterDebugServer(nullptr);
 	}
 
-	DebugServer::RegisterDebugServer(nullptr);
 	return executionResult;
 }
 
@@ -224,22 +261,22 @@ int main(int argc, char* argv[]) {
 	// Enable memory anal
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
-
-#endif // DEBUG
+#endif // DEBUG	
 
 	planet::argparser::ArgParser argParser([](const std::string& err) {
 		writer::ConsoleWrite(err + '\n', writer::Code::BG_RED);
 		});
 
-	argParser.RegisterArgument("s|script=", AddToScripts);
+	argParser.RegisterArgument("s|script=", [](const auto& arg) { AddToScripts(std::filesystem::path{ arg }); });
 	argParser.RegisterArgument("b|binding=", AddToBindings);
+	argParser.RegisterArgument("wait_for_debugger", [](const std::string&) { g_waitForDebuggerConnection = true; });
+
 	if (!argParser.Parse(argc, argv)) {
 		writer::ConsoleWrite("Could not parse program arguments!", writer::Code::BG_RED);
 		return -1;
 	}
 
 	/* DO NOT DUMP MEMORY HERE OTHERWISE STATIC STUFF WILL BE REPORTED */
-
 	int result = ExecuteVM();
 	return result;
 }

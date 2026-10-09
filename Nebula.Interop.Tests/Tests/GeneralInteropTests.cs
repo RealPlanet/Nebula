@@ -10,8 +10,9 @@ namespace Nebula.Interop.Tests.Tests
         [TestMethod]
         public void ScriptLoadsCorrectly()
         {
-            bool loadOk = Script.FromFile("hello_world.neb", OnReportMessage, out Script script);
+            bool loadOk = Script.FromFile("hello_world.neb", OnReportMessage, out Script? script);
             Assert.IsTrue(loadOk);
+            Assert.IsNotNull(script);
             Assert.AreEqual(script.Namespace, "hello_world");
             script.Dispose();
         }

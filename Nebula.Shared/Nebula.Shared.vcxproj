@@ -13,24 +13,27 @@
   <ItemGroup>
     <ClInclude Include="include\DebuggerDefinitions.h" />
     <ClInclude Include="include\DebugServer.h" />
+    <ClInclude Include="include\DebugSymbols.h" />
     <ClInclude Include="include\DiagnosticReport.h" />
-    <ClInclude Include="include\ErrorCallStack.h" />
+    <ClInclude Include="include\ExceptionCallstack.h" />
     <ClInclude Include="include\Instruction.h" />
-    <ClInclude Include="include\InstructionDefs.h" />
-    <ClInclude Include="include\interfaces\IGCObject.h" />
-    <ClInclude Include="include\interfaces\INotificationListener.h" />
+    <ClInclude Include="include\InstructionDefinitions.h" />
+    <ClInclude Include="include\GCUser.h" />
+    <ClInclude Include="include\NotificationListener.h" />
     <ClInclude Include="include\interfaces\IScriptParser.h" />
     <ClInclude Include="include\interfaces\IStreamWrapper.h" />
+    <ClInclude Include="include\DebugSymbolSerializers.h" />
     <ClInclude Include="include\LanguageTypes.h" />
-    <ClInclude Include="include\Utility.h" />
+    <ClInclude Include="include\StringUtility.h" />
+    <ClInclude Include="include\TimeUtility.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DebugServer.cpp" />
     <ClCompile Include="src\DiagnosticReport.cpp" />
-    <ClCompile Include="src\ErrorCallStack.cpp" />
-    <ClCompile Include="src\IGCObject.cpp" />
-    <ClCompile Include="src\INotificationListener.cpp" />
+    <ClCompile Include="src\ExceptionCallstack.cpp" />
+    <ClCompile Include="src\GCUser.cpp" />
     <ClCompile Include="src\LanguageTypes.cpp" />
+    <ClCompile Include="src\NotificationListener.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -80,7 +83,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./include/;../../Strata.JSON/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <TreatWarningAsError>true</TreatWarningAsError>
       <TranslateIncludes>false</TranslateIncludes>
@@ -101,7 +104,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./include/;../../Strata.JSON/include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <TreatWarningAsError>true</TreatWarningAsError>
       <TranslateIncludes>false</TranslateIncludes>

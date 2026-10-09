@@ -22,15 +22,15 @@
     <ClInclude Include="include\ThreadMap.h" />
     <ClInclude Include="include\Script.h" />
     <ClInclude Include="include\InterpreterMemory.h" />
-    <ClInclude Include="include\Variable.h" />
+    <ClInclude Include="include\Value.h" />
     <ClInclude Include="include\VariantArray.h" />
     <ClInclude Include="src\InstructionRegistry.h" />
     <ClInclude Include="src\LiteralScriptParser.h" />
     <ClInclude Include="include\Interpreter.h" />
     <ClInclude Include="include\InterpreterStandardOutput.h" />
-    <ClInclude Include="thirdparty\json.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Value.cpp" />
     <ClCompile Include="src\DefaultDebugServer.cpp" />
     <ClCompile Include="src\VariantArray.cpp" />
     <ClCompile Include="src\InterpreterMemory.cpp" />
@@ -87,7 +87,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>src\;include\;thirdparty\;..\Nebula.Shared\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src/;include/;../../Strata.JSON/include;../Nebula.Shared/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -101,7 +101,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>Nebula.Shared.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Nebula.Shared.lib;Strata.JSON.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
@@ -112,7 +112,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>src\;include\;thirdparty\;..\Nebula.Shared\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src/;include/;../../Strata.JSON/include;../Nebula.Shared/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -127,7 +127,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>Nebula.Shared.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Nebula.Shared.lib;Strata.JSON.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>

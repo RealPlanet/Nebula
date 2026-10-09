@@ -11,7 +11,7 @@ constexpr size_t g_MinGCThreshold = 128;
 
 static void GatherStackRoots(Interpreter* vm, std::vector<AllocableObjectPtr>& foundRoots)
 {
-    const ThreadMap& tm = vm->GetThreadMap();
+    const ThreadMap& tm = vm->GetThreads();
     size_t threadCount = tm.Count();
     for (int i = 0; i < threadCount; i++)
     {
@@ -32,10 +32,10 @@ static void GatherStackRoots(Interpreter* vm, std::vector<AllocableObjectPtr>& f
             size_t localCount = memory.LocalCount();
             for (int j{ 0 }; j < localCount; j++)
             {
-                const Variable& fv = memory.LocalAt(j);
-                if (const TGCObject* obj = std::get_if<TGCObject>(&fv.Value()))
+                const Value& fv = memory.LocalAt(j);
+                if (fv.GetValueType() == DataStackVariantIndex::_TypeObject)
                 {
-                    foundRoots.push_back(*obj);
+                    foundRoots.push_back(fv.AsGCObject());
                 }
             }
 
@@ -57,7 +57,7 @@ static void GatherStackRoots(Interpreter* vm, std::vector<AllocableObjectPtr>& f
 }
 
 InterpreterMemory::InterpreterMemory(Interpreter* parent)
-    : m_pParent{ parent }, m_IGCObjects{}, m_iGCThreshold{ g_MinGCThreshold }
+    : m_pParent{ parent }, m_GCUsers{}, m_iGCThreshold{ g_MinGCThreshold }
 {
 }
 
@@ -68,17 +68,17 @@ TBundle InterpreterMemory::AllocBundle(const BundleDefinition& definition)
     // This shared pointer is passed around function frames
     TBundle ptr = Bundle::FromDefinition(definition);
     // Keep track of the allocated objectsw
-    m_IGCObjects.push_back(dynamic_pointer_cast<IGCObject>(ptr));
+    m_GCUsers.push_back(dynamic_pointer_cast<GCUser>(ptr));
 
     return ptr;
 }
 
-TArray InterpreterMemory::AllocArray(const DataStackVariantIndex& type)
+TArray InterpreterMemory::AllocArray()
 {
     // Attempt to free memory at each allocation
     Collect();
-    TArray ptr = std::make_shared<VariantArray>(type);
-    m_IGCObjects.push_back(dynamic_pointer_cast<IGCObject>(ptr));
+    TArray ptr = std::make_shared<VariantArray>();
+    m_GCUsers.push_back(dynamic_pointer_cast<GCUser>(ptr));
 
     return ptr;
 }
@@ -86,7 +86,7 @@ TArray InterpreterMemory::AllocArray(const DataStackVariantIndex& type)
 void InterpreterMemory::Collect(bool force)
 {
     Interpreter* vm = m_pParent;
-    size_t startingSize = m_IGCObjects.size();
+    size_t startingSize = m_GCUsers.size();
 
     if (force || startingSize >= m_iGCThreshold)
     {
@@ -126,7 +126,7 @@ void InterpreterMemory::Collect(bool force)
 
         Sweep();
 
-        size_t reductionAmount = startingSize - m_IGCObjects.size();
+        size_t reductionAmount = startingSize - m_GCUsers.size();
         size_t quarter = startingSize / 4;
         if (reductionAmount < quarter)
         {
@@ -144,8 +144,8 @@ void InterpreterMemory::Collect(bool force)
 
 void InterpreterMemory::Sweep()
 {
-    auto it = m_IGCObjects.begin();
-    while (it != m_IGCObjects.end())
+    auto it = m_GCUsers.begin();
+    while (it != m_GCUsers.end())
     {
         AllocableObjectPtr obj = *it;
         // We didn't reach it, so release it
@@ -156,7 +156,7 @@ void InterpreterMemory::Sweep()
                 bundle->ClearFields();
             }
 
-            it = m_IGCObjects.erase(it);
+            it = m_GCUsers.erase(it);
         }
         else
         {
@@ -169,7 +169,7 @@ void InterpreterMemory::Sweep()
 
 void InterpreterMemory::AddGlobals(const Script* script)
 {
-    std::vector<Variable> variables{};
+    std::vector<Value> variables{};
     variables.reserve(script->Globals().size());
 
     for (auto& global : script->Globals())
@@ -179,7 +179,7 @@ void InterpreterMemory::AddGlobals(const Script* script)
     m_ScriptGlobals[script->Namespace()] = variables;
 }
 
-Variable* InterpreterMemory::GetGlobal(const std::string_view& script, TInt32 index)
+Value* InterpreterMemory::GetGlobal(const std::string_view& script, TInt32 index)
 {
     auto it = m_ScriptGlobals.find(script);
     if (it == m_ScriptGlobals.end())

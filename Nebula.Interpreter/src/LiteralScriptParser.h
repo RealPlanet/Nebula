@@ -4,7 +4,7 @@
 
 #include "DiagnosticReport.h"
 #include "LanguageTypes.h"
-#include "InstructionDefs.h"
+#include "InstructionDefinitions.h"
 
 
 namespace nebula
@@ -48,8 +48,6 @@ namespace nebula::parsing
 
         bool ReadLiteral(std::string&, bool = false);
         bool ReadLiteralUntil(std::string&, char c, bool = false);
-        bool ReadInt(TInt32& i);
-        bool ReadFloat(TFloat& f);
     };
 }
 

@@ -61,7 +61,7 @@ namespace Nebula.Core.Compilation
                 result.Report.Append(parseReport);
                 if (unit == null)
                 {
-                    result.FailedSourcePath = source.FileName;
+                    result.FailedSourcePath = source.FullPath;
                     return false;
                 }
 
@@ -72,9 +72,6 @@ namespace Nebula.Core.Compilation
             result.Report.Append(bindingReport);
             if (bindingReport.HasErrors)
             {
-                ReportMessage firstError = bindingReport.Errors.First();
-                // TODO Fix
-                //result.FailedSourcePath = firstError.Location.Text?.FileName ?? throw new NullReferenceException();
                 return false;
             }
 
@@ -94,14 +91,14 @@ namespace Nebula.Core.Compilation
 
                 foreach (var program in programs)
                 {
-                    string moduleName = Path.GetFileNameWithoutExtension(program.SourceCode.FileName);
+                    string moduleName = Path.GetFileNameWithoutExtension(program.SourceCode.FullPath);
                     emitter.Emit(moduleName, program, out var report);
                     result.Report.Append(report);
 
                     if (report.HasErrors &&
                         string.IsNullOrEmpty(result.FailedSourcePath))
                     {
-                        result.FailedSourcePath = program.SourceCode.FileName;
+                        result.FailedSourcePath = program.SourceCode.FullPath;
                     }
                 }
             }
